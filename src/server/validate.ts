@@ -118,3 +118,21 @@ export function requireUsername(body: Body, field = "username"): string {
 export function has(body: Body, field: string): boolean {
   return Object.hasOwn(body, field);
 }
+
+export function requireBoolean(body: Body, field: string): boolean {
+  const value = body[field];
+  if (value === undefined || value === null) fail(fieldCode("MISSING", field));
+  if (typeof value !== "boolean") fail(fieldCode("INVALID", field));
+  return value;
+}
+
+// Nullable text that must match `pattern` when present. null / "" clears it.
+export function optionalMatching(body: Body, field: string, pattern: RegExp): string | null {
+  const value = body[field];
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") fail(fieldCode("INVALID", field));
+  const trimmed = value.trim();
+  if (trimmed === "") return null;
+  if (!pattern.test(trimmed)) fail(fieldCode("INVALID", field));
+  return trimmed;
+}

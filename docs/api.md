@@ -32,6 +32,10 @@ Chuẩn envelope, định dạng thuộc tính và quy tắc `error.code` ở [`
 | Xoá chính mình | 409 | `CANNOT_DELETE_SELF` |
 | Hạ quyền / xoá admin cuối | 409 | `LAST_ADMIN_REQUIRED` |
 | Hạ quyền admin đang là payer của gói | 409 | `USER_IS_PLAN_PAYER` |
+| Payer không phải admin | 400 | `PAYER_MUST_BE_ADMIN` |
+| Chỉ có một trong BIN / số tài khoản | 400 | `INCOMPLETE_BANK_DETAILS` |
+| Giảm số suất dưới số thành viên đang có | 409 | `SLOTS_BELOW_MEMBERS` |
+| Đặt payer là người đang có suất trong gói | 409 | `PAYER_IS_MEMBER` |
 | Lỗi khác | 500 | `INTERNAL_ERROR` (lỗi thật chỉ vào `console.error`) |
 
 `handleError` (gắn làm `app.onError`) nhận ra lỗi constraint của D1 chỉ qua chuỗi message (`UNIQUE constraint failed`, …), xét cả `err.cause`. Chữ ký là `failure(c, code, message, status = 400, details = null)` — mã đứng ngay sau `c` để lệnh grep trong `envelop-conventions.md` bắt được mọi mã.
@@ -59,6 +63,23 @@ Sub-path tĩnh (`/api/plans/summary`, …) đăng ký **trước** `/:code` — 
 | `/api/dashboard` | `GET /` |
 
 Tài khoản có hai chốt: không xoá tài khoản đang đăng nhập (`CANNOT_DELETE_SELF`), không xoá **hay hạ quyền** admin cuối cùng (`LAST_ADMIN_REQUIRED`). Chốt admin cuối nằm **trong chính câu `UPDATE`/`DELETE`** (`… AND (role <> 'ADMIN' OR (SELECT COUNT(*) …) > 1)`), không phải SELECT-rồi-ghi, nên hai admin hạ quyền nhau cùng lúc không thể cùng lọt.
+
+`/api/plans` **đã có code** (`src/server/routes/plans.ts`, `requireAdmin` trong sub-app):
+
+| Route | Body | `data` |
+|---|---|---|
+| `GET /` | — | `{ plans }` (đang dùng trước, rồi theo tên) |
+| `GET /:code` | — | `{ plan }` |
+| `POST /` | `name`, `price`, `cycle`, `max_slots`, `payer_code`, `bank_bin?`, `bank_account_no?`, `bank_account_name?`, `active?` | `{ plan }` — 201 |
+| `PATCH /:code` | bất kỳ trường nào ở trên | `{ plan }` |
+| `DELETE /:code` | — | `null` |
+
+`plan` = `{ code, name, price, cycle, max_slots, active_members, payer: { code, display_name }, bank_bin, bank_account_no, bank_account_name, active, created_at }` — `active` là boolean, không có `id` hay `payer_id`.
+
+- `payer_code` là mã tài khoản (`AC…`) của một **admin**: sai hình dạng hoặc không tồn tại → `INVALID_PAYER_CODE`, không phải admin → `PAYER_MUST_BE_ADMIN`. Đổi payer sang người đang có suất trong chính gói đó → 409 `PAYER_IS_MEMBER`.
+- `bank_bin` 6 chữ số (BIN NAPAS), `bank_account_no` 4–19 chữ số; hai trường đặt hoặc xoá **cùng nhau** (`INCOMPLETE_BANK_DETAILS`), vì QR cần cả hai. `null` hoặc `""` là xoá.
+- `max_slots` không được nhỏ hơn `active_members` → 409 `SLOTS_BELOW_MEMBERS`.
+- Đổi `price` chỉ ảnh hưởng kỳ tạo sau đó. Gói còn suất hoặc kỳ không xoá được (`RELATED_DATA_EXISTS`) — đặt `active: false`.
 
 `/api/accounts` **đã có code** (`src/server/routes/accounts.ts`, `requireAdmin` gắn trong sub-app):
 

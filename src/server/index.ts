@@ -4,6 +4,7 @@ import { handleError, notFound, ok } from "./envelope";
 import { securityHeaders } from "./headers";
 import { accountRoutes } from "./routes/accounts";
 import { authRoutes } from "./routes/auth";
+import { planRoutes } from "./routes/plans";
 
 const app = new Hono<AppEnv>();
 
@@ -21,5 +22,8 @@ app.route("/api/auth", authRoutes);
 
 // requireAdmin, applied inside the sub-app to every route it serves.
 app.route("/api/accounts", accountRoutes);
+
+// requireAdmin, applied inside the sub-app.
+app.route("/api/plans", planRoutes);
 
 export default app;

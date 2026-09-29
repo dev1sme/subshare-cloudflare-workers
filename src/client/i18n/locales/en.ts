@@ -19,6 +19,10 @@ const en: typeof vi = {
     CANNOT_DELETE_SELF: "You cannot delete the account you are signed in with.",
     LAST_ADMIN_REQUIRED: "At least one admin must remain.",
     USER_IS_PLAN_PAYER: "This admin pays for a plan; assign another payer first.",
+    PAYER_MUST_BE_ADMIN: "The payer must be an admin.",
+    INCOMPLETE_BANK_DETAILS: "Enter both the bank code and the account number, or neither.",
+    SLOTS_BELOW_MEMBERS: "Seats cannot be fewer than the plan's current members.",
+    PAYER_IS_MEMBER: "This person holds a seat in the plan; remove the seat before making them the payer.",
   },
   fields: {
     username: "username",
@@ -27,6 +31,15 @@ const en: typeof vi = {
     new_password: "new password",
     display_name: "display name",
     role: "role",
+    name: "plan name",
+    price: "price",
+    cycle: "cycle",
+    max_slots: "seats",
+    payer_code: "payer",
+    bank_bin: "bank code",
+    bank_account_no: "account number",
+    bank_account_name: "account holder",
+    active: "status",
   },
 };
 

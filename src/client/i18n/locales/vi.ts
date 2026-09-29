@@ -19,6 +19,10 @@ const vi = {
     CANNOT_DELETE_SELF: "Không thể xoá tài khoản đang đăng nhập.",
     LAST_ADMIN_REQUIRED: "Phải còn ít nhất một quản trị viên.",
     USER_IS_PLAN_PAYER: "Người này đang là người thanh toán của một gói; hãy đổi người thanh toán trước.",
+    PAYER_MUST_BE_ADMIN: "Người thanh toán phải là quản trị viên.",
+    INCOMPLETE_BANK_DETAILS: "Cần nhập cả mã ngân hàng và số tài khoản, hoặc bỏ trống cả hai.",
+    SLOTS_BELOW_MEMBERS: "Số suất không được ít hơn số thành viên đang ở trong gói.",
+    PAYER_IS_MEMBER: "Người này đang là thành viên của gói; hãy cho rời gói trước khi đặt làm người thanh toán.",
   },
   fields: {
     username: "tên đăng nhập",
@@ -27,6 +31,15 @@ const vi = {
     new_password: "mật khẩu mới",
     display_name: "tên hiển thị",
     role: "vai trò",
+    name: "tên gói",
+    price: "giá gói",
+    cycle: "chu kỳ",
+    max_slots: "số suất",
+    payer_code: "người thanh toán",
+    bank_bin: "mã ngân hàng",
+    bank_account_no: "số tài khoản",
+    bank_account_name: "tên chủ tài khoản",
+    active: "trạng thái",
   } as Record<string, string>,
 };
 

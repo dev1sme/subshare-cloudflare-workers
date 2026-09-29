@@ -35,3 +35,23 @@ export type User = {
 
 // A user as the admin account screen sees it.
 export type Account = User & { created_at: string };
+
+export type Cycle = "MONTHLY" | "YEARLY";
+
+export type Plan = {
+  code: string;
+  name: string;
+  // VND per cycle, fees included, set by the admin.
+  price: number;
+  cycle: Cycle;
+  // Seats for members; the payer is not counted.
+  max_slots: number;
+  active_members: number;
+  payer: { code: string; display_name: string };
+  // Where members transfer to. Null when not set — the member screen then shows no QR.
+  bank_bin: string | null;
+  bank_account_no: string | null;
+  bank_account_name: string | null;
+  active: boolean;
+  created_at: string;
+};
