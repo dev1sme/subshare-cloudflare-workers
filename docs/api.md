@@ -1,6 +1,6 @@
 # API
 
-> Envelope, `validate.ts`, xử lý lỗi và `GET /api/health` đã có code. Phần còn lại của bề mặt là **thiết kế**; khi route được viết, file này phải khớp code.
+> Toàn bộ bề mặt dưới đây **đã có code**, trừ `/api/dashboard` (còn dự kiến). Khi route đổi, file này phải khớp code.
 
 Mọi route nằm dưới `/api`. Mọi thứ dưới `/api` cần phiên đăng nhập, trừ `/api/health` và `/api/auth/login`.
 
@@ -58,7 +58,7 @@ Tài nguyên trỏ bằng **mã công khai**, không bằng id: `/api/plans/PL3C
 
 Sub-path tĩnh (`/api/plans/summary`, …) đăng ký **trước** `/:code` — Hono khớp theo thứ tự.
 
-## Bề mặt API (dự kiến)
+## Tổng quan bề mặt API
 
 ### Quản trị (`requireAdmin`)
 
@@ -68,9 +68,10 @@ Sub-path tĩnh (`/api/plans/summary`, …) đăng ký **trước** `/:code` — 
 | `/api/plans/:code/members` | `GET /`, `POST /` |
 | `/api/members` | `PATCH /:code` (đặt `left_on`) |
 | `/api/plans/:code/periods` | `GET /`, `POST /` (tạo kỳ tay; cùng đường với cron) |
-| `/api/payments` | `GET /?status=&period=`, `PATCH /:code` (`PAID` / trả về `UNPAID`) |
+| `/api/payments` | `GET /?status=&period=&plan_code=`, `PATCH /:code` (`PAID` / trả về `UNPAID`) |
+| `/api/prepayments` | `GET /?status=`, `PATCH /:code` (`PAID` / trả về `UNPAID`), `DELETE /:code` |
 | `/api/accounts` | `GET /`, `POST /`, `PATCH /:code`, `POST /:code/reset-password`, `DELETE /:code` |
-| `/api/dashboard` | `GET /` |
+| `/api/dashboard` | `GET /` — **dự kiến** |
 
 Tài khoản có hai chốt: không xoá tài khoản đang đăng nhập (`CANNOT_DELETE_SELF`), không xoá **hay hạ quyền** admin cuối cùng (`LAST_ADMIN_REQUIRED`). Chốt admin cuối nằm **trong chính câu `UPDATE`/`DELETE`** (`… AND (role <> 'ADMIN' OR (SELECT COUNT(*) …) > 1)`), không phải SELECT-rồi-ghi, nên hai admin hạ quyền nhau cùng lúc không thể cùng lọt.
 

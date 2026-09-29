@@ -33,7 +33,7 @@ Hai middleware, mỗi vai trò một cái: `requireAdmin`, `requireMember`. **Kh
 - `GET /api/auth/me` tra DB, nên tài khoản đã xoá thấy 401 ở đó.
 - Giao diện admin (JS của SPA) là file tĩnh công khai — member mở được khung màn nhưng mọi lời gọi API trả 403. Không để bí mật nào trong code client.
 - Thiếu `JWT_SECRET` → 503 `SESSION_NOT_CONFIGURED` từ mọi chỗ đọc phiên, kể cả khi request không có cookie.
-- `requireMember` **chỉ** nhận `MEMBER`; admin gọi `/api/me/*` bị 403.
+- `requireMember` **chỉ** nhận `MEMBER`; admin gọi `/api/me/*` bị 403. Hợp với mô hình hiện tại (admin là payer, không nợ ai). [Chưa chốt] Nếu một admin khác có suất trong gói, người đó không có màn "Khoản của tôi" — nới `requireMember` khi cần.
 
 ## Mật khẩu
 

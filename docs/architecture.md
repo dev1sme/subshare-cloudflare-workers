@@ -27,7 +27,9 @@ Build và dev chạy qua [`@cloudflare/vite-plugin`](https://developers.cloudfla
 - `run_worker_first: ["/api/*"]` cùng `not_found_handling: "single-page-application"`: chỉ `/api/*` vào Worker, mọi đường dẫn khác rơi xuống SPA. Đường dẫn không có trong danh sách **không bao giờ chạy route** — nó nhận `index.html` với status 200. Thêm prefix mới ngoài `/api` (hiếm khi cần) là phải thêm vào đây.
 - Cần Wrangler ≥ 4.20 và Vite plugin ≥ 1.7 cho `run_worker_first` dạng mảng.
 
-## Cấu trúc thư mục (dự kiến)
+## Cấu trúc thư mục
+
+`src/server/`, `migrations/`, `scripts/`, `test/` đã có; `src/client/` mới là khung (chỉ `main.tsx`, `App.tsx`, `i18n/locales/`) — phần còn lại của nhánh client là **dự kiến**.
 
 ```
 index.html            entry Vite
@@ -47,13 +49,14 @@ src/client/           React SPA
     useXxx.ts         tải dữ liệu + mutation, không JSX
 src/server/           API Hono trên Worker
   index.ts            entry: fetch (Hono) + scheduled (cron), bảng route, guard
-  auth.ts             băm/verify mật khẩu, JWT, middleware vai trò
+  auth.ts             phiên JWT trong cookie, currentUser, requireAdmin / requireMember
+  scheduled.ts        việc của Cron Trigger: createDuePeriods
   envelope.ts         ok / failure / notFound — nơi duy nhất gọi c.json
   headers.ts          security header cho /api/*
   validate.ts         validate request viết tay
-  routes/             mỗi nhóm tài nguyên một file
-  domain/             logic thuần: period.ts, vietqr.ts, code.ts, password.ts, username.ts
-  db/                 một module mỗi bảng + sql.ts
+  routes/             mỗi nhóm tài nguyên một file: auth, accounts, plans (+ members, periods), members, payments, prepayments, me
+  domain/             logic thuần, không import runtime: period.ts, vietqr.ts, code.ts, password.ts, username.ts
+  db/                 một module mỗi bảng (users, plans, members, periods, payments, prepayments) + sql.ts
 src/shared/types.ts   kiểu API dùng chung client ↔ server
 scripts/              hash-password.mjs (tạo admin đầu tiên)
 migrations/           SQL cho D1

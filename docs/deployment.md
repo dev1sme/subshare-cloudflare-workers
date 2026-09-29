@@ -1,6 +1,6 @@
 # Cấu hình & deploy
 
-> Đã có `wrangler.jsonc` (scaffold). Chưa có database remote (`database_id` đang là placeholder toàn số 0), chưa có Cron Trigger, chưa đặt secret nào. Phần dưới là cấu hình đích và các bẫy đã biết.
+> Đã có `wrangler.jsonc` và `scheduled()`. **Chưa deploy**: chưa có database remote (`database_id` đang là placeholder toàn số 0), chưa khai báo Cron Trigger, chưa đặt secret nào. Local đã chạy đủ migration `0001`–`0005`. Phần dưới là cấu hình đích và các bẫy đã biết.
 
 ## `wrangler.jsonc`
 
@@ -48,9 +48,15 @@
 
 ```bash
 npm install
+cp .dev.vars.example .dev.vars   # đặt JWT_SECRET: openssl rand -base64 48
 npm run cf-typegen
-npm run db:migrate          # D1 local
+npm run db:migrate               # D1 local
+npm run test                     # Vitest trong workerd, D1 thật với mọi migration
 npm run dev
+
+# Admin đầu tiên (DB rỗng): in SQL + mật khẩu một lần, chạy SQL vào D1 local
+node scripts/hash-password.mjs <username> "<tên hiển thị>"
+./node_modules/.bin/wrangler d1 execute subshare-db --local --command "<sql>"
 ```
 
 > `npx` không dùng được trong môi trường này (bị hook viết lại thành `npm`). Gọi qua npm script hoặc `./node_modules/.bin/<bin>`.
