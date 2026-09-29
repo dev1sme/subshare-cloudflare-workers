@@ -2,7 +2,7 @@
 
 > Quản lý các gói đăng ký dùng chung (YouTube Premium, Spotify, Netflix…): ai đang dùng gói nào, kỳ này ai đã đóng tiền, ai còn nợ.
 
-Chạy hoàn toàn trên **Cloudflare**: Workers (API) · D1 (cơ sở dữ liệu) · Pages (giao diện React).
+Chạy hoàn toàn trên **Cloudflare**: một Worker phục vụ cả giao diện React lẫn API, dữ liệu trong D1.
 
 <!-- Thêm ảnh chụp màn hình khi có -->
 <!-- ![Giao diện](docs/screenshot.png) -->
@@ -12,119 +12,98 @@ Chạy hoàn toàn trên **Cloudflare**: Workers (API) · D1 (cơ sở dữ li�
 ## ✨ Tính năng
 
 - **Quản lý gói**: tạo gói, giá tiền, chu kỳ (tháng/năm), số suất tối đa.
-- **Quản lý thành viên**: mời người vào gói, chia tiền đều hoặc theo tỉ lệ.
+- **Quản lý thành viên**: thêm người vào gói, chia tiền đều hoặc theo tỉ lệ.
 - **Kỳ thanh toán**: tự tạo kỳ mới mỗi tháng, mỗi thành viên có trạng thái *Chưa đóng / Chờ xác nhận / Đã đóng*.
-- **Nộp tiền**: thành viên xem số tiền cần đóng, mã QR chuyển khoản và tải ảnh biên lai lên.
-- **Xác nhận**: quản trị viên duyệt các khoản đã đóng.
-- **Nhắc nợ** *(dự kiến)*: gửi thông báo cho người chưa đóng.
+- **Nộp tiền**: thành viên xem số tiền cần đóng, quét mã VietQR, bấm *Tôi đã chuyển*.
+- **Xác nhận**: quản trị viên đối chiếu sao kê rồi xác nhận.
+- **Nhắc nợ** *(dự kiến)*.
 
 ## 🧱 Công nghệ
 
 | Phần | Công nghệ |
 |---|---|
 | API | Cloudflare Workers, [Hono](https://hono.dev), TypeScript |
-| Cơ sở dữ liệu | Cloudflare D1 (SQLite) + [Drizzle ORM](https://orm.drizzle.team) |
-| Lưu ảnh biên lai | Cloudflare R2 |
-| Giao diện | React + Vite + [shadcn/ui](https://ui.shadcn.com), deploy lên Cloudflare Pages |
-| Đăng nhập | JWT |
+| Cơ sở dữ liệu | Cloudflare D1 (SQLite) |
+| Giao diện | React + Vite + [shadcn/ui](https://ui.shadcn.com), phục vụ bởi chính Worker (static assets) |
+| Việc định kỳ | Cron Trigger |
+| Đăng nhập | JWT trong cookie `httpOnly` |
+
+Chỉ Worker + D1 — không Pages, không R2, không dịch vụ ngoài. Lý do: [docs/architecture.md](docs/architecture.md).
 
 ## 📁 Cấu trúc thư mục
 
 ```
 subshare-cloudflare-workers/
-├── apps/
-│   ├── api/            # Cloudflare Workers (Hono)
-│   │   ├── src/
-│   │   ├── migrations/ # SQL migration cho D1
-│   │   └── wrangler.jsonc
-│   └── web/            # React (Cloudflare Pages)
-├── docs/
+├── src/
+│   ├── client/        # React SPA
+│   ├── server/        # Hono API + cron trên Worker
+│   └── shared/        # kiểu dùng chung
+├── migrations/        # SQL migration cho D1
+├── public/            # _headers, favicon
+├── docs/              # đặc tả hệ thống
+├── wrangler.jsonc
 └── README.md
 ```
 
 ## 🚀 Chạy ở máy (local)
 
-**Yêu cầu:** Node.js 20 trở lên, npm (hoặc pnpm).
+**Yêu cầu:** Node.js LTS, npm.
 
 ```bash
-# 1. Tải code về
-git clone https://github.com/<tai-khoan>/subshare-cloudflare-workers.git
+git clone https://github.com/dev1sme/subshare-cloudflare-workers.git
 cd subshare-cloudflare-workers
 npm install
+cp .dev.vars.example .dev.vars   # rồi điền giá trị (không commit file này)
 
-# 2. Tạo cơ sở dữ liệu local
-cd apps/api
-npx wrangler d1 migrations apply subshare-db --local
-
-# 3. Chạy API  →  http://localhost:8787
-npx wrangler dev
-
-# 4. Chạy giao diện (ở terminal khác)  →  http://localhost:5173
-cd ../web
-npm run dev
-```
-
-### Biến môi trường
-
-Tạo file `apps/api/.dev.vars` (**không commit file này**):
-
-```
-JWT_SECRET=chuoi-bi-mat-bat-ky
-ADMIN_EMAIL=admin@example.com
+npm run cf-typegen
+npm run db:migrate               # D1 local
+npm run dev                      # giao diện + API, một process
 ```
 
 ## ☁️ Deploy lên Cloudflare
 
 ```bash
-# Đăng nhập Cloudflare
-npx wrangler login
+./node_modules/.bin/wrangler login
 
-# Tạo D1 và R2 (chỉ làm lần đầu), rồi chép ID vào wrangler.jsonc
-npx wrangler d1 create subshare-db
-npx wrangler r2 bucket create subshare-receipts
+# Chỉ làm lần đầu: tạo D1 rồi chép database_id vào wrangler.jsonc
+./node_modules/.bin/wrangler d1 create subshare-db
+./node_modules/.bin/wrangler secret put JWT_SECRET
 
-# Chạy migration trên môi trường thật
-npx wrangler d1 migrations apply subshare-db --remote
-
-# Đặt biến bí mật
-npx wrangler secret put JWT_SECRET
-
-# Deploy API
-cd apps/api && npx wrangler deploy
-
-# Deploy giao diện
-cd ../web && npm run build && npx wrangler pages deploy dist
+npm run db:migrate:remote
+npm run deploy
 ```
+
+Chi tiết và các bẫy đã biết: [docs/deployment.md](docs/deployment.md).
 
 ## 🗄️ Cơ sở dữ liệu (tóm tắt)
 
 | Bảng | Nội dung |
 |---|---|
 | `users` | Người dùng (tên, email, vai trò) |
-| `plans` | Gói đăng ký (tên, giá, chu kỳ, số suất) |
-| `plan_members` | Ai thuộc gói nào, phần tiền phải đóng |
-| `billing_periods` | Các kỳ thanh toán (tháng 10/2026…) |
-| `payments` | Khoản đóng của từng người mỗi kỳ, trạng thái, ảnh biên lai |
+| `plans` | Gói đăng ký (tên, giá, chu kỳ, số suất, tài khoản nhận tiền) |
+| `plan_members` | Ai thuộc gói nào, trọng số chia tiền |
+| `billing_periods` | Các kỳ thanh toán, giá chốt tại thời điểm tạo |
+| `payments` | Khoản của từng người mỗi kỳ, trạng thái |
+
+Chi tiết: [docs/data-model.md](docs/data-model.md).
 
 ## 🔌 API chính
 
 | Method | Đường dẫn | Mô tả |
 |---|---|---|
-| `POST` | `/auth/login` | Đăng nhập |
-| `GET` | `/plans` | Danh sách gói |
-| `POST` | `/plans` | Tạo gói *(admin)* |
-| `POST` | `/plans/:id/members` | Thêm thành viên *(admin)* |
-| `GET` | `/me/payments` | Các khoản tôi cần đóng |
-| `POST` | `/payments/:id/receipt` | Tải biên lai lên |
-| `PATCH` | `/payments/:id` | Xác nhận đã đóng *(admin)* |
+| `POST` | `/api/auth/login` | Đăng nhập |
+| `GET` | `/api/plans` | Danh sách gói *(admin)* |
+| `POST` | `/api/plans` | Tạo gói *(admin)* |
+| `POST` | `/api/plans/:code/members` | Thêm thành viên *(admin)* |
+| `GET` | `/api/me/payments` | Các khoản tôi cần đóng |
+| `POST` | `/api/me/payments/:code/mark-sent` | Báo đã chuyển tiền |
+| `PATCH` | `/api/payments/:code` | Xác nhận đã đóng *(admin)* |
+
+Đầy đủ: [docs/api.md](docs/api.md).
 
 ## 🗺️ Kế hoạch
 
-- [x] Quản lý gói và thành viên
-- [x] Theo dõi đóng tiền theo kỳ
-- [ ] Mã QR VietQR tự điền số tiền
-- [ ] Nhắc nợ qua email / Telegram
-- [ ] Thống kê chi tiêu theo tháng
+[docs/roadmap.md](docs/roadmap.md)
 
 ## ⚠️ Lưu ý
 

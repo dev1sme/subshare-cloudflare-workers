@@ -1,0 +1,6 @@
+# Copy to .dev.vars for local dev. Production uses `wrangler secret put`.
+# Every name here must also be listed in wrangler.jsonc "secrets.required",
+# or it is silently undefined in c.env during local dev.
+
+# Signs the session JWT. Any long random string: `openssl rand -base64 48`.
+JWT_SECRET="change-me-to-a-long-random-string"
