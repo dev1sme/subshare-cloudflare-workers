@@ -23,6 +23,10 @@ const en: typeof vi = {
     INCOMPLETE_BANK_DETAILS: "Enter both the bank code and the account number, or neither.",
     SLOTS_BELOW_MEMBERS: "Seats cannot be fewer than the plan's current members.",
     PAYER_IS_MEMBER: "This person holds a seat in the plan; remove the seat before making them the payer.",
+    PLAN_INACTIVE: "The plan is inactive; members cannot be added.",
+    PAYER_CANNOT_BE_MEMBER: "The plan's payer cannot be a member of it.",
+    PLAN_FULL: "The plan has no free seat.",
+    LEFT_BEFORE_JOINED: "The leave date cannot be before the join date.",
   },
   fields: {
     username: "username",
@@ -40,6 +44,10 @@ const en: typeof vi = {
     bank_account_no: "account number",
     bank_account_name: "account holder",
     active: "status",
+    user_code: "member",
+    amount: "amount",
+    joined_on: "join date",
+    left_on: "leave date",
   },
 };
 

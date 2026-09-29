@@ -36,6 +36,10 @@ Chuẩn envelope, định dạng thuộc tính và quy tắc `error.code` ở [`
 | Chỉ có một trong BIN / số tài khoản | 400 | `INCOMPLETE_BANK_DETAILS` |
 | Giảm số suất dưới số thành viên đang có | 409 | `SLOTS_BELOW_MEMBERS` |
 | Đặt payer là người đang có suất trong gói | 409 | `PAYER_IS_MEMBER` |
+| Thêm payer làm thành viên của chính gói | 409 | `PAYER_CANNOT_BE_MEMBER` |
+| Gói đã ngừng | 409 | `PLAN_INACTIVE` |
+| Gói hết suất | 409 | `PLAN_FULL` |
+| Ngày rời trước ngày vào | 400 | `LEFT_BEFORE_JOINED` |
 | Lỗi khác | 500 | `INTERNAL_ERROR` (lỗi thật chỉ vào `console.error`) |
 
 `handleError` (gắn làm `app.onError`) nhận ra lỗi constraint của D1 chỉ qua chuỗi message (`UNIQUE constraint failed`, …), xét cả `err.cause`. Chữ ký là `failure(c, code, message, status = 400, details = null)` — mã đứng ngay sau `c` để lệnh grep trong `envelop-conventions.md` bắt được mọi mã.
@@ -80,6 +84,23 @@ Tài khoản có hai chốt: không xoá tài khoản đang đăng nhập (`CANN
 - `bank_bin` 6 chữ số (BIN NAPAS), `bank_account_no` 4–19 chữ số; hai trường đặt hoặc xoá **cùng nhau** (`INCOMPLETE_BANK_DETAILS`), vì QR cần cả hai. `null` hoặc `""` là xoá.
 - `max_slots` không được nhỏ hơn `active_members` → 409 `SLOTS_BELOW_MEMBERS`.
 - Đổi `price` chỉ ảnh hưởng kỳ tạo sau đó. Gói còn suất hoặc kỳ không xoá được (`RELATED_DATA_EXISTS`) — đặt `active: false`.
+
+Thành viên của gói **đã có code** (`GET`/`POST /api/plans/:code/members` trong `routes/plans.ts`, `PATCH /api/members/:code` trong `routes/members.ts`, đều `requireAdmin`):
+
+| Route | Body | `data` |
+|---|---|---|
+| `GET /api/plans/:code/members` | — | `{ members }` — đang ở trước, rồi theo `joined_on`; gồm cả người đã rời |
+| `POST /api/plans/:code/members` | `user_code`, `amount`, `joined_on?` (mặc định hôm nay giờ Việt Nam) | `{ member }` — 201 |
+| `PATCH /api/members/:code` | `amount`, `left_on` | `{ member }` |
+
+`member` = `{ code, user: { code, username, display_name }, amount, joined_on, left_on }`.
+
+- Payer của gói không có suất trong gói đó → 409 `PAYER_CANNOT_BE_MEMBER`. Gói `active = false` → 409 `PLAN_INACTIVE`.
+- Hết suất → 409 `PLAN_FULL`. Kiểm **trong chính câu `INSERT … SELECT … WHERE COUNT(*) < max_slots`**, nên hai lần thêm song song không cùng lấy suất cuối.
+- Một người một suất đang hoạt động mỗi gói → 409 `DUPLICATE_DATA` (partial unique index).
+- `amount` 0 được phép (người dùng miễn phí). Đổi `amount` chỉ ảnh hưởng kỳ tạo sau đó.
+- Rời gói: `left_on` là ngày thật, không trước `joined_on` (`LEFT_BEFORE_JOINED`), không ở tương lai (`INVALID_LEFT_ON`). **Không có "huỷ rời"** — `left_on: null` bị từ chối, vì nó lách được giới hạn suất; quay lại là thêm suất mới. Không có xoá suất: dòng giữ làm lịch sử.
+- Thành viên có `role = ADMIN` (admin khác, không phải payer) được thêm vào gói, nhưng `/api/me/*` chỉ nhận `MEMBER` — xem [auth.md](auth.md).
 
 `/api/accounts` **đã có code** (`src/server/routes/accounts.ts`, `requireAdmin` gắn trong sub-app):
 

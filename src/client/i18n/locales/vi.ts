@@ -23,6 +23,10 @@ const vi = {
     INCOMPLETE_BANK_DETAILS: "Cần nhập cả mã ngân hàng và số tài khoản, hoặc bỏ trống cả hai.",
     SLOTS_BELOW_MEMBERS: "Số suất không được ít hơn số thành viên đang ở trong gói.",
     PAYER_IS_MEMBER: "Người này đang là thành viên của gói; hãy cho rời gói trước khi đặt làm người thanh toán.",
+    PLAN_INACTIVE: "Gói đã ngừng, không thêm thành viên được.",
+    PAYER_CANNOT_BE_MEMBER: "Người thanh toán của gói không thể là thành viên của chính gói đó.",
+    PLAN_FULL: "Gói đã hết suất.",
+    LEFT_BEFORE_JOINED: "Ngày rời gói không được trước ngày vào gói.",
   },
   fields: {
     username: "tên đăng nhập",
@@ -40,6 +44,10 @@ const vi = {
     bank_account_no: "số tài khoản",
     bank_account_name: "tên chủ tài khoản",
     active: "trạng thái",
+    user_code: "thành viên",
+    amount: "số tiền",
+    joined_on: "ngày vào gói",
+    left_on: "ngày rời gói",
   } as Record<string, string>,
 };
 

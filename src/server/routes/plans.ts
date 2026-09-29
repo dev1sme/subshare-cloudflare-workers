@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import type { Cycle, Plan } from "../../shared/types";
+import type { Cycle, Member, Plan } from "../../shared/types";
 import { requireAdmin, type AppEnv } from "../auth";
 import {
   type PlanFields,
@@ -12,7 +12,9 @@ import {
   updatePlan,
 } from "../db/plans";
 import { findUserByCode } from "../db/users";
-import { CODE_PREFIX, generateCode, isCode } from "../domain/code";
+import { type MemberRow, insertMemberIfSeatFree, listMembersOfPlan } from "../db/members";
+import { CODE_PREFIX, generateCode } from "../domain/code";
+import { todayInVietnam } from "../domain/period";
 import { failure, notFound, ok } from "../envelope";
 import {
   type Body,
@@ -24,8 +26,10 @@ import {
   readBody,
   requireBoolean,
   requireEnum,
+  requireDate,
   requireInteger,
   requireString,
+  requireUserCode,
 } from "../validate";
 
 // Admin-only plan management. Price and member amounts are set by hand — nothing is split.
@@ -36,7 +40,7 @@ planRoutes.use(requireAdmin);
 
 const CYCLES: readonly Cycle[] = ["MONTHLY", "YEARLY"];
 const NAME_MAX = 64;
-const PRICE_MAX = 1_000_000_000;
+export const PRICE_MAX = 1_000_000_000;
 const SLOTS_MAX = 50;
 // NAPAS bank identification number.
 const BANK_BIN = /^\d{6}$/;
@@ -59,13 +63,20 @@ function toPlan(row: PlanRow): Plan {
   };
 }
 
+export function toMember(row: MemberRow): Member {
+  return {
+    code: row.code,
+    user: { code: row.user_code, username: row.username, display_name: row.display_name },
+    amount: row.amount,
+    joined_on: row.joined_on,
+    left_on: row.left_on,
+  };
+}
+
 // The payer is addressed by account code and must be an ADMIN: a role is a system permission,
 // being a plan's payer is a property of the plan, and only an admin may hold it.
 async function requirePayerId(db: D1Database, body: Body): Promise<number> {
-  const raw = body.payer_code;
-  if (raw === undefined || raw === null || raw === "") fail("MISSING_PAYER_CODE");
-  if (typeof raw !== "string" || !isCode(CODE_PREFIX.user, raw)) fail("INVALID_PAYER_CODE");
-  const user = await findUserByCode(db, raw);
+  const user = await findUserByCode(db, requireUserCode(body, "payer_code"));
   if (!user) fail("INVALID_PAYER_CODE");
   if (user.role !== "ADMIN") fail("PAYER_MUST_BE_ADMIN", "The payer must be an admin.");
   return user.id;
@@ -148,4 +159,40 @@ planRoutes.delete("/:code", async (c) => {
   if (!plan) return notFound(c);
   await deletePlan(c.env.DB, plan.id);
   return ok(c, null, "Plan deleted.");
+});
+
+// Every seat, active first. Past seats stay as history.
+planRoutes.get("/:code/members", async (c) => {
+  const plan = await findPlanByCode(c.env.DB, parseCode(CODE_PREFIX.plan, c.req.param("code")));
+  if (!plan) return notFound(c);
+  const rows = await listMembersOfPlan(c.env.DB, plan.id);
+  return ok(c, { members: rows.map(toMember) });
+});
+
+// Adds a seat with an admin-set amount. The payer never holds a seat in their own plan, and the
+// seat limit is checked inside the INSERT itself.
+planRoutes.post("/:code/members", async (c) => {
+  const plan = await findPlanByCode(c.env.DB, parseCode(CODE_PREFIX.plan, c.req.param("code")));
+  if (!plan) return notFound(c);
+
+  const body = await readBody(c);
+  const user = await findUserByCode(c.env.DB, requireUserCode(body, "user_code"));
+  if (!user) fail("INVALID_USER_CODE");
+  const amount = requireInteger(body, "amount", 0, PRICE_MAX);
+  const joinedOn = has(body, "joined_on") ? requireDate(body, "joined_on") : todayInVietnam();
+
+  if (plan.active !== 1) return failure(c, "PLAN_INACTIVE", "The plan is not active.", 409);
+  if (user.id === plan.payer_id) {
+    return failure(c, "PAYER_CANNOT_BE_MEMBER", "The plan's payer cannot hold a seat in it.", 409);
+  }
+
+  const row = await insertMemberIfSeatFree(c.env.DB, {
+    code: generateCode(CODE_PREFIX.member),
+    plan_id: plan.id,
+    user_id: user.id,
+    amount,
+    joined_on: joinedOn,
+  });
+  if (!row) return failure(c, "PLAN_FULL", "The plan has no free seat.", 409);
+  return ok(c, { member: toMember(row) }, "Member added.", 201);
 });

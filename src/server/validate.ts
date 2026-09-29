@@ -2,6 +2,7 @@ import type { Context } from "hono";
 import type { ErrorDetails } from "../shared/types";
 import { type CodePrefix, isCode } from "./domain/code";
 import { MAX_PASSWORD_LENGTH } from "./domain/password";
+import { isIsoDate } from "./domain/period";
 import { normalizeUsername } from "./domain/username";
 
 const ERROR_CODE = /^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$/;
@@ -135,4 +136,20 @@ export function optionalMatching(body: Body, field: string, pattern: RegExp): st
   if (trimmed === "") return null;
   if (!pattern.test(trimmed)) fail(fieldCode("INVALID", field));
   return trimmed;
+}
+
+// A calendar date (YYYY-MM-DD).
+export function requireDate(body: Body, field: string): string {
+  const value = body[field];
+  if (value === undefined || value === null || value === "") fail(fieldCode("MISSING", field));
+  if (typeof value !== "string" || !isIsoDate(value)) fail(fieldCode("INVALID", field));
+  return value;
+}
+
+// An account code (AC...) sent in a body field, e.g. user_code, payer_code.
+export function requireUserCode(body: Body, field: string): string {
+  const value = body[field];
+  if (value === undefined || value === null || value === "") fail(fieldCode("MISSING", field));
+  if (typeof value !== "string" || !isCode("AC", value)) fail(fieldCode("INVALID", field));
+  return value;
 }

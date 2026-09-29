@@ -55,3 +55,13 @@ export type Plan = {
   active: boolean;
   created_at: string;
 };
+
+// A seat in a plan. `left_on` is null while the member is active; leaving keeps the row as history.
+export type Member = {
+  code: string;
+  user: { code: string; username: string; display_name: string };
+  // VND per cycle, set by the admin. Copied onto each payment when a period is created.
+  amount: number;
+  joined_on: string;
+  left_on: string | null;
+};

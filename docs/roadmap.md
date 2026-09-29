@@ -16,7 +16,7 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 - [x] Quản lý tài khoản (`/api/accounts`): tạo, đổi tên / vai trò, đặt lại mật khẩu, xoá; `requireAdmin` đọc vai trò từ DB
 
 - [x] Quản lý gói: giá (VND, gồm phí, đặt tay), chu kỳ `MONTHLY`/`YEARLY`, số suất cho thành viên, payer (admin), thông tin ngân hàng
-- [ ] Quản lý thành viên: thêm vào gói với số tiền đặt tay, đổi số tiền, rời gói; payer không được là thành viên của gói mình
+- [x] Quản lý thành viên: thêm vào gói với số tiền đặt tay, đổi số tiền, rời gói; payer không được là thành viên của gói mình
 - [ ] Tạo kỳ: tay (admin) và Cron Trigger đầu tháng giờ Việt Nam, idempotent
 - [ ] Màn thành viên: khoản cần đóng, VietQR, nút "Tôi đã chuyển"
 - [ ] Màn admin: danh sách `PENDING` chờ xác nhận, xác nhận / trả về
