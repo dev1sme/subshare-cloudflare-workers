@@ -2,7 +2,7 @@
 
 Spec: `docs/deployment.md`.
 
-The scripts below are the intended surface; they do not exist until the scaffold lands. Keep these names when creating `package.json`.
+The scripts below are the surface in `package.json`. Keep these names.
 
 ```bash
 npm install
@@ -10,6 +10,8 @@ npm run dev                  # Vite + workerd + local D1, one process
 npm run build                # tsc -b && vite build -> dist/
 npm run deploy               # build + wrangler deploy
 npm run typecheck
+npm run test                 # vitest run (Workers runtime via @cloudflare/vitest-plugin)
+npm run preview              # vite preview of the build — the only local way to see public/_headers
 npm run cf-typegen           # wrangler types — rerun after editing wrangler.jsonc
 npm run db:migrate           # apply pending migrations to the LOCAL D1
 npm run db:migrate:remote    # apply pending migrations to the REMOTE D1 (needs approval)

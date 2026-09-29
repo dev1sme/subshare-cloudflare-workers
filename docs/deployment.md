@@ -1,6 +1,6 @@
 # Cấu hình & deploy
 
-> Chưa có `wrangler.jsonc`, database hay secret nào. Phần dưới là cấu hình dự kiến và các bẫy đã biết.
+> Đã có `wrangler.jsonc` (scaffold). Chưa có database remote (`database_id` đang là placeholder toàn số 0), chưa có Cron Trigger, chưa đặt secret nào. Phần dưới là cấu hình đích và các bẫy đã biết.
 
 ## `wrangler.jsonc`
 

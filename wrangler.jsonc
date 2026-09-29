@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "subshare",
+  "main": "./src/server/index.ts",
+  "compatibility_date": "2026-09-26",
+  "assets": {
+    // No "directory": @cloudflare/vite-plugin points assets at the client build output.
+    "not_found_handling": "single-page-application",
+    // Only these paths reach the Worker; anything else is served index.html with 200.
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "subshare-db",
+      // Placeholder until the remote database is created (roadmap: create D1 via MCP).
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "./migrations"
+    }
+  ],
+  "secrets": { "required": ["JWT_SECRET"] },
+  "observability": { "enabled": true }
+}
