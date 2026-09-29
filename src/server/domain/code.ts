@@ -7,6 +7,7 @@ export const CODE_PREFIX = {
   member: "MB",
   period: "BP",
   payment: "PM",
+  prepayment: "PP",
 } as const;
 
 export type CodePrefix = (typeof CODE_PREFIX)[keyof typeof CODE_PREFIX];

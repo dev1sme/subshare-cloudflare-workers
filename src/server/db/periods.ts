@@ -55,6 +55,10 @@ async function billableUserIds(db: D1Database, planId: number, period: string): 
  * NOTHING, and every payment INSERT selects the period by the code generated for *this* call,
  * so when the period already existed they match no row. The batch is one transaction, and the
  * amounts are read from plans.member_amount inside it — the snapshot.
+ *
+ * A month covered by the member's PAID prepayment is created already PAID, at the prepaid
+ * monthly amount, and linked to that prepayment. Coverage never overlaps (checked when a
+ * prepayment is created), so the LEFT JOIN yields at most one row per seat.
  */
 export async function createPeriod(
   db: D1Database,
@@ -75,12 +79,19 @@ export async function createPeriod(
     ...userIds.map((userId) =>
       db
         .prepare(
-          `INSERT INTO payments (code, billing_period_id, user_id, amount)
-           SELECT ?, bp.id, ?, p.member_amount
-           FROM billing_periods bp JOIN plans p ON p.id = bp.plan_id
+          `INSERT INTO payments (code, billing_period_id, user_id, amount, status, confirmed_at, confirmed_by, prepayment_id)
+           SELECT ?, bp.id, ?,
+                  COALESCE(pp.amount_per_month, p.member_amount),
+                  CASE WHEN pp.id IS NULL THEN 'UNPAID' ELSE 'PAID' END,
+                  pp.confirmed_at, pp.confirmed_by, pp.id
+           FROM billing_periods bp
+           JOIN plans p ON p.id = bp.plan_id
+           LEFT JOIN prepayments pp
+             ON pp.plan_id = bp.plan_id AND pp.user_id = ? AND pp.status = 'PAID'
+            AND bp.period BETWEEN pp.start_period AND pp.end_period
            WHERE bp.code = ?`,
         )
-        .bind(generateCode(CODE_PREFIX.payment), userId, periodCode),
+        .bind(generateCode(CODE_PREFIX.payment), userId, userId, periodCode),
     ),
     db.prepare(`${SELECT_PERIOD} WHERE bp.plan_id = ? AND bp.period = ? GROUP BY bp.id`).bind(planId, period),
   ]);

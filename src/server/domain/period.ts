@@ -39,3 +39,10 @@ export function isPeriod(value: string): boolean {
 export function firstDayOf(period: string): string {
   return `${period}-01`;
 }
+
+// "2026-11" + 3 -> "2027-02". Months may be negative.
+export function addMonths(period: string, months: number): string {
+  const [year, month] = period.split("-").map(Number);
+  const index = year * 12 + (month - 1) + months;
+  return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`;
+}

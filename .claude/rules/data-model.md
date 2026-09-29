@@ -8,6 +8,8 @@ Must hold:
 - Money is `INTEGER` VND — no floats, no minor units. Nothing is split automatically: the admin sets `plans.price` (fees included) and `plans.member_amount` (the same for every member of the plan). There is no "sum equals price" invariant.
 - `users.role` is a system permission; `plans.payer_id` is per plan and must be an ADMIN. The payer has no `plan_members` seat, so never a `payments` row.
 - Rebuilding a table in a migration: backup → drop → create under the final name → copy back (D1 cannot turn `foreign_keys` off). Test it on a database that has rows.
+- Members are billed **monthly** whatever `plans.cycle` says (cycle only describes how the payer pays the provider). `member_amount` is per month.
+- A prepayment covers 3/6/12 consecutive months with no discount; prepayments of one member in one plan never overlap. A month it covers is created (or turned) `PAID` with `prepayment_id` set.
 - A period `YYYY-MM` bills every seat present on its 1st: `joined_on <= 'YYYY-MM-01' AND (left_on IS NULL OR left_on >= 'YYYY-MM-01')`.
 - Dates are ISO `TEXT`. `period` is `YYYY-MM`, computed in `Asia/Ho_Chi_Minh`.
 - `UNIQUE(plan_id, period)` on `billing_periods` and `UNIQUE(billing_period_id, user_id)` on `payments` — creating a period twice (a cron retry, a double click) must be a no-op, not a duplicate.

@@ -148,7 +148,7 @@ describe("create a period", () => {
 });
 
 describe("scheduled", () => {
-  it("creates this month's period for active MONTHLY plans only, and is safe to re-run", async () => {
+  it("creates this month's period for every active plan, YEARLY included, and is safe to re-run", async () => {
     const yearly = await createPlan("Yearly", "YEARLY");
     const inactive = await createPlan("Inactive", "MONTHLY");
     await call("PATCH", `/api/plans/${inactive.code}`, { active: false });
@@ -156,13 +156,16 @@ describe("scheduled", () => {
 
     // 2026-10-31T17:05Z is 00:05 on 1 November in Hanoi.
     const now = new Date("2026-10-31T17:05:00Z");
-    expect(await createDuePeriods(env.DB, now)).toEqual({ created: 1, failed: 0 });
+    expect(await createDuePeriods(env.DB, now)).toEqual({ created: 2, failed: 0 });
     expect(await createDuePeriods(env.DB, now)).toEqual({ created: 0, failed: 0 });
 
     const { results } = await env.DB.prepare(
-      "SELECT p.code, bp.period FROM billing_periods bp JOIN plans p ON p.id = bp.plan_id",
+      "SELECT p.code, bp.period FROM billing_periods bp JOIN plans p ON p.id = bp.plan_id ORDER BY p.id",
     ).all<{ code: string; period: string }>();
-    expect(results).toEqual([{ code: plan.code, period: "2026-11" }]);
-    expect(results.some((r) => r.code === yearly.code || r.code === inactive.code)).toBe(false);
+    expect(results).toEqual([
+      { code: plan.code, period: "2026-11" },
+      { code: yearly.code, period: "2026-11" },
+    ]);
+    expect(results.some((r) => r.code === inactive.code)).toBe(false);
   });
 });

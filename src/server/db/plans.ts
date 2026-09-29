@@ -108,10 +108,11 @@ export async function hasActiveSeat(db: D1Database, planId: number, userId: numb
   return row !== null;
 }
 
-// Plans the monthly cron creates a period for.
-export async function listActiveMonthlyPlanIds(db: D1Database): Promise<number[]> {
+// Plans the cron creates a period for. Members are billed monthly whatever the plan's cycle.
+// Scans plans on purpose: a handful of rows, once a day.
+export async function listActivePlanIds(db: D1Database): Promise<number[]> {
   const { results } = await db
-    .prepare("SELECT id FROM plans WHERE active = 1 AND cycle = 'MONTHLY' ORDER BY id")
+    .prepare("SELECT id FROM plans WHERE active = 1 ORDER BY id")
     .all<{ id: number }>();
   return results.map((row) => row.id);
 }

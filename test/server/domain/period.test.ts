@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { currentPeriodInVietnam, firstDayOf, isIsoDate, isPeriod, todayInVietnam } from "../../../src/server/domain/period";
+import { addMonths, currentPeriodInVietnam, firstDayOf, isIsoDate, isPeriod, todayInVietnam } from "../../../src/server/domain/period";
 
 describe("todayInVietnam", () => {
   it("is already the next day when UTC is still on the previous one", () => {
@@ -30,5 +30,14 @@ describe("periods", () => {
     expect(isPeriod("2026-10")).toBe(true);
     for (const value of ["2026-13", "2026-00", "2026-1", "202610", "2026-10-01"]) expect(isPeriod(value), value).toBe(false);
     expect(firstDayOf("2026-10")).toBe("2026-10-01");
+  });
+});
+
+describe("addMonths", () => {
+  it("crosses year boundaries both ways", () => {
+    expect(addMonths("2026-11", 3)).toBe("2027-02");
+    expect(addMonths("2026-10", 11)).toBe("2027-09");
+    expect(addMonths("2027-01", -1)).toBe("2026-12");
+    expect(addMonths("2026-10", 0)).toBe("2026-10");
   });
 });
