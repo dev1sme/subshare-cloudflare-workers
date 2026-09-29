@@ -32,3 +32,6 @@ export type User = {
   display_name: string;
   role: Role;
 };
+
+// A user as the admin account screen sees it.
+export type Account = User & { created_at: string };

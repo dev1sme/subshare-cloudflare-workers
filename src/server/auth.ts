@@ -2,6 +2,7 @@ import type { Context, MiddlewareHandler } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { sign, verify } from "hono/jwt";
 import type { Role } from "../shared/types";
+import { findUserByCode } from "./db/users";
 import { ApiError, failure } from "./envelope";
 
 // Stateless sessions: a JWT in an httpOnly cookie, no session table. Spec: docs/auth.md.
@@ -59,15 +60,24 @@ export async function currentUser(c: Context<AppEnv>): Promise<Session | null> {
 }
 
 // One guard per role — there is deliberately no role-agnostic requireAuth.
-function requireRole(role: Role): MiddlewareHandler<AppEnv> {
-  return async (c, next) => {
-    const session = await currentUser(c);
-    if (!session) return failure(c, "UNAUTHORIZED", "Not signed in.", 401);
-    if (session.role !== role) return failure(c, "FORBIDDEN", "Not allowed for this role.", 403);
-    c.set("session", session);
-    await next();
-  };
-}
 
-export const requireAdmin = requireRole("ADMIN");
-export const requireMember = requireRole("MEMBER");
+// Re-reads the role from the database on every request (one indexed row read): demoting or
+// deleting an admin takes effect immediately instead of when their token expires.
+export const requireAdmin: MiddlewareHandler<AppEnv> = async (c, next) => {
+  const session = await currentUser(c);
+  if (!session) return failure(c, "UNAUTHORIZED", "Not signed in.", 401);
+  const user = await findUserByCode(c.env.DB, session.code);
+  if (!user) return failure(c, "UNAUTHORIZED", "Not signed in.", 401);
+  if (user.role !== "ADMIN") return failure(c, "FORBIDDEN", "Not allowed for this role.", 403);
+  c.set("session", { code: user.code, role: user.role });
+  await next();
+};
+
+// Trusts the token: a member only ever reaches their own rows, so a stale role grants nothing new.
+export const requireMember: MiddlewareHandler<AppEnv> = async (c, next) => {
+  const session = await currentUser(c);
+  if (!session) return failure(c, "UNAUTHORIZED", "Not signed in.", 401);
+  if (session.role !== "MEMBER") return failure(c, "FORBIDDEN", "Not allowed for this role.", 403);
+  c.set("session", session);
+  await next();
+};

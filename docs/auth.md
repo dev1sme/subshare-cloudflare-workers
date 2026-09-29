@@ -28,7 +28,10 @@ Hai middleware, mỗi vai trò một cái: `requireAdmin`, `requireMember`. **Kh
 Đã có code (`src/server/auth.ts`, `routes/auth.ts`, `domain/password.ts`):
 
 - `sub` của JWT là `users.code`, không phải `id` — payload JWT đọc được bằng base64, và id không bao giờ rời server.
-- Guard chỉ tin token, không tra DB mỗi request: đổi vai trò hay xoá tài khoản có hiệu lực khi token hết hạn. `GET /api/auth/me` thì tra DB, nên tài khoản đã xoá thấy 401 ở đó.
+- **`requireAdmin` đọc lại vai trò từ DB mỗi request** (một row read theo `code`, có index; chờ D1 không tính CPU). Hạ quyền hay xoá một admin có hiệu lực **ngay**, dù token cũ còn hạn — token chỉ chứng minh "là ai", DB quyết định "được gì". Sửa `role` trong token thì chữ ký sai → 401; `verify` ép `HS256` nên `alg: none` cũng bị từ chối.
+- `requireMember` chỉ tin token: member chỉ chạm được dòng của chính mình, nên vai trò cũ không mở thêm quyền gì. Hệ quả chấp nhận được: tài khoản member đã xoá vẫn đọc được `/api/me/*` (rỗng, vì dòng đã mất) tới khi token hết hạn.
+- `GET /api/auth/me` tra DB, nên tài khoản đã xoá thấy 401 ở đó.
+- Giao diện admin (JS của SPA) là file tĩnh công khai — member mở được khung màn nhưng mọi lời gọi API trả 403. Không để bí mật nào trong code client.
 - Thiếu `JWT_SECRET` → 503 `SESSION_NOT_CONFIGURED` từ mọi chỗ đọc phiên, kể cả khi request không có cookie.
 - `requireMember` **chỉ** nhận `MEMBER`; admin gọi `/api/me/*` bị 403.
 

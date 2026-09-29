@@ -113,3 +113,8 @@ export function requireUsername(body: Body, field = "username"): string {
   if (typeof value !== "string") fail(fieldCode("INVALID", field));
   return normalizeUsername(value) ?? fail(fieldCode("INVALID", field));
 }
+
+// For PATCH bodies: a field counts as sent when its key is present, even with a null value.
+export function has(body: Body, field: string): boolean {
+  return Object.hasOwn(body, field);
+}

@@ -15,12 +15,17 @@ const en: typeof vi = {
     PASSWORD_TOO_SHORT: "The new password must be at least 8 characters.",
     WRONG_CURRENT_PASSWORD: "The current password is incorrect.",
     SESSION_NOT_CONFIGURED: "Sign-in is not configured on the server.",
+    NOTHING_TO_UPDATE: "There is nothing to save.",
+    CANNOT_DELETE_SELF: "You cannot delete the account you are signed in with.",
+    LAST_ADMIN_REQUIRED: "At least one admin must remain.",
   },
   fields: {
     username: "username",
     password: "password",
     current_password: "current password",
     new_password: "new password",
+    display_name: "display name",
+    role: "role",
   },
 };
 

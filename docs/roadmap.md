@@ -13,6 +13,8 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 
 ## Tính năng
 
+- [x] Quản lý tài khoản (`/api/accounts`): tạo, đổi tên / vai trò, đặt lại mật khẩu, xoá; `requireAdmin` đọc vai trò từ DB
+
 - [ ] Quản lý gói: giá, chu kỳ `MONTHLY`/`YEARLY`, số suất tối đa, thông tin ngân hàng
 - [ ] Quản lý thành viên: thêm vào gói, chia đều hoặc theo trọng số, rời gói
 - [ ] `domain/split.ts` + test: tổng các phần luôn bằng giá

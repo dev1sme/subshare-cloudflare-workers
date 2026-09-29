@@ -28,6 +28,9 @@ Chuẩn envelope, định dạng thuộc tính và quy tắc `error.code` ở [`
 | Mật khẩu mới < 8 ký tự | 400 | `PASSWORD_TOO_SHORT` |
 | Đổi mật khẩu, sai mật khẩu hiện tại | 400 | `WRONG_CURRENT_PASSWORD` |
 | Thiếu `JWT_SECRET` trên Worker | 503 | `SESSION_NOT_CONFIGURED` |
+| PATCH không có field hợp lệ | 400 | `NOTHING_TO_UPDATE` |
+| Xoá chính mình | 409 | `CANNOT_DELETE_SELF` |
+| Hạ quyền / xoá admin cuối | 409 | `LAST_ADMIN_REQUIRED` |
 | Lỗi khác | 500 | `INTERNAL_ERROR` (lỗi thật chỉ vào `console.error`) |
 
 `handleError` (gắn làm `app.onError`) nhận ra lỗi constraint của D1 chỉ qua chuỗi message (`UNIQUE constraint failed`, …), xét cả `err.cause`. Chữ ký là `failure(c, code, message, status = 400, details = null)` — mã đứng ngay sau `c` để lệnh grep trong `envelop-conventions.md` bắt được mọi mã.
@@ -54,7 +57,19 @@ Sub-path tĩnh (`/api/plans/summary`, …) đăng ký **trước** `/:code` — 
 | `/api/accounts` | `GET /`, `POST /`, `PATCH /:code`, `POST /:code/reset-password`, `DELETE /:code` |
 | `/api/dashboard` | `GET /` |
 
-Tài khoản có hai chốt: không xoá tài khoản đang đăng nhập (`CANNOT_DELETE_SELF`), không xoá admin cuối cùng (`LAST_ADMIN_REQUIRED`).
+Tài khoản có hai chốt: không xoá tài khoản đang đăng nhập (`CANNOT_DELETE_SELF`), không xoá **hay hạ quyền** admin cuối cùng (`LAST_ADMIN_REQUIRED`). Chốt admin cuối nằm **trong chính câu `UPDATE`/`DELETE`** (`… AND (role <> 'ADMIN' OR (SELECT COUNT(*) …) > 1)`), không phải SELECT-rồi-ghi, nên hai admin hạ quyền nhau cùng lúc không thể cùng lọt.
+
+`/api/accounts` **đã có code** (`src/server/routes/accounts.ts`, `requireAdmin` gắn trong sub-app):
+
+| Route | Body | `data` |
+|---|---|---|
+| `GET /` | — | `{ accounts }` |
+| `POST /` | `username`, `display_name`, `role?` (mặc định `MEMBER`), `password?` | `{ account, password }` — 201 |
+| `PATCH /:code` | bất kỳ trong `username`, `display_name`, `role` | `{ account }` |
+| `POST /:code/reset-password` | `password?` | `{ password }` |
+| `DELETE /:code` | — | `null` |
+
+`account` = `{ code, username, display_name, role, created_at }`. `password` (sinh ngẫu nhiên 16 ký tự nếu không gửi) chỉ có trong response tạo/đặt lại — không route nào khác trả nó. Field lạ trong body PATCH bị bỏ qua; không có field hợp lệ nào → 400 `NOTHING_TO_UPDATE`. Username trùng (không phân biệt hoa thường) → 409 `DUPLICATE_DATA`; xoá người còn suất trong gói hay khoản thanh toán → 409 `RELATED_DATA_EXISTS`.
 
 ### Thành viên (`requireMember`)
 

@@ -1,6 +1,6 @@
 # Mô hình dữ liệu
 
-> Đã chốt bằng `migrations/0001_initial_schema.sql`. File này phải khớp migration; thay đổi schema là migration mới, không sửa file đã apply.
+> Đã chốt bằng `migrations/0001_initial_schema.sql` (+ `0002_users_role_index.sql`). File này phải khớp migration; thay đổi schema là migration mới, không sửa file đã apply.
 
 Tên bảng và cột **tiếng Anh**; enum **UPPER_SNAKE tiếng Anh**.
 
@@ -34,6 +34,7 @@ Chi tiết đã chốt trong migration 0001:
 - `plan_members`: `left_on >= joined_on`; `weight >= 1`.
 - `price > 0`, `amount >= 0`, `max_slots >= 1`, `active IN (0, 1)`.
 - `created_at` mặc định `strftime('%Y-%m-%dT%H:%M:%SZ', 'now')` (UTC).
+- `users(role)` có index (migration `0002`) cho chốt "admin cuối" đếm admin mỗi lần hạ quyền / xoá.
 - Mọi cột FK có index, để kiểm FK khi xoá bảng cha không quét bảng con. Thêm `billing_periods(period)` cho lọc theo khoảng, `payments(status)` cho danh sách `PENDING`.
 
 Xoá bị chặn bởi FK, không cascade: gói còn kỳ, kỳ còn khoản thanh toán → 409 `RELATED_DATA_EXISTS`. Thành viên rời gói thì đặt `left_on`, không xoá dòng.

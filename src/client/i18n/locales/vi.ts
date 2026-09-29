@@ -15,12 +15,17 @@ const vi = {
     PASSWORD_TOO_SHORT: "Mật khẩu mới phải có ít nhất 8 ký tự.",
     WRONG_CURRENT_PASSWORD: "Mật khẩu hiện tại không đúng.",
     SESSION_NOT_CONFIGURED: "Máy chủ chưa được cấu hình đăng nhập.",
+    NOTHING_TO_UPDATE: "Không có thay đổi nào để lưu.",
+    CANNOT_DELETE_SELF: "Không thể xoá tài khoản đang đăng nhập.",
+    LAST_ADMIN_REQUIRED: "Phải còn ít nhất một quản trị viên.",
   },
   fields: {
     username: "tên đăng nhập",
     password: "mật khẩu",
     current_password: "mật khẩu hiện tại",
     new_password: "mật khẩu mới",
+    display_name: "tên hiển thị",
+    role: "vai trò",
   } as Record<string, string>,
 };
 
