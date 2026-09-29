@@ -12,6 +12,17 @@ Luồng **thủ công**, không ảnh biên lai:
 | `UNPAID/PENDING → PAID` | admin |
 | `PENDING/PAID → UNPAID` | admin |
 
+Mỗi chuyển trạng thái kiểm **trong chính câu `UPDATE … WHERE status IN (…)`**; không khớp → 409 `INVALID_STATUS_TRANSITION`. Hai admin bấm cùng lúc thì một người thắng, người kia nhận 409.
+
+## Trả trước
+
+Thành viên chọn **3 / 6 / 12 tháng** cho một gói mình có suất (`POST /api/me/prepayments`), không giảm giá. App tính khoảng tháng (tháng đầu tiên từ hiện tại chưa trả và chưa được phủ — [data-model.md](data-model.md#trả-trước)), trả VietQR với **tổng tiền** và **mã `PP…`** làm nội dung chuyển khoản. Trạng thái đi như payment: thành viên báo đã chuyển → admin đối chiếu sao kê → `PAID`.
+
+- Admin xác nhận `PAID` → các payment đã có trong khoảng đó thành `PAID` (trỏ về lệnh); kỳ tạo sau trong khoảng đó sinh sẵn `PAID`.
+- Admin trả về `UNPAID` → mọi payment lệnh đó đã trả cũng về `UNPAID`.
+- Payment thuộc một lệnh trả trước **không** đổi trạng thái lẻ được (409 `PAYMENT_COVERED_BY_PREPAYMENT`) — đổi lệnh.
+- Xoá: thành viên xoá lệnh của mình khi còn `UNPAID`; admin xoá khi `UNPAID`/`PENDING`; `PAID` phải trả về trước (`CANNOT_DELETE_PREPAYMENT`).
+
 Thành viên **không bao giờ** tự đặt `PAID`. `PENDING` chỉ là lời báo, không phải bằng chứng — vì vậy bỏ ảnh biên lai không làm yếu đi thứ gì: ảnh cũng chỉ là lời báo, và đối chiếu sao kê mới là xác nhận thật.
 
 ## Tài khoản nhận tiền

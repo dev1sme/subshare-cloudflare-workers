@@ -41,6 +41,11 @@ Chuẩn envelope, định dạng thuộc tính và quy tắc `error.code` ở [`
 | Gói hết suất | 409 | `PLAN_FULL` |
 | Ngày rời trước ngày vào | 400 | `LEFT_BEFORE_JOINED` |
 | Kỳ sai dạng hoặc ở tương lai | 400 | `INVALID_PERIOD` |
+| Chuyển trạng thái không hợp lệ (đã đổi trước đó) | 409 | `INVALID_STATUS_TRANSITION` |
+| Đổi lẻ payment thuộc lệnh trả trước | 409 | `PAYMENT_COVERED_BY_PREPAYMENT` |
+| Trả trước chồng lên tháng đã trả / đã phủ | 409 | `PREPAYMENT_OVERLAP` |
+| Xoá lệnh trả trước không được phép | 409 | `CANNOT_DELETE_PREPAYMENT` |
+| Số tháng trả trước không phải 3/6/12 | 400 | `INVALID_MONTHS` |
 | Lỗi khác | 500 | `INTERNAL_ERROR` (lỗi thật chỉ vào `console.error`) |
 
 `handleError` (gắn làm `app.onError`) nhận ra lỗi constraint của D1 chỉ qua chuỗi message (`UNIQUE constraint failed`, …), xét cả `err.cause`. Chữ ký là `failure(c, code, message, status = 400, details = null)` — mã đứng ngay sau `c` để lệnh grep trong `envelop-conventions.md` bắt được mọi mã.
@@ -129,9 +134,37 @@ Thành viên của gói **đã có code** (`GET`/`POST /api/plans/:code/members`
 
 `account` = `{ code, username, display_name, role, created_at }`. `password` (sinh ngẫu nhiên 16 ký tự nếu không gửi) chỉ có trong response tạo/đặt lại — không route nào khác trả nó. Field lạ trong body PATCH bị bỏ qua; không có field hợp lệ nào → 400 `NOTHING_TO_UPDATE`. Username trùng (không phân biệt hoa thường) → 409 `DUPLICATE_DATA`; xoá người còn suất trong gói hay khoản thanh toán → 409 `RELATED_DATA_EXISTS`.
 
-### Thành viên (`requireMember`)
+### Thành viên (`requireMember`) — **đã có code** (`routes/me.ts`)
 
-`GET /api/me/payments`, `GET /api/me/payments/:code`, `POST /api/me/payments/:code/mark-sent` (`UNPAID → PENDING`). Người dùng lấy từ token; khoản của người khác trả **404**, không 403.
+Người dùng lấy từ token; khoản / lệnh của người khác trả **404**, không 403.
+
+| Route | Body | `data` |
+|---|---|---|
+| `GET /api/me/plans` | — | `{ plans }` — gói mình đang có suất, kèm `member_amount` |
+| `GET /api/me/payments` | — | `{ payments }` — chưa trả trước, rồi mới nhất |
+| `GET /api/me/payments/:code` | — | `{ payment, bank_transfer }` |
+| `POST /api/me/payments/:code/mark-sent` | — | `{ payment }` (`UNPAID → PENDING`) |
+| `GET /api/me/prepayments` | — | `{ prepayments }` |
+| `POST /api/me/prepayments` | `plan_code`, `months` (3/6/12) | `{ prepayment, bank_transfer }` — 201 |
+| `GET /api/me/prepayments/:code` | — | `{ prepayment, bank_transfer }` |
+| `POST /api/me/prepayments/:code/mark-sent` | — | `{ prepayment }` |
+| `DELETE /api/me/prepayments/:code` | — | `null` (chỉ khi `UNPAID`) |
+
+`bank_transfer` = `{ bank_bin, account_no, account_name, amount, note, qr }` hoặc `null` (đã `PAID`, hoặc gói chưa có ngân hàng). `qr` là payload VietQR để trình duyệt vẽ; `amount` là số nguyên để copy.
+
+### Thanh toán — admin (`requireAdmin`) — **đã có code** (`routes/payments.ts`, `routes/prepayments.ts`)
+
+| Route | Body / query | `data` |
+|---|---|---|
+| `GET /api/payments` | `?status=&period=&plan_code=` | `{ payments }` (tối đa 500, mới nhất trước) |
+| `PATCH /api/payments/:code` | `status`: `PAID` \| `UNPAID` | `{ payment }` |
+| `GET /api/prepayments` | `?status=` | `{ prepayments }` |
+| `PATCH /api/prepayments/:code` | `status`: `PAID` \| `UNPAID` | `{ prepayment }` |
+| `DELETE /api/prepayments/:code` | — | `null` (không khi `PAID`) |
+
+`payment` = `{ code, plan: { code, name }, user: { code, username, display_name }, period, amount, status, marked_at, confirmed_at, prepayment_code }`. `prepayment` = `{ code, plan, user, start_period, end_period, months, amount_per_month, amount, status, created_at, marked_at, confirmed_at }`.
+
+`GET /api/payments` không filter phải đọc cả bảng `payments` để sắp xếp — dùng `?status=PENDING` / `?period=` (có index) cho màn hằng ngày.
 
 ### Chung
 

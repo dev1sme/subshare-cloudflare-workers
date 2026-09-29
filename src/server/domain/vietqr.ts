@@ -2,6 +2,8 @@
 // Never route this through img.vietqr.io or any QR image service: that tells a third party who owes
 // how much to which account. The browser draws the QR from this string.
 
+import type { BankTransfer, PaymentStatus } from "../../shared/types";
+
 // Every field is ID (2 digits) + length (2 digits) + value.
 function tlv(id: string, value: string): string {
   if (value.length > 99) throw new Error(`VietQR field ${id} is longer than 99 characters`);
@@ -56,4 +58,20 @@ export function buildVietQrPayload({ bin, accountNo, amount, note }: VietQrInput
     tlv("62", tlv("08", note)) + // additional data: purpose of transaction = transfer note
     "6304"; // CRC tag and length are part of the checksummed input
   return payload + crc16(payload);
+}
+
+type BankDetails = { bank_bin: string | null; bank_account_no: string | null; bank_account_name: string | null };
+
+// What a member is shown to pay `amount` for `note`. Null once PAID (nothing is owed) or while the
+// plan has no bank details — the UI then shows the code as text only.
+export function bankTransferFor(bank: BankDetails, amount: number, note: string, status: PaymentStatus): BankTransfer | null {
+  if (status === "PAID" || !bank.bank_bin || !bank.bank_account_no) return null;
+  return {
+    bank_bin: bank.bank_bin,
+    account_no: bank.bank_account_no,
+    account_name: bank.bank_account_name,
+    amount,
+    note,
+    qr: buildVietQrPayload({ bin: bank.bank_bin, accountNo: bank.bank_account_no, amount, note }),
+  };
 }

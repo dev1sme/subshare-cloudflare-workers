@@ -28,6 +28,11 @@ const en: typeof vi = {
     PLAN_FULL: "The plan has no free seat.",
     LEFT_BEFORE_JOINED: "The leave date cannot be before the join date.",
     INVALID_PERIOD: "The billing period is invalid or in the future.",
+    INVALID_STATUS_TRANSITION: "The status has changed; this action no longer applies. Please reload.",
+    PAYMENT_COVERED_BY_PREPAYMENT: "This payment belongs to a prepayment; change the prepayment instead.",
+    PREPAYMENT_OVERLAP: "These months are already paid or covered by another prepayment.",
+    CANNOT_DELETE_PREPAYMENT: "This prepayment cannot be deleted.",
+    INVALID_MONTHS: "Prepay 3, 6 or 12 months only.",
   },
   fields: {
     username: "username",
@@ -50,6 +55,9 @@ const en: typeof vi = {
     joined_on: "join date",
     left_on: "leave date",
     period: "billing period",
+    status: "status",
+    plan_code: "plan",
+    months: "months",
   },
 };
 

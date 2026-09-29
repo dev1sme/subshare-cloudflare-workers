@@ -79,3 +79,54 @@ export type Period = {
   amount_paid: number;
   created_at: string;
 };
+
+export type PaymentStatus = "UNPAID" | "PENDING" | "PAID";
+
+// Everything a member needs to transfer: copy rows and the VietQR payload the browser draws.
+// Null when the plan has no bank details or nothing is owed.
+export type BankTransfer = {
+  bank_bin: string;
+  account_no: string;
+  account_name: string | null;
+  // Whole VND — copy this, not a formatted string.
+  amount: number;
+  // The payment / prepayment code, used as the transfer note.
+  note: string;
+  qr: string;
+};
+
+type PlanRef = { code: string; name: string };
+type UserRef = { code: string; username: string; display_name: string };
+
+// One member's share of one monthly period.
+export type Payment = {
+  code: string;
+  plan: PlanRef;
+  user: UserRef;
+  period: string;
+  amount: number;
+  status: PaymentStatus;
+  marked_at: string | null;
+  confirmed_at: string | null;
+  // Set when the payment was settled by a prepayment.
+  prepayment_code: string | null;
+};
+
+// 3, 6 or 12 months paid at once, no discount.
+export type Prepayment = {
+  code: string;
+  plan: PlanRef;
+  user: UserRef;
+  start_period: string;
+  end_period: string;
+  months: number;
+  amount_per_month: number;
+  amount: number;
+  status: PaymentStatus;
+  created_at: string;
+  marked_at: string | null;
+  confirmed_at: string | null;
+};
+
+// A plan the signed-in member holds a seat in.
+export type MyPlan = PlanRef & { member_amount: number };

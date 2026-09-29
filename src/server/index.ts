@@ -4,8 +4,11 @@ import { handleError, notFound, ok } from "./envelope";
 import { securityHeaders } from "./headers";
 import { accountRoutes } from "./routes/accounts";
 import { authRoutes } from "./routes/auth";
+import { meRoutes } from "./routes/me";
 import { memberRoutes } from "./routes/members";
+import { paymentRoutes } from "./routes/payments";
 import { planRoutes } from "./routes/plans";
+import { prepaymentRoutes } from "./routes/prepayments";
 import { createDuePeriods } from "./scheduled";
 
 export const app = new Hono<AppEnv>();
@@ -30,6 +33,15 @@ app.route("/api/plans", planRoutes);
 
 // requireAdmin, applied inside the sub-app.
 app.route("/api/members", memberRoutes);
+
+// requireAdmin, applied inside the sub-app.
+app.route("/api/payments", paymentRoutes);
+
+// requireAdmin, applied inside the sub-app.
+app.route("/api/prepayments", prepaymentRoutes);
+
+// requireMember, applied inside the sub-app. The user comes from the token only.
+app.route("/api/me", meRoutes);
 
 export default {
   fetch: app.fetch,

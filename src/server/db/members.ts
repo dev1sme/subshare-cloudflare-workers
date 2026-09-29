@@ -66,3 +66,25 @@ export async function updateMember(db: D1Database, id: number, patch: MemberPatc
   ]);
   return selected.results[0];
 }
+
+export type SeatRow = {
+  plan_id: number;
+  plan_code: string;
+  plan_name: string;
+  member_amount: number;
+  user_id: number;
+};
+
+// The plans a member holds an active seat in, for /api/me. Active plans only.
+export async function listSeatsOfUser(db: D1Database, userCode: string): Promise<SeatRow[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT p.id AS plan_id, p.code AS plan_code, p.name AS plan_name, p.member_amount, m.user_id
+       FROM plan_members m JOIN plans p ON p.id = m.plan_id
+       WHERE m.user_id = (SELECT id FROM users WHERE code = ?) AND m.left_on IS NULL AND p.active = 1
+       ORDER BY p.name`,
+    )
+    .bind(userCode)
+    .all<SeatRow>();
+  return results;
+}

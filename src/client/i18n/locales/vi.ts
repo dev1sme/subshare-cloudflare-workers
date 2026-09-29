@@ -28,6 +28,11 @@ const vi = {
     PLAN_FULL: "Gói đã hết suất.",
     LEFT_BEFORE_JOINED: "Ngày rời gói không được trước ngày vào gói.",
     INVALID_PERIOD: "Kỳ thanh toán không hợp lệ hoặc ở tương lai.",
+    INVALID_STATUS_TRANSITION: "Trạng thái đã thay đổi, không thể thực hiện thao tác này. Hãy tải lại.",
+    PAYMENT_COVERED_BY_PREPAYMENT: "Khoản này thuộc một lần trả trước; hãy đổi trạng thái của lần trả trước.",
+    PREPAYMENT_OVERLAP: "Khoảng tháng này đã được trả hoặc đã có lần trả trước khác.",
+    CANNOT_DELETE_PREPAYMENT: "Không thể xoá lần trả trước này.",
+    INVALID_MONTHS: "Chỉ trả trước 3, 6 hoặc 12 tháng.",
   },
   fields: {
     username: "tên đăng nhập",
@@ -50,6 +55,9 @@ const vi = {
     joined_on: "ngày vào gói",
     left_on: "ngày rời gói",
     period: "kỳ thanh toán",
+    status: "trạng thái",
+    plan_code: "gói",
+    months: "số tháng",
   } as Record<string, string>,
 };
 

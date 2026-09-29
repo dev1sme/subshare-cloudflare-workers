@@ -19,8 +19,10 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 - [x] Quản lý thành viên: thêm vào gói với số tiền đặt tay, đổi số tiền, rời gói; payer không được là thành viên của gói mình
 - [x] Tạo kỳ: tay (admin) và hàm `scheduled()` idempotent
 - [ ] Khai báo Cron Trigger (đếm trigger trên account trước) — cần deploy
-- [ ] Màn thành viên: khoản cần đóng, VietQR, nút "Tôi đã chuyển"
-- [ ] Màn admin: danh sách `PENDING` chờ xác nhận, xác nhận / trả về
+- [x] API thành viên: khoản cần đóng, VietQR, "Tôi đã chuyển", trả trước 3/6/12 tháng
+- [ ] Màn thành viên (UI)
+- [x] API admin: danh sách `PENDING`, xác nhận / trả về (payment và trả trước)
+- [ ] Màn admin (UI)
 - [ ] Dashboard admin: ai còn nợ, qua mọi kỳ
 
 ## Sau này
