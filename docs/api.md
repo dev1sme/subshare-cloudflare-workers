@@ -24,7 +24,7 @@ Chuẩn envelope, định dạng thuộc tính và quy tắc `error.code` ở [`
 | Không tìm thấy | 404 | `NOT_FOUND` |
 | Chưa đăng nhập | 401 | `UNAUTHORIZED` |
 | Sai vai trò | 403 | `FORBIDDEN` |
-| Sai email hoặc mật khẩu (không phân biệt hai trường hợp) | 401 | `INVALID_CREDENTIALS` |
+| Sai username hoặc mật khẩu (không phân biệt hai trường hợp) | 401 | `INVALID_CREDENTIALS` |
 | Mật khẩu mới < 8 ký tự | 400 | `PASSWORD_TOO_SHORT` |
 | Đổi mật khẩu, sai mật khẩu hiện tại | 400 | `WRONG_CURRENT_PASSWORD` |
 | Thiếu `JWT_SECRET` trên Worker | 503 | `SESSION_NOT_CONFIGURED` |
@@ -68,12 +68,12 @@ Tài khoản có hai chốt: không xoá tài khoản đang đăng nhập (`CANN
 
 | Route | Body | `data` |
 |---|---|---|
-| `POST /login` | `email`, `password` | `{ user }` + cookie `session` |
+| `POST /login` | `username`, `password` | `{ user }` + cookie `session` |
 | `POST /logout` | — | `null`, cookie hết hạn |
 | `GET /me` | — | `{ user }` |
 | `POST /change-password` | `current_password`, `new_password` | `null` |
 
-`user` = `{ code, email, display_name, role }` — không bao giờ `id` hay `password_hash`.
+`user` = `{ code, username, display_name, role }` — không bao giờ `id` hay `password_hash`.
 
 ## Hiệu năng
 

@@ -5,7 +5,7 @@
 Tên bảng và cột **tiếng Anh**; enum **UPPER_SNAKE tiếng Anh**.
 
 ```
-users            (id, code, email, display_name, password_hash, role, created_at)
+users            (id, code, username, display_name, password_hash, role, created_at)
 plans            (id, code, name, price, cycle, max_slots, split_mode,
                   bank_bin, bank_account_no, bank_account_name, active, created_at)
 plan_members     (id, code, plan_id, user_id, weight, joined_on, left_on)
@@ -21,13 +21,13 @@ payments         (id, code, billing_period_id, user_id, amount, status,
 | `billing_periods UNIQUE(plan_id, period)` | Cron chạy lại, hay admin bấm hai lần, không sinh hai kỳ. Tạo kỳ dùng `INSERT … ON CONFLICT DO NOTHING`, không SELECT-rồi-INSERT (hai lần chạy song song sẽ cùng lọt). |
 | `payments UNIQUE(billing_period_id, user_id)` | Mỗi người một khoản mỗi kỳ. |
 | `plan_members UNIQUE(plan_id, user_id) WHERE left_on IS NULL` | Một người không ở hai suất đang hoạt động của cùng gói; người đã rời giữ lại làm lịch sử. |
-| `users UNIQUE(email)` | Đăng nhập bằng email. |
+| `users UNIQUE(username)` | Đăng nhập bằng username. Không lưu email: app không gửi mail, nên email chỉ là dữ liệu cá nhân thừa. |
 | `UNIQUE(code)` trên mọi bảng có `code` | Xem dưới. |
 
 Chi tiết đã chốt trong migration 0001:
 
 - Mọi bảng là `STRICT`: sai kiểu (chuỗi vào cột `INTEGER`) bị từ chối thay vì lưu lặng lẽ. Lỗi đó là `SQLITE_CONSTRAINT_DATATYPE` — validate phải chặn trước; lọt tới D1 thì thành 500.
-- `users.email` là `COLLATE NOCASE`: `A@x` và `a@x` là một tài khoản.
+- `users.username`: 3–32 ký tự `a-z 0-9 . _ -`, bắt đầu bằng chữ hoặc số, **lưu chữ thường** (CHECK trong DB, cùng luật với `domain/username.ts`). App trim + hạ chữ thường trước mọi lần ghi và tra, nên `Minh.Anh` và `minh.anh` là một tài khoản.
 - `code` có CHECK tiền tố (`substr(code, 1, 2) = 'PL'`, …) — chỉ tiền tố, độ dài và bảng chữ do `parseCode` kiểm.
 - `period` có CHECK dạng `YYYY-MM`, tháng `01`–`12`.
 - `payments`: `status = 'PAID'` buộc `confirmed_at` và `confirmed_by` khác NULL.
@@ -82,4 +82,4 @@ Bất biến: **tổng các khoản của một kỳ luôn bằng đúng `billin
 
 - **Giá và phần tiền được chốt lúc tạo kỳ.** `billing_periods.price` copy từ `plans.price`, `payments.amount` là phần chia lúc đó. Đổi giá gói hay thêm/bớt thành viên chỉ ảnh hưởng kỳ **sau**; không bao giờ tính lại kỳ cũ theo dữ liệu hôm nay.
 - **Không có ảnh biên lai, không có cột file.** `PENDING` nghĩa là thành viên tự báo đã chuyển, chưa phải bằng chứng.
-- **Seed không chứa dữ liệu thật.** Repo public: migration không được có email, tên hay số tài khoản thật. Admin đầu tiên tạo bằng `scripts/hash-password.mjs` và chạy câu SQL nó in ra, không commit.
+- **Seed không chứa dữ liệu thật.** Repo public: migration không được có username, tên hay số tài khoản thật. Admin đầu tiên tạo bằng `scripts/hash-password.mjs` và chạy câu SQL nó in ra, không commit.

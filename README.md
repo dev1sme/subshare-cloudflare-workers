@@ -79,7 +79,7 @@ Chi tiết và các bẫy đã biết: [docs/deployment.md](docs/deployment.md).
 
 | Bảng | Nội dung |
 |---|---|
-| `users` | Người dùng (tên, email, vai trò) |
+| `users` | Người dùng (username, tên hiển thị, vai trò) |
 | `plans` | Gói đăng ký (tên, giá, chu kỳ, số suất, tài khoản nhận tiền) |
 | `plan_members` | Ai thuộc gói nào, trọng số chia tiền |
 | `billing_periods` | Các kỳ thanh toán, giá chốt tại thời điểm tạo |

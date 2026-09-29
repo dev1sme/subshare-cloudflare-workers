@@ -28,7 +28,7 @@ export type Role = "ADMIN" | "MEMBER";
 // A user as the API returns it — never the id or the password hash.
 export type User = {
   code: string;
-  email: string;
+  username: string;
   display_name: string;
   role: Role;
 };

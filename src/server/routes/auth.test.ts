@@ -7,17 +7,17 @@ import { hashPassword } from "../domain/password";
 import { handleError, ok } from "../envelope";
 import worker from "../index";
 
-const ADMIN = { code: "AC0000000A", email: "admin@example.test", password: "admin-password" };
-const MEMBER = { code: "AC0000000B", email: "member@example.test", password: "member-password" };
+const ADMIN = { code: "AC0000000A", username: "admin", password: "admin-password" };
+const MEMBER = { code: "AC0000000B", username: "member", password: "member-password" };
 
 beforeEach(async () => {
   await env.DB.batch([
     env.DB.prepare("DELETE FROM users"),
     env.DB.prepare(
-      "INSERT INTO users (code, email, display_name, password_hash, role) VALUES (?, ?, 'Admin', ?, 'ADMIN'), (?, ?, 'Member', ?, 'MEMBER')",
+      "INSERT INTO users (code, username, display_name, password_hash, role) VALUES (?, ?, 'Admin', ?, 'ADMIN'), (?, ?, 'Member', ?, 'MEMBER')",
     ).bind(
-      ADMIN.code, ADMIN.email, await hashPassword(ADMIN.password),
-      MEMBER.code, MEMBER.email, await hashPassword(MEMBER.password),
+      ADMIN.code, ADMIN.username, await hashPassword(ADMIN.password),
+      MEMBER.code, MEMBER.username, await hashPassword(MEMBER.password),
     ),
   ]);
 });
@@ -30,8 +30,8 @@ function post(path: string, body: unknown, cookie?: string) {
   );
 }
 
-async function login(email: string, password: string): Promise<string> {
-  const res = await post("/api/auth/login", { email, password });
+async function login(username: string, password: string): Promise<string> {
+  const res = await post("/api/auth/login", { username, password });
   expect(res.status).toBe(200);
   return res.headers.get("Set-Cookie")!.split(";")[0];
 }
@@ -42,7 +42,7 @@ async function errorCode(res: Response): Promise<string> {
 
 describe("login", () => {
   it("sets an httpOnly, secure, Lax session cookie and returns the user without secrets", async () => {
-    const res = await post("/api/auth/login", { email: "ADMIN@example.test", password: ADMIN.password });
+    const res = await post("/api/auth/login", { username: " Admin ", password: ADMIN.password });
     expect(res.status).toBe(200);
     const cookie = res.headers.get("Set-Cookie")!;
     expect(cookie).toMatch(/^session=/);
@@ -56,9 +56,9 @@ describe("login", () => {
     expect(text).not.toMatch(/"id"/);
   });
 
-  it("answers unknown email and wrong password identically", async () => {
-    const unknown = await post("/api/auth/login", { email: "nobody@example.test", password: "whatever-pw" });
-    const wrong = await post("/api/auth/login", { email: ADMIN.email, password: "wrong-password" });
+  it("answers unknown username and wrong password identically", async () => {
+    const unknown = await post("/api/auth/login", { username: "nobody", password: "whatever-pw" });
+    const wrong = await post("/api/auth/login", { username: ADMIN.username, password: "wrong-password" });
     expect(unknown.status).toBe(401);
     expect(wrong.status).toBe(401);
     expect(await errorCode(unknown)).toBe("INVALID_CREDENTIALS");
@@ -67,14 +67,15 @@ describe("login", () => {
   });
 
   it("validates the body", async () => {
-    expect(await errorCode(await post("/api/auth/login", { password: "x" }))).toBe("MISSING_EMAIL");
-    expect(await errorCode(await post("/api/auth/login", { email: ADMIN.email }))).toBe("MISSING_PASSWORD");
+    expect(await errorCode(await post("/api/auth/login", { password: "x" }))).toBe("MISSING_USERNAME");
+    expect(await errorCode(await post("/api/auth/login", { username: "a b", password: "x" }))).toBe("INVALID_USERNAME");
+    expect(await errorCode(await post("/api/auth/login", { username: ADMIN.username }))).toBe("MISSING_PASSWORD");
   });
 });
 
 describe("me and logout", () => {
   it("returns the signed-in user and 401 without a valid session", async () => {
-    const cookie = await login(MEMBER.email, MEMBER.password);
+    const cookie = await login(MEMBER.username, MEMBER.password);
     const me = await worker.request("/api/auth/me", { headers: { Cookie: cookie } }, env);
     expect(((await me.json()) as ApiSuccess<{ user: User }>).data.user.code).toBe(MEMBER.code);
 
@@ -92,7 +93,7 @@ describe("me and logout", () => {
 
 describe("change-password", () => {
   it("requires the current password and enforces the minimum length", async () => {
-    const cookie = await login(MEMBER.email, MEMBER.password);
+    const cookie = await login(MEMBER.username, MEMBER.password);
     const path = "/api/auth/change-password";
     expect((await post(path, { current_password: MEMBER.password, new_password: "x" })).status).toBe(401);
     expect(await errorCode(await post(path, { current_password: "nope-nope", new_password: "new-password-1" }, cookie))).toBe(
@@ -104,8 +105,8 @@ describe("change-password", () => {
 
     const changed = await post(path, { current_password: MEMBER.password, new_password: "new-password-1" }, cookie);
     expect(changed.status).toBe(200);
-    expect((await post("/api/auth/login", { email: MEMBER.email, password: MEMBER.password })).status).toBe(401);
-    await login(MEMBER.email, "new-password-1");
+    expect((await post("/api/auth/login", { username: MEMBER.username, password: MEMBER.password })).status).toBe(401);
+    await login(MEMBER.username, "new-password-1");
   });
 });
 
@@ -116,8 +117,8 @@ describe("role guards", () => {
   app.get("/member", requireMember, (c) => ok(c, c.get("session")));
 
   it("401 without a session, 403 for the other role, 200 for the right one", async () => {
-    const admin = await login(ADMIN.email, ADMIN.password);
-    const member = await login(MEMBER.email, MEMBER.password);
+    const admin = await login(ADMIN.username, ADMIN.password);
+    const member = await login(MEMBER.username, MEMBER.password);
     const get = (path: string, cookie?: string) =>
       app.request(path, { headers: cookie ? { Cookie: cookie } : {} }, env);
 
@@ -132,5 +133,17 @@ describe("role guards", () => {
     const res = await app.request("/admin", {}, { ...env, JWT_SECRET: "" });
     expect(res.status).toBe(503);
     expect(await errorCode(res)).toBe("SESSION_NOT_CONFIGURED");
+  });
+});
+
+describe("users.username CHECK", () => {
+  it("rejects what normalizeUsername rejects, at the database too", async () => {
+    for (const username of ["Upper", "ab", ".dot", "a b", "a@b"]) {
+      await expect(
+        env.DB.prepare("INSERT INTO users (code, username, display_name, password_hash) VALUES ('AC000000FF', ?, 'x', 'x')")
+          .bind(username)
+          .run(),
+      ).rejects.toThrow(/CHECK constraint failed/);
+    }
   });
 });

@@ -1,29 +1,29 @@
 import { Hono } from "hono";
 import type { User } from "../../shared/types";
 import { currentUser, endSession, startSession, type AppEnv } from "../auth";
-import { type UserRow, findUserByCode, findUserByEmail, updateUserPasswordHash } from "../db/users";
+import { type UserRow, findUserByCode, findUserByUsername, updateUserPasswordHash } from "../db/users";
 import { DUMMY_PASSWORD_HASH, MIN_PASSWORD_LENGTH, hashPassword, verifyPassword } from "../domain/password";
 import { failure, ok } from "../envelope";
-import { fail, readBody, requirePassword, requireString } from "../validate";
+import { fail, readBody, requirePassword, requireUsername } from "../validate";
 
 // Mounted without a guard: login/logout are public, and me/change-password serve
 // both roles, so they resolve the session themselves through currentUser.
 export const authRoutes = new Hono<AppEnv>();
 
 function toUser(row: UserRow): User {
-  return { code: row.code, email: row.email, display_name: row.display_name, role: row.role };
+  return { code: row.code, username: row.username, display_name: row.display_name, role: row.role };
 }
 
 authRoutes.post("/login", async (c) => {
   const body = await readBody(c);
-  const email = requireString(body, "email", 254);
+  const username = requireUsername(body);
   const password = requirePassword(body, "password");
 
-  const row = await findUserByEmail(c.env.DB, email);
-  // Always run one PBKDF2 verification so an unknown email costs the same as a wrong password.
+  const row = await findUserByUsername(c.env.DB, username);
+  // Always run one PBKDF2 verification so an unknown username costs the same as a wrong password.
   const valid = await verifyPassword(password, row?.password_hash ?? DUMMY_PASSWORD_HASH);
   if (!row || !valid) {
-    return failure(c, "INVALID_CREDENTIALS", "Email or password is incorrect.", 401);
+    return failure(c, "INVALID_CREDENTIALS", "Username or password is incorrect.", 401);
   }
 
   await startSession(c, { code: row.code, role: row.role });

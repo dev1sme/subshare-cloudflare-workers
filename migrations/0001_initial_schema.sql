@@ -9,11 +9,18 @@
 --   * Every FK column is indexed, so the FK check on delete does not scan the child table.
 --   * STRICT tables: a wrong type is rejected instead of silently stored.
 --   * No real data here — the repository is public. The first admin is created with scripts/hash-password.mjs.
+--   * No email anywhere: the app sends no mail, so it stores none.
 
 CREATE TABLE users (
   id            INTEGER PRIMARY KEY,
   code          TEXT    NOT NULL UNIQUE CHECK (substr(code, 1, 2) = 'AC'),
-  email         TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+  -- Login name: 3-32 chars of a-z 0-9 . _ -, starting with a letter or digit, stored lowercase
+  -- (the app lowercases before every write and lookup). Same rule as domain/username.ts.
+  username      TEXT    NOT NULL UNIQUE CHECK (
+    length(username) BETWEEN 3 AND 32
+    AND username NOT GLOB '*[^a-z0-9._-]*'
+    AND substr(username, 1, 1) GLOB '[a-z0-9]'
+  ),
   display_name  TEXT    NOT NULL,
   -- pbkdf2$sha256$<iterations>$<salt_b64>$<hash_b64> (docs/auth.md)
   password_hash TEXT    NOT NULL,

@@ -13,9 +13,9 @@ const HASH_BYTES = 32;
 const SCHEME = "pbkdf2";
 const DIGEST = "sha256";
 
-// Verified when the email is unknown, so a wrong email costs the same as a wrong password.
+// Verified when the username is unknown, so a wrong username costs the same as a wrong password.
 // The iteration count follows PBKDF2_ITERATIONS: a hard-coded count would make failed logins
-// cost a different amount of CPU and reveal which emails exist.
+// cost a different amount of CPU and reveal which usernames exist.
 export const DUMMY_PASSWORD_HASH = [
   SCHEME,
   DIGEST,

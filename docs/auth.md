@@ -9,7 +9,7 @@ Không dùng framework auth, không bảng session. **Không trạng thái.**
 | Quản trị | `ADMIN` | Gói, thành viên, kỳ, xác nhận thanh toán, tài khoản |
 | Thành viên | `MEMBER` | Xem khoản của mình, báo "đã chuyển" |
 
-Không có đăng ký tự do, không xác minh email, không "quên mật khẩu" qua email — admin tạo tài khoản và đặt lại mật khẩu. Không gửi email nghĩa là không cần dịch vụ ngoài.
+Không có đăng ký tự do, không xác minh email, không "quên mật khẩu" qua email — admin tạo tài khoản và đặt lại mật khẩu. Không gửi email nghĩa là không cần dịch vụ ngoài — và cũng **không lưu email**: đăng nhập bằng `username` (luật định dạng ở [data-model.md](data-model.md)).
 
 ## Middleware & bố cục route
 
@@ -43,14 +43,14 @@ Hai middleware, mỗi vai trò một cái: `requireAdmin`, `requireMember`. **Kh
 
 Băm bằng Web Crypto (`crypto.subtle`) trong Worker, không Node `crypto`. So sánh bằng hàm so byte thời gian hằng. Token, salt, mật khẩu sinh ra dùng `crypto.getRandomValues`, không bao giờ `Math.random()`.
 
-Admin đầu tiên (DB rỗng) tạo bằng `scripts/hash-password.mjs`: script in câu `INSERT … ON CONFLICT DO UPDATE`, chạy bằng `wrangler d1 execute --local` / `--remote`. Câu đó chứa email thật — **không commit**.
+Admin đầu tiên (DB rỗng) tạo bằng `scripts/hash-password.mjs`: script in câu `INSERT … ON CONFLICT DO UPDATE`, chạy bằng `wrangler d1 execute --local` / `--remote`. Câu đó chứa username và tên thật — **không commit**.
 
 ```bash
-node scripts/hash-password.mjs <email> "<display_name>" [ADMIN|MEMBER]   # SQL ra stdout, mật khẩu sinh ra ra stderr
+node scripts/hash-password.mjs <username> "<display_name>" [ADMIN|MEMBER]   # SQL ra stdout, mật khẩu sinh ra ra stderr
 ./node_modules/.bin/wrangler d1 execute subshare-db --local --command "<sql>"
 ```
 
-Script import thẳng `src/server/domain/password.ts` và `code.ts` (Node ≥ 23.6 bỏ type TypeScript khi chạy), nên định dạng hash và mã không thể lệch với Worker. Vì vậy hai file đó **không được có import** runtime. `PASSWORD=...` để tự chọn mật khẩu thay vì sinh.
+Script import thẳng `src/server/domain/password.ts`, `code.ts` và `username.ts` (Node ≥ 23.6 bỏ type TypeScript khi chạy), nên định dạng hash và mã không thể lệch với Worker. Vì vậy hai file đó **không được có import** runtime. `PASSWORD=...` để tự chọn mật khẩu thay vì sinh.
 
 ## Số vòng PBKDF2
 
@@ -72,7 +72,7 @@ Thứ giữ an toàn là **mật khẩu dài và ngẫu nhiên**, không phải 
 
 ### Bản ghi giả
 
-Email không tồn tại thì login vẫn verify với một **bản ghi giả**, để sai email và sai mật khẩu tốn thời gian như nhau. **Số vòng của bản ghi giả nội suy từ `PBKDF2_ITERATIONS`**, không gán cứng: lệch một chỗ đó là login trượt tốn CPU gấp nhiều lần (vượt trần), và chênh lệch thời gian lộ email nào tồn tại — đúng thứ bản ghi giả sinh ra để che.
+Username không tồn tại thì login vẫn verify với một **bản ghi giả**, để sai username và sai mật khẩu tốn thời gian như nhau. **Số vòng của bản ghi giả nội suy từ `PBKDF2_ITERATIONS`**, không gán cứng: lệch một chỗ đó là login trượt tốn CPU gấp nhiều lần (vượt trần), và chênh lệch thời gian lộ username nào tồn tại — đúng thứ bản ghi giả sinh ra để che.
 
 ## Không có rate limit
 
