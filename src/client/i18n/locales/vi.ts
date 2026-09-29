@@ -8,8 +8,20 @@ const vi = {
     RELATED_DATA_EXISTS: "Không thể xoá vì còn dữ liệu liên quan.",
     INVALID_DATA: "Dữ liệu không hợp lệ.",
     MALFORMED_JSON: "Yêu cầu gửi lên không đúng định dạng.",
+    INVALID_CODE: "Mã không hợp lệ.",
+    INVALID_CREDENTIALS: "Email hoặc mật khẩu không đúng.",
+    UNAUTHORIZED: "Phiên đăng nhập đã hết, vui lòng đăng nhập lại.",
+    FORBIDDEN: "Bạn không có quyền thực hiện thao tác này.",
+    PASSWORD_TOO_SHORT: "Mật khẩu mới phải có ít nhất 8 ký tự.",
+    WRONG_CURRENT_PASSWORD: "Mật khẩu hiện tại không đúng.",
+    SESSION_NOT_CONFIGURED: "Máy chủ chưa được cấu hình đăng nhập.",
   },
-  fields: {} as Record<string, string>,
+  fields: {
+    email: "email",
+    password: "mật khẩu",
+    current_password: "mật khẩu hiện tại",
+    new_password: "mật khẩu mới",
+  } as Record<string, string>,
 };
 
 export default vi;

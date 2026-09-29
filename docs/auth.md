@@ -25,6 +25,13 @@ Hai middleware, mỗi vai trò một cái: `requireAdmin`, `requireMember`. **Kh
 - **Không** để token trong `localStorage` (script nào chạy được trên trang là đọc được) và không trên URL.
 - Không trạng thái nên đặt lại mật khẩu **không đá phiên cũ** — JWT cũ sống tới khi hết hạn. Chấp nhận ở quy mô này; muốn sửa cần cột token version và một lần tra DB mỗi request.
 
+Đã có code (`src/server/auth.ts`, `routes/auth.ts`, `domain/password.ts`):
+
+- `sub` của JWT là `users.code`, không phải `id` — payload JWT đọc được bằng base64, và id không bao giờ rời server.
+- Guard chỉ tin token, không tra DB mỗi request: đổi vai trò hay xoá tài khoản có hiệu lực khi token hết hạn. `GET /api/auth/me` thì tra DB, nên tài khoản đã xoá thấy 401 ở đó.
+- Thiếu `JWT_SECRET` → 503 `SESSION_NOT_CONFIGURED` từ mọi chỗ đọc phiên, kể cả khi request không có cookie.
+- `requireMember` **chỉ** nhận `MEMBER`; admin gọi `/api/me/*` bị 403.
+
 ## Mật khẩu
 
 `users.password_hash` dạng `pbkdf2$sha256$<iterations>$<salt_b64>$<hash_b64>`. Số vòng nằm trong bản ghi, nên tăng về sau là băm lại + `UPDATE`, không cần migration.
@@ -37,6 +44,13 @@ Hai middleware, mỗi vai trò một cái: `requireAdmin`, `requireMember`. **Kh
 Băm bằng Web Crypto (`crypto.subtle`) trong Worker, không Node `crypto`. So sánh bằng hàm so byte thời gian hằng. Token, salt, mật khẩu sinh ra dùng `crypto.getRandomValues`, không bao giờ `Math.random()`.
 
 Admin đầu tiên (DB rỗng) tạo bằng `scripts/hash-password.mjs`: script in câu `INSERT … ON CONFLICT DO UPDATE`, chạy bằng `wrangler d1 execute --local` / `--remote`. Câu đó chứa email thật — **không commit**.
+
+```bash
+node scripts/hash-password.mjs <email> "<display_name>" [ADMIN|MEMBER]   # SQL ra stdout, mật khẩu sinh ra ra stderr
+./node_modules/.bin/wrangler d1 execute subshare-db --local --command "<sql>"
+```
+
+Script import thẳng `src/server/domain/password.ts` và `code.ts` (Node ≥ 23.6 bỏ type TypeScript khi chạy), nên định dạng hash và mã không thể lệch với Worker. Vì vậy hai file đó **không được có import** runtime. `PASSWORD=...` để tự chọn mật khẩu thay vì sinh.
 
 ## Số vòng PBKDF2
 
@@ -51,6 +65,8 @@ Số liệu tham khảo (đo trên Worker thật cùng account, cùng code băm)
 ```
 
 **Cách lấy mẫu quyết định kết quả**: các lần thử cách nhau ~2 giây. Bắn dồn liên tiếp dựng isolate nguội và cho số cao giả tạo — không phải hình dạng traffic thật. Đừng hạ xuống 5k: 10k đã nằm gọn, giảm nửa work factor không được gì.
+
+[Chưa xác minh] `change-password` chạy PBKDF2 **hai lần** (verify mật khẩu hiện tại + băm mật khẩu mới), nên ở 10k vòng nó tốn khoảng gấp đôi login (~10 ms theo số đo trên) — sát trần. Đo `cpuTime` của route này khi deploy lần đầu.
 
 Thứ giữ an toàn là **mật khẩu dài và ngẫu nhiên**, không phải số vòng — mật khẩu admin tự đặt tay mới là điểm yếu.
 

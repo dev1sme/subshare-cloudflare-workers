@@ -31,6 +31,20 @@ export function notFound(c: Context, message = "Resource not found.") {
   return failure(c, "NOT_FOUND", message, 404);
 }
 
+// Thrown where returning a response is awkward (middleware helpers, deep calls); onError renders it.
+export class ApiError extends Error {
+  readonly code: string;
+  readonly status: ContentfulStatusCode;
+
+  constructor(code: string, message: string, status: ContentfulStatusCode) {
+    assertErrorCode(code);
+    super(message);
+    this.name = "ApiError";
+    this.code = code;
+    this.status = status;
+  }
+}
+
 // D1 surfaces SQLite constraint violations only through the error message text.
 const CONSTRAINT_FAILURES: { pattern: string; status: ContentfulStatusCode; code: string; message: string }[] = [
   { pattern: "UNIQUE constraint failed", status: 409, code: "DUPLICATE_DATA", message: "Data already exists." },
@@ -40,6 +54,9 @@ const CONSTRAINT_FAILURES: { pattern: string; status: ContentfulStatusCode; code
 
 // Wired as app.onError. The real error is logged, never returned to the client.
 export function handleError(err: Error, c: Context) {
+  if (err instanceof ApiError) {
+    return failure(c, err.code, err.message, err.status);
+  }
   if (err instanceof ValidationError) {
     return failure(c, err.code, err.message, 400, validationDetails(err.code));
   }

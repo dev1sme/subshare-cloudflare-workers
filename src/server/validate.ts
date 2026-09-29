@@ -1,5 +1,7 @@
 import type { Context } from "hono";
 import type { ErrorDetails } from "../shared/types";
+import { type CodePrefix, isCode } from "./domain/code";
+import { MAX_PASSWORD_LENGTH } from "./domain/password";
 
 const ERROR_CODE = /^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$/;
 const FIELD_PREFIX = /^(MISSING|INVALID|TOO_LONG)_([A-Z0-9_]+)$/;
@@ -87,4 +89,19 @@ export function requireEnum<T extends string>(body: Body, field: string, allowed
   if (value === undefined || value === null) fail(fieldCode("MISSING", field));
   if (typeof value !== "string" || !allowed.includes(value as T)) fail(fieldCode("INVALID", field));
   return value as T;
+}
+
+// Passwords are never trimmed — surrounding spaces are part of the password.
+export function requirePassword(body: Body, field: string): string {
+  const value = body[field];
+  if (value === undefined || value === null || value === "") fail(fieldCode("MISSING", field));
+  if (typeof value !== "string") fail(fieldCode("INVALID", field));
+  if (value.length > MAX_PASSWORD_LENGTH) fail(fieldCode("TOO_LONG", field));
+  return value;
+}
+
+// Checked before any lookup: a numeric id or another table's code never reaches the database.
+export function parseCode(prefix: CodePrefix, raw: string): string {
+  if (!isCode(prefix, raw)) fail("INVALID_CODE", "Malformed resource code.");
+  return raw;
 }

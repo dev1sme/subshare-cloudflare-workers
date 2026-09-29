@@ -8,7 +8,7 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 - [x] `envelope.ts`, `validate.ts`, `headers.ts`, `public/_headers`
 - [ ] Tạo D1 `subshare-db` (qua MCP `d1_database_create`), dán `database_id`
 - [x] Migration 0001 theo [data-model.md](data-model.md)
-- [ ] Auth: PBKDF2 + JWT cookie, `requireAdmin` / `requireMember`, `scripts/hash-password.mjs`
+- [x] Auth: PBKDF2 + JWT cookie, `requireAdmin` / `requireMember`, `scripts/hash-password.mjs`
 - [ ] Deploy lần đầu; đo `cpuTime` login trên Worker thật
 
 ## Tính năng

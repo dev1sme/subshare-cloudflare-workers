@@ -22,3 +22,13 @@ export type ApiFailure = {
 };
 
 export type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
+
+export type Role = "ADMIN" | "MEMBER";
+
+// A user as the API returns it — never the id or the password hash.
+export type User = {
+  code: string;
+  email: string;
+  display_name: string;
+  role: Role;
+};

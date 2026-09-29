@@ -24,6 +24,10 @@ Chuẩn envelope, định dạng thuộc tính và quy tắc `error.code` ở [`
 | Không tìm thấy | 404 | `NOT_FOUND` |
 | Chưa đăng nhập | 401 | `UNAUTHORIZED` |
 | Sai vai trò | 403 | `FORBIDDEN` |
+| Sai email hoặc mật khẩu (không phân biệt hai trường hợp) | 401 | `INVALID_CREDENTIALS` |
+| Mật khẩu mới < 8 ký tự | 400 | `PASSWORD_TOO_SHORT` |
+| Đổi mật khẩu, sai mật khẩu hiện tại | 400 | `WRONG_CURRENT_PASSWORD` |
+| Thiếu `JWT_SECRET` trên Worker | 503 | `SESSION_NOT_CONFIGURED` |
 | Lỗi khác | 500 | `INTERNAL_ERROR` (lỗi thật chỉ vào `console.error`) |
 
 `handleError` (gắn làm `app.onError`) nhận ra lỗi constraint của D1 chỉ qua chuỗi message (`UNIQUE constraint failed`, …), xét cả `err.cause`. Chữ ký là `failure(c, code, message, status = 400, details = null)` — mã đứng ngay sau `c` để lệnh grep trong `envelop-conventions.md` bắt được mọi mã.
@@ -58,7 +62,18 @@ Tài khoản có hai chốt: không xoá tài khoản đang đăng nhập (`CANN
 
 ### Chung
 
-`POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`, `POST /api/auth/change-password` (có yêu cầu mật khẩu hiện tại). `GET /api/health` không guard.
+`POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`, `POST /api/auth/change-password` (có yêu cầu mật khẩu hiện tại). `GET /api/health` không guard. **Đã có code** (`src/server/routes/auth.ts`).
+
+`/api/auth` mount **không** guard: login/logout công khai, `me` và `change-password` phục vụ cả hai vai trò nên tự gọi `currentUser` và trả 401 khi không có phiên.
+
+| Route | Body | `data` |
+|---|---|---|
+| `POST /login` | `email`, `password` | `{ user }` + cookie `session` |
+| `POST /logout` | — | `null`, cookie hết hạn |
+| `GET /me` | — | `{ user }` |
+| `POST /change-password` | `current_password`, `new_password` | `null` |
+
+`user` = `{ code, email, display_name, role }` — không bao giờ `id` hay `password_hash`.
 
 ## Hiệu năng
 
