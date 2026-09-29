@@ -1,8 +1,15 @@
 import { Hono } from "hono";
+import { handleError, notFound, ok } from "./envelope";
+import { securityHeaders } from "./headers";
 
 const app = new Hono<{ Bindings: Env }>();
 
-// Liveness probe. No body until the response envelope lands (src/server/envelope.ts).
-app.get("/api/health", (c) => c.body(null, 204));
+// Headers only — not a guard. Guards are picked at each route's own mount.
+app.use(securityHeaders);
+
+app.onError(handleError);
+app.notFound((c) => notFound(c));
+
+app.get("/api/health", (c) => ok(c, { status: "ok" }));
 
 export default app;

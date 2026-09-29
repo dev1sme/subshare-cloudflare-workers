@@ -17,6 +17,8 @@ Hono giữ chúng làm prepared header và gộp vào mọi response context d�
 
 ## CSP
 
+Hiện tại (`public/_headers`): `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`. API: `default-src 'none'; frame-ancestors 'none'`, `Referrer-Policy: no-referrer`.
+
 - `script-src 'self'`, **không** `'unsafe-inline'`. Script inline duy nhất được phép (vd script chọn theme trước lần vẽ đầu) đi bằng **sha256 của đúng chuỗi byte đó**; sửa script mà không sinh lại hash thì nó bị chặn im lặng. Ghi lệnh sinh hash vào comment đầu `_headers`.
 - `style-src`: [Chưa xác minh] Radix/shadcn có thể đặt style inline lúc runtime — kiểm console trên `vite preview` trước khi quyết định có cần `'unsafe-inline'` cho style hay không.
 - Font tự host (`@fontsource`), không CDN — `font-src 'self'`.

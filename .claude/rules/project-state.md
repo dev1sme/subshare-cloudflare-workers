@@ -1,8 +1,10 @@
 # Project state
 
-The scaffold exists: `package.json`, `wrangler.jsonc`, Vite + React + Tailwind client shell, a Hono Worker with one route (`GET /api/health` → 204). No envelope, no auth, no migrations. Nothing is deployed, no D1 database has been created (`database_id` in `wrangler.jsonc` is an all-zero placeholder), and no Worker secret has been set.
+The scaffold exists: `package.json`, `wrangler.jsonc`, Vite + React + Tailwind client shell, a Hono Worker with one route (`GET /api/health` → 204). Envelope (`ok` / `failure` / `notFound` / `handleError`), `validate.ts`, `securityHeaders` and `public/_headers` exist; `/api/health` answers the envelope. No auth, no migrations, client i18n is only the locale files (`errors` keys), not wired to i18next yet. Nothing is deployed, no D1 database has been created (`database_id` in `wrangler.jsonc` is an all-zero placeholder), and no Worker secret has been set.
 
 Scaffold verified locally on 2026-09-29: `npm run cf-typegen && npm run typecheck && npm run build` pass; the built `dist/subshare/wrangler.json` carries `run_worker_first: ["/api/*"]` and `not_found_handling: "single-page-application"`; against `npm run dev`, `/api/health` → 204, `/api/nope` → 404 (Worker), `/foo` → 200 `index.html` (SPA fallback).
+
+Step 2 verified locally on 2026-09-29: `npm run test` 18/18 (envelope shape, validation details, D1 constraint mapping, INTERNAL_ERROR hiding the real message, headers present on 200/400/404/500); `npm run build && vite preview` logs `Parsed 1 valid header rule`, `/`, `/foo` and a hashed JS asset carry CSP/HSTS/`X-Frame-Options`, `/api/health` and `/api/nope` carry `Cache-Control: no-store` + API CSP. Browser console under the CSP not yet checked.
 
 Decided before any code exists:
 

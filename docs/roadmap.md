@@ -5,7 +5,7 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 ## Nền
 
 - [x] Scaffold: Vite + React + Hono + `@cloudflare/vite-plugin`, `wrangler.jsonc`, npm scripts theo `.claude/rules/commands.md`
-- [ ] `envelope.ts`, `validate.ts`, `headers.ts`, `public/_headers`
+- [x] `envelope.ts`, `validate.ts`, `headers.ts`, `public/_headers`
 - [ ] Tạo D1 `subshare-db` (qua MCP `d1_database_create`), dán `database_id`
 - [ ] Migration 0001 theo [data-model.md](data-model.md)
 - [ ] Auth: PBKDF2 + JWT cookie, `requireAdmin` / `requireMember`, `scripts/hash-password.mjs`

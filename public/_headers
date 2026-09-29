@@ -1,0 +1,13 @@
+# Security headers for the SPA. Static assets never reach the Worker, so this file is the only
+# place they get headers; /api/* headers live in src/server/headers.ts. Spec: docs/security-headers.md.
+#
+# script-src never takes 'unsafe-inline'. An inline script in index.html is allowed by its sha256:
+#   printf '%s' '<exact script body>' | openssl dgst -sha256 -binary | openssl base64
+# then add 'sha256-<hash>' to script-src. Editing the script means regenerating the hash.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()

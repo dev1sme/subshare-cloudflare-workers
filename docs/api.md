@@ -1,6 +1,6 @@
 # API
 
-> Bề mặt dưới đây là **thiết kế**, chưa có code. Khi route được viết, file này phải khớp code.
+> Envelope, `validate.ts`, xử lý lỗi và `GET /api/health` đã có code. Phần còn lại của bề mặt là **thiết kế**; khi route được viết, file này phải khớp code.
 
 Mọi route nằm dưới `/api`. Mọi thứ dưới `/api` cần phiên đăng nhập, trừ `/api/health` và `/api/auth/login`.
 
@@ -16,6 +16,7 @@ Chuẩn envelope, định dạng thuộc tính và quy tắc `error.code` ở [`
 | Lỗi | HTTP | Mã |
 |---|---|---|
 | `ValidationError` | 400 | mã cụ thể (`INVALID_PERIOD`, …) |
+| Body không phải JSON object | 400 | `MALFORMED_JSON` |
 | D1 UNIQUE | 409 | `DUPLICATE_DATA` |
 | D1 FOREIGN KEY | 409 | `RELATED_DATA_EXISTS` |
 | D1 CHECK | 400 | `INVALID_DATA` |
@@ -24,6 +25,10 @@ Chuẩn envelope, định dạng thuộc tính và quy tắc `error.code` ở [`
 | Chưa đăng nhập | 401 | `UNAUTHORIZED` |
 | Sai vai trò | 403 | `FORBIDDEN` |
 | Lỗi khác | 500 | `INTERNAL_ERROR` (lỗi thật chỉ vào `console.error`) |
+
+`handleError` (gắn làm `app.onError`) nhận ra lỗi constraint của D1 chỉ qua chuỗi message (`UNIQUE constraint failed`, …), xét cả `err.cause`. Chữ ký là `failure(c, code, message, status = 400, details = null)` — mã đứng ngay sau `c` để lệnh grep trong `envelop-conventions.md` bắt được mọi mã.
+
+`validate.ts` sinh mã từ tên field snake_case: `requireString(body, "plan_name", 100)` ném `MISSING_PLAN_NAME` / `INVALID_PLAN_NAME` / `TOO_LONG_PLAN_NAME`. Tên field vì thế phải trùng tên field trong body và khoá `fields.<field>` ở locale.
 
 ## Đường dẫn
 
