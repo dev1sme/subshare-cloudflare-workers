@@ -32,7 +32,8 @@ import {
   requireUserCode,
 } from "../validate";
 
-// Admin-only plan management. Price and member amounts are set by hand — nothing is split.
+// Admin-only plan management. The plan price and the per-member amount are both set by hand —
+// nothing is split, and every member of a plan pays the same.
 // Spec: docs/data-model.md, docs/payments.md.
 export const planRoutes = new Hono<AppEnv>();
 
@@ -40,7 +41,7 @@ planRoutes.use(requireAdmin);
 
 const CYCLES: readonly Cycle[] = ["MONTHLY", "YEARLY"];
 const NAME_MAX = 64;
-export const PRICE_MAX = 1_000_000_000;
+const PRICE_MAX = 1_000_000_000;
 const SLOTS_MAX = 50;
 // NAPAS bank identification number.
 const BANK_BIN = /^\d{6}$/;
@@ -51,6 +52,7 @@ function toPlan(row: PlanRow): Plan {
     code: row.code,
     name: row.name,
     price: row.price,
+    member_amount: row.member_amount,
     cycle: row.cycle,
     max_slots: row.max_slots,
     active_members: row.active_members,
@@ -67,7 +69,6 @@ export function toMember(row: MemberRow): Member {
   return {
     code: row.code,
     user: { code: row.user_code, username: row.username, display_name: row.display_name },
-    amount: row.amount,
     joined_on: row.joined_on,
     left_on: row.left_on,
   };
@@ -105,6 +106,7 @@ planRoutes.post("/", async (c) => {
   const fields: PlanFields = {
     name: requireString(body, "name", NAME_MAX),
     price: requireInteger(body, "price", 1, PRICE_MAX),
+    member_amount: requireInteger(body, "member_amount", 1, PRICE_MAX),
     cycle: requireEnum(body, "cycle", CYCLES),
     max_slots: requireInteger(body, "max_slots", 1, SLOTS_MAX),
     payer_id: await requirePayerId(c.env.DB, body),
@@ -119,7 +121,7 @@ planRoutes.post("/", async (c) => {
   return ok(c, { plan: toPlan(row) }, "Plan created.", 201);
 });
 
-// Price changes affect only periods created afterwards — past periods keep their snapshot.
+// price / member_amount changes affect only periods created afterwards — past periods keep their snapshot.
 planRoutes.patch("/:code", async (c) => {
   const plan = await findPlanByCode(c.env.DB, parseCode(CODE_PREFIX.plan, c.req.param("code")));
   if (!plan) return notFound(c);
@@ -129,6 +131,7 @@ planRoutes.patch("/:code", async (c) => {
   const patch: Partial<PlanFields> = {};
   if (has(body, "name")) patch.name = requireString(body, "name", NAME_MAX);
   if (has(body, "price")) patch.price = requireInteger(body, "price", 1, PRICE_MAX);
+  if (has(body, "member_amount")) patch.member_amount = requireInteger(body, "member_amount", 1, PRICE_MAX);
   if (has(body, "cycle")) patch.cycle = requireEnum(body, "cycle", CYCLES);
   if (has(body, "max_slots")) patch.max_slots = requireInteger(body, "max_slots", 1, SLOTS_MAX);
   if (has(body, "payer_code")) patch.payer_id = await requirePayerId(c.env.DB, body);
@@ -169,7 +172,7 @@ planRoutes.get("/:code/members", async (c) => {
   return ok(c, { members: rows.map(toMember) });
 });
 
-// Adds a seat with an admin-set amount. The payer never holds a seat in their own plan, and the
+// Adds a seat; the member pays the plan's member_amount. The payer never holds a seat in their own plan, and the
 // seat limit is checked inside the INSERT itself.
 planRoutes.post("/:code/members", async (c) => {
   const plan = await findPlanByCode(c.env.DB, parseCode(CODE_PREFIX.plan, c.req.param("code")));
@@ -178,7 +181,6 @@ planRoutes.post("/:code/members", async (c) => {
   const body = await readBody(c);
   const user = await findUserByCode(c.env.DB, requireUserCode(body, "user_code"));
   if (!user) fail("INVALID_USER_CODE");
-  const amount = requireInteger(body, "amount", 0, PRICE_MAX);
   const joinedOn = has(body, "joined_on") ? requireDate(body, "joined_on") : todayInVietnam();
 
   if (plan.active !== 1) return failure(c, "PLAN_INACTIVE", "The plan is not active.", 409);
@@ -190,7 +192,6 @@ planRoutes.post("/:code/members", async (c) => {
     code: generateCode(CODE_PREFIX.member),
     plan_id: plan.id,
     user_id: user.id,
-    amount,
     joined_on: joinedOn,
   });
   if (!row) return failure(c, "PLAN_FULL", "The plan has no free seat.", 409);

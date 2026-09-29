@@ -41,8 +41,10 @@ export type Cycle = "MONTHLY" | "YEARLY";
 export type Plan = {
   code: string;
   name: string;
-  // VND per cycle, fees included, set by the admin.
+  // VND per cycle the payer pays the provider, fees included, set by the admin.
   price: number;
+  // VND per cycle every member pays, set by the admin. Independent of price.
+  member_amount: number;
   cycle: Cycle;
   // Seats for members; the payer is not counted.
   max_slots: number;
@@ -60,8 +62,6 @@ export type Plan = {
 export type Member = {
   code: string;
   user: { code: string; username: string; display_name: string };
-  // VND per cycle, set by the admin. Copied onto each payment when a period is created.
-  amount: number;
   joined_on: string;
   left_on: string | null;
 };

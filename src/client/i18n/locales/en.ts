@@ -45,7 +45,7 @@ const en: typeof vi = {
     bank_account_name: "account holder",
     active: "status",
     user_code: "member",
-    amount: "amount",
+    member_amount: "amount per member",
     joined_on: "join date",
     left_on: "leave date",
   },

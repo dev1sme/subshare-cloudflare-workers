@@ -6,7 +6,6 @@ export type MemberRow = {
   code: string;
   plan_id: number;
   user_id: number;
-  amount: number;
   joined_on: string;
   left_on: string | null;
   user_code: string;
@@ -15,10 +14,10 @@ export type MemberRow = {
 };
 
 // Columns an admin may change through PATCH /api/members/:code.
-export type MemberPatch = Partial<Pick<MemberRow, "amount" | "left_on">>;
+export type MemberPatch = Partial<Pick<MemberRow, "left_on">>;
 
 const SELECT_MEMBER = `
-  SELECT m.id, m.code, m.plan_id, m.user_id, m.amount, m.joined_on, m.left_on,
+  SELECT m.id, m.code, m.plan_id, m.user_id, m.joined_on, m.left_on,
          u.code AS user_code, u.username, u.display_name
   FROM plan_members m
   JOIN users u ON u.id = m.user_id`;
@@ -41,18 +40,18 @@ export function findMemberByCode(db: D1Database, code: string): Promise<MemberRo
 // violates plan_members_active_unique -> DUPLICATE_DATA.
 export async function insertMemberIfSeatFree(
   db: D1Database,
-  seat: { code: string; plan_id: number; user_id: number; amount: number; joined_on: string },
+  seat: { code: string; plan_id: number; user_id: number; joined_on: string },
 ): Promise<MemberRow | null> {
   const [, selected] = await db.batch<MemberRow>([
     db
       .prepare(
-        `INSERT INTO plan_members (code, plan_id, user_id, amount, joined_on)
-         SELECT ?, p.id, ?, ?, ?
+        `INSERT INTO plan_members (code, plan_id, user_id, joined_on)
+         SELECT ?, p.id, ?, ?
          FROM plans p
          WHERE p.id = ?
            AND (SELECT COUNT(*) FROM plan_members m WHERE m.plan_id = p.id AND m.left_on IS NULL) < p.max_slots`,
       )
-      .bind(seat.code, seat.user_id, seat.amount, seat.joined_on, seat.plan_id),
+      .bind(seat.code, seat.user_id, seat.joined_on, seat.plan_id),
     db.prepare(`${SELECT_MEMBER} WHERE m.code = ?`).bind(seat.code),
   ]);
   return selected.results[0] ?? null;

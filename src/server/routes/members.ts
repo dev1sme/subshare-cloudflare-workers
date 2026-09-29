@@ -4,11 +4,11 @@ import { type MemberPatch, findMemberByCode, updateMember } from "../db/members"
 import { CODE_PREFIX } from "../domain/code";
 import { todayInVietnam } from "../domain/period";
 import { notFound, ok } from "../envelope";
-import { fail, has, parseCode, readBody, requireDate, requireInteger } from "../validate";
-import { PRICE_MAX, toMember } from "./plans";
+import { fail, has, parseCode, readBody, requireDate } from "../validate";
+import { toMember } from "./plans";
 
-// Admin-only changes to one seat. There is no delete: leaving sets left_on and the row stays as
-// history. A new amount applies to periods created afterwards; past payments keep their snapshot.
+// Admin-only changes to one seat: leaving. There is no delete — the row stays as history. What a
+// member pays is the plan's member_amount, not a property of the seat.
 export const memberRoutes = new Hono<AppEnv>();
 
 memberRoutes.use(requireAdmin);
@@ -20,7 +20,6 @@ memberRoutes.patch("/:code", async (c) => {
   const body = await readBody(c);
   // Built field by field from the allowlist — never from the body itself.
   const patch: MemberPatch = {};
-  if (has(body, "amount")) patch.amount = requireInteger(body, "amount", 0, PRICE_MAX);
   if (has(body, "left_on")) {
     // No un-leaving (it would bypass the seat limit): to come back, add a new seat.
     const leftOn = requireDate(body, "left_on");

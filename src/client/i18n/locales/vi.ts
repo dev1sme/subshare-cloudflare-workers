@@ -45,7 +45,7 @@ const vi = {
     bank_account_name: "tên chủ tài khoản",
     active: "trạng thái",
     user_code: "thành viên",
-    amount: "số tiền",
+    member_amount: "số tiền mỗi thành viên",
     joined_on: "ngày vào gói",
     left_on: "ngày rời gói",
   } as Record<string, string>,

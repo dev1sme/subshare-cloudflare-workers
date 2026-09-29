@@ -123,7 +123,7 @@ describe("update", () => {
   it("keeps a plan's payer an admin", async () => {
     await addOtherAdmin();
     await env.DB.prepare(
-      "INSERT INTO plans (code, name, price, cycle, max_slots, payer_id) SELECT 'PL00000001', 'P', 1000, 'MONTHLY', 2, id FROM users WHERE code = ?",
+      "INSERT INTO plans (code, name, price, member_amount, cycle, max_slots, payer_id) SELECT 'PL00000001', 'P', 1000, 500, 'MONTHLY', 2, id FROM users WHERE code = ?",
     )
       .bind(OTHER_ADMIN.code)
       .run();
@@ -167,10 +167,10 @@ describe("delete", () => {
     await addOtherAdmin();
     await env.DB.batch([
       env.DB.prepare(
-        "INSERT INTO plans (code, name, price, cycle, max_slots, payer_id) SELECT 'PL00000001', 'P', 1000, 'MONTHLY', 2, id FROM users WHERE code = ?",
+        "INSERT INTO plans (code, name, price, member_amount, cycle, max_slots, payer_id) SELECT 'PL00000001', 'P', 1000, 500, 'MONTHLY', 2, id FROM users WHERE code = ?",
       ).bind(ADMIN.code),
       env.DB.prepare(
-        "INSERT INTO plan_members (code, plan_id, user_id, amount, joined_on) SELECT 'MB00000001', p.id, u.id, 500, '2026-09-01' FROM plans p, users u WHERE u.code = ?",
+        "INSERT INTO plan_members (code, plan_id, user_id, joined_on) SELECT 'MB00000001', p.id, u.id, '2026-09-01' FROM plans p, users u WHERE u.code = ?",
       ).bind(OTHER_ADMIN.code),
     ]);
     const res = await call("DELETE", `/api/accounts/${OTHER_ADMIN.code}`, admin);

@@ -1,14 +1,14 @@
 # Mô hình dữ liệu
 
-> Đã chốt bằng `migrations/0001_initial_schema.sql`, `0002_users_role_index.sql`, `0003_plan_payer_and_manual_amounts.sql`. File này phải khớp migration; thay đổi schema là migration mới, không sửa file đã apply.
+> Đã chốt bằng `migrations/0001_initial_schema.sql` … `0004_plan_member_amount.sql`. File này phải khớp migration; thay đổi schema là migration mới, không sửa file đã apply.
 
 Tên bảng và cột **tiếng Anh**; enum **UPPER_SNAKE tiếng Anh**.
 
 ```
 users            (id, code, username, display_name, password_hash, role, created_at)
-plans            (id, code, name, price, cycle, max_slots, payer_id,
+plans            (id, code, name, price, member_amount, cycle, max_slots, payer_id,
                   bank_bin, bank_account_no, bank_account_name, active, created_at)
-plan_members     (id, code, plan_id, user_id, amount, joined_on, left_on)
+plan_members     (id, code, plan_id, user_id, joined_on, left_on)
 billing_periods  (id, code, plan_id, period /YYYY-MM/, price, created_at)
 payments         (id, code, billing_period_id, user_id, amount, status,
                   marked_at, confirmed_at, confirmed_by)
@@ -39,8 +39,8 @@ Chi tiết đã chốt trong migration:
 - `code` có CHECK tiền tố (`substr(code, 1, 2) = 'PL'`, …) — chỉ tiền tố, độ dài và bảng chữ do `parseCode` kiểm.
 - `period` có CHECK dạng `YYYY-MM`, tháng `01`–`12`.
 - `payments`: `status = 'PAID'` buộc `confirmed_at` và `confirmed_by` khác NULL.
-- `plan_members`: `left_on >= joined_on`; `amount >= 0`.
-- `price > 0`, `payments.amount >= 0`, `max_slots >= 1`, `active IN (0, 1)`.
+- `plan_members`: `left_on >= joined_on`.
+- `price > 0`, `member_amount > 0`, `payments.amount >= 0`, `max_slots >= 1`, `active IN (0, 1)`.
 - `created_at` mặc định `strftime('%Y-%m-%dT%H:%M:%SZ', 'now')` (UTC).
 - `users(role)` có index (migration `0002`) cho chốt "admin cuối" đếm admin mỗi lần hạ quyền / xoá.
 - `plans(payer_id)` có index (migration `0003`) cho kiểm "admin này có đang là payer" và cho FK khi xoá user.
@@ -78,22 +78,22 @@ Tiền là `INTEGER` VND. Ngày là `TEXT` ISO. `period` là `YYYY-MM`, tính th
 
 ## Số tiền do admin đặt, không chia tự động
 
-Không có công thức chia. Gói trả bằng USD kèm phí chuyển đổi, và chia đều hay ra số lẻ — nên admin **đặt tay** cả hai:
+Không có công thức chia. Gói trả bằng USD kèm phí chuyển đổi, và chia đều hay ra số lẻ — nên admin **đặt tay hai con số trên gói**, độc lập với nhau:
 
 - `plans.price` — một chu kỳ tốn payer bao nhiêu VND, **đã gồm phí**. App không quy đổi USD.
-- `plan_members.amount` — mỗi thành viên đóng bao nhiêu VND mỗi chu kỳ.
+- `plans.member_amount` — **mỗi** thành viên đóng bao nhiêu VND mỗi chu kỳ. Mọi thành viên của một gói đóng như nhau; số tiền là của gói, không của suất (migration `0004` bỏ `plan_members.amount`).
 
-Ví dụ YouTube Family, payer trả 180.000đ (gồm phí), 5 thành viên:
-
-| | `amount` |
-|---|---|
-| 4 người | 30.000 |
-| 1 người (trẻ em, miễn phí) | 0 |
-| payer (không có dòng) | tự gánh 180.000 − 120.000 = 60.000 |
+Ví dụ YouTube Family: `price = 185.500` (gồm phí), `member_amount = 37.000`, 5 thành viên → thu 185.000, payer tự gánh 500.
 
 **Không có bất biến "tổng các khoản = giá gói".** Phần payer tự gánh = `billing_periods.price − Σ payments.amount` của kỳ đó, tính ra khi cần, không lưu. Có thể âm (thu nhiều hơn chi) — app không chặn, chỉ hiển thị.
 
-Khi tạo kỳ: một dòng `payments` cho mỗi suất đang hoạt động, `amount` copy từ `plan_members.amount`. [Chưa chốt] Suất `amount = 0` có sinh dòng (tạo sẵn `PAID`) hay bỏ qua — quyết khi làm tạo kỳ.
+## Ai vào kỳ nào
+
+Khi tạo kỳ `YYYY-MM`: một dòng `payments` cho mỗi suất **còn trong gói vào ngày 1 của kỳ** — `joined_on <= 'YYYY-MM-01' AND (left_on IS NULL OR left_on >= 'YYYY-MM-01')`. `amount` copy từ `plans.member_amount` lúc tạo kỳ.
+
+- Vào ngày 15/10 → đóng từ kỳ `2026-11`.
+- Rời ngày 15/10 → vẫn đóng kỳ `2026-10`, không vào kỳ `2026-11`.
+- Payer không có suất → không bao giờ có dòng.
 
 ## Dựng lại bảng trong migration
 
@@ -113,6 +113,6 @@ Test migration dựng lại bảng **trên DB có dữ liệu**, không chỉ DB
 
 ## Những điểm thiết kế không được phá
 
-- **Giá và số tiền được chốt lúc tạo kỳ.** `billing_periods.price` copy từ `plans.price`, `payments.amount` copy từ `plan_members.amount` lúc đó. Đổi giá gói, đổi số tiền của một người hay thêm/bớt thành viên chỉ ảnh hưởng kỳ **sau**; không bao giờ tính lại kỳ cũ theo dữ liệu hôm nay.
+- **Giá và số tiền được chốt lúc tạo kỳ.** `billing_periods.price` copy từ `plans.price`, `payments.amount` copy từ `plans.member_amount` lúc đó. Đổi giá gói, đổi số tiền mỗi người hay thêm/bớt thành viên chỉ ảnh hưởng kỳ **sau**; không bao giờ tính lại kỳ cũ theo dữ liệu hôm nay.
 - **Không có ảnh biên lai, không có cột file.** `PENDING` nghĩa là thành viên tự báo đã chuyển, chưa phải bằng chứng.
 - **Seed không chứa dữ liệu thật.** Repo public: migration không được có username, tên hay số tài khoản thật. Admin đầu tiên tạo bằng `scripts/hash-password.mjs` và chạy câu SQL nó in ra, không commit.

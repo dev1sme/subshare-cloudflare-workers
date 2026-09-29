@@ -60,7 +60,7 @@ Sub-path tĩnh (`/api/plans/summary`, …) đăng ký **trước** `/:code` — 
 |---|---|
 | `/api/plans` | `GET /`, `GET /:code`, `POST /`, `PATCH /:code`, `DELETE /:code` |
 | `/api/plans/:code/members` | `GET /`, `POST /` |
-| `/api/members` | `PATCH /:code` (đổi `amount`, đặt `left_on`) |
+| `/api/members` | `PATCH /:code` (đặt `left_on`) |
 | `/api/plans/:code/periods` | `GET /`, `POST /` (tạo kỳ tay; cùng đường với cron) |
 | `/api/payments` | `GET /?status=&period=`, `PATCH /:code` (`PAID` / trả về `UNPAID`) |
 | `/api/accounts` | `GET /`, `POST /`, `PATCH /:code`, `POST /:code/reset-password`, `DELETE /:code` |
@@ -74,31 +74,30 @@ Tài khoản có hai chốt: không xoá tài khoản đang đăng nhập (`CANN
 |---|---|---|
 | `GET /` | — | `{ plans }` (đang dùng trước, rồi theo tên) |
 | `GET /:code` | — | `{ plan }` |
-| `POST /` | `name`, `price`, `cycle`, `max_slots`, `payer_code`, `bank_bin?`, `bank_account_no?`, `bank_account_name?`, `active?` | `{ plan }` — 201 |
+| `POST /` | `name`, `price`, `member_amount`, `cycle`, `max_slots`, `payer_code`, `bank_bin?`, `bank_account_no?`, `bank_account_name?`, `active?` | `{ plan }` — 201 |
 | `PATCH /:code` | bất kỳ trường nào ở trên | `{ plan }` |
 | `DELETE /:code` | — | `null` |
 
-`plan` = `{ code, name, price, cycle, max_slots, active_members, payer: { code, display_name }, bank_bin, bank_account_no, bank_account_name, active, created_at }` — `active` là boolean, không có `id` hay `payer_id`.
+`plan` = `{ code, name, price, member_amount, cycle, max_slots, active_members, payer: { code, display_name }, bank_bin, bank_account_no, bank_account_name, active, created_at }` — `active` là boolean, không có `id` hay `payer_id`.
 
 - `payer_code` là mã tài khoản (`AC…`) của một **admin**: sai hình dạng hoặc không tồn tại → `INVALID_PAYER_CODE`, không phải admin → `PAYER_MUST_BE_ADMIN`. Đổi payer sang người đang có suất trong chính gói đó → 409 `PAYER_IS_MEMBER`.
 - `bank_bin` 6 chữ số (BIN NAPAS), `bank_account_no` 4–19 chữ số; hai trường đặt hoặc xoá **cùng nhau** (`INCOMPLETE_BANK_DETAILS`), vì QR cần cả hai. `null` hoặc `""` là xoá.
 - `max_slots` không được nhỏ hơn `active_members` → 409 `SLOTS_BELOW_MEMBERS`.
-- Đổi `price` chỉ ảnh hưởng kỳ tạo sau đó. Gói còn suất hoặc kỳ không xoá được (`RELATED_DATA_EXISTS`) — đặt `active: false`.
+- `price` (payer trả, gồm phí) và `member_amount` (mỗi thành viên đóng) đều đặt tay, độc lập. Đổi một trong hai chỉ ảnh hưởng kỳ tạo sau đó. Gói còn suất hoặc kỳ không xoá được (`RELATED_DATA_EXISTS`) — đặt `active: false`.
 
 Thành viên của gói **đã có code** (`GET`/`POST /api/plans/:code/members` trong `routes/plans.ts`, `PATCH /api/members/:code` trong `routes/members.ts`, đều `requireAdmin`):
 
 | Route | Body | `data` |
 |---|---|---|
 | `GET /api/plans/:code/members` | — | `{ members }` — đang ở trước, rồi theo `joined_on`; gồm cả người đã rời |
-| `POST /api/plans/:code/members` | `user_code`, `amount`, `joined_on?` (mặc định hôm nay giờ Việt Nam) | `{ member }` — 201 |
-| `PATCH /api/members/:code` | `amount`, `left_on` | `{ member }` |
+| `POST /api/plans/:code/members` | `user_code`, `joined_on?` (mặc định hôm nay giờ Việt Nam) | `{ member }` — 201 |
+| `PATCH /api/members/:code` | `left_on` | `{ member }` |
 
-`member` = `{ code, user: { code, username, display_name }, amount, joined_on, left_on }`.
+`member` = `{ code, user: { code, username, display_name }, joined_on, left_on }`. Số tiền không nằm trên suất — mọi thành viên đóng `plans.member_amount`.
 
 - Payer của gói không có suất trong gói đó → 409 `PAYER_CANNOT_BE_MEMBER`. Gói `active = false` → 409 `PLAN_INACTIVE`.
 - Hết suất → 409 `PLAN_FULL`. Kiểm **trong chính câu `INSERT … SELECT … WHERE COUNT(*) < max_slots`**, nên hai lần thêm song song không cùng lấy suất cuối.
 - Một người một suất đang hoạt động mỗi gói → 409 `DUPLICATE_DATA` (partial unique index).
-- `amount` 0 được phép (người dùng miễn phí). Đổi `amount` chỉ ảnh hưởng kỳ tạo sau đó.
 - Rời gói: `left_on` là ngày thật, không trước `joined_on` (`LEFT_BEFORE_JOINED`), không ở tương lai (`INVALID_LEFT_ON`). **Không có "huỷ rời"** — `left_on: null` bị từ chối, vì nó lách được giới hạn suất; quay lại là thêm suất mới. Không có xoá suất: dòng giữ làm lịch sử.
 - Thành viên có `role = ADMIN` (admin khác, không phải payer) được thêm vào gói, nhưng `/api/me/*` chỉ nhận `MEMBER` — xem [auth.md](auth.md).
 

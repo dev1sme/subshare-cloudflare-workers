@@ -48,6 +48,7 @@ async function errorCode(res: Response): Promise<string> {
 const YOUTUBE = {
   name: "YouTube Family",
   price: 185_500,
+  member_amount: 37_000,
   cycle: "MONTHLY",
   max_slots: 5,
   payer_code: ADMIN.code,
@@ -64,7 +65,7 @@ async function createPlan(overrides: Record<string, unknown> = {}): Promise<Plan
 
 async function addSeat(planCode: string, userCode: string) {
   await env.DB.prepare(
-    "INSERT INTO plan_members (code, plan_id, user_id, amount, joined_on) SELECT 'MB' || substr(?, 3), p.id, u.id, 30000, '2026-09-01' FROM plans p, users u WHERE p.code = ? AND u.code = ?",
+    "INSERT INTO plan_members (code, plan_id, user_id, joined_on) SELECT 'MB' || substr(?, 3), p.id, u.id, '2026-09-01' FROM plans p, users u WHERE p.code = ? AND u.code = ?",
   )
     .bind(userCode, planCode, userCode)
     .run();
@@ -84,6 +85,7 @@ describe("create and read", () => {
     expect(plan).toMatchObject({
       name: "YouTube Family",
       price: 185_500,
+      member_amount: 37_000,
       cycle: "MONTHLY",
       max_slots: 5,
       active_members: 0,
@@ -110,6 +112,8 @@ describe("create and read", () => {
       [{ name: undefined }, "MISSING_NAME"],
       [{ price: 0 }, "INVALID_PRICE"],
       [{ price: 1.5 }, "INVALID_PRICE"],
+      [{ member_amount: undefined }, "MISSING_MEMBER_AMOUNT"],
+      [{ member_amount: 0 }, "INVALID_MEMBER_AMOUNT"],
       [{ cycle: "WEEKLY" }, "INVALID_CYCLE"],
       [{ max_slots: 0 }, "INVALID_MAX_SLOTS"],
       [{ payer_code: undefined }, "MISSING_PAYER_CODE"],
@@ -138,9 +142,9 @@ describe("create and read", () => {
 describe("update", () => {
   it("changes allowlisted fields and ignores the rest", async () => {
     const plan = await createPlan();
-    const res = await call("PATCH", `/api/plans/${plan.code}`, { price: 190_000, active: false, payer_id: 999, code: "PL00000000" });
+    const res = await call("PATCH", `/api/plans/${plan.code}`, { price: 190_000, member_amount: 38_000, active: false, payer_id: 999, code: "PL00000000" });
     const updated = ((await res.json()) as ApiSuccess<{ plan: Plan }>).data.plan;
-    expect(updated).toMatchObject({ code: plan.code, price: 190_000, active: false, payer: { code: ADMIN.code } });
+    expect(updated).toMatchObject({ code: plan.code, price: 190_000, member_amount: 38_000, active: false, payer: { code: ADMIN.code } });
     expect(await errorCode(await call("PATCH", `/api/plans/${plan.code}`, { payer_id: 1 }))).toBe("NOTHING_TO_UPDATE");
   });
 

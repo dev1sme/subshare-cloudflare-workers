@@ -31,6 +31,7 @@ beforeEach(async () => {
   const res = await call("POST", "/api/plans", {
     name: "YouTube Family",
     price: 185_500,
+    member_amount: 37_000,
     cycle: "MONTHLY",
     max_slots: 2,
     payer_code: ADMIN.code,
@@ -58,7 +59,7 @@ async function errorCode(res: Response): Promise<string> {
 }
 
 async function addMember(userCode: string, extra: Record<string, unknown> = {}): Promise<Response> {
-  return call("POST", `/api/plans/${plan.code}/members`, { user_code: userCode, amount: 30_000, ...extra });
+  return call("POST", `/api/plans/${plan.code}/members`, { user_code: userCode, ...extra });
 }
 
 async function memberOf(res: Response): Promise<Member> {
@@ -69,18 +70,17 @@ describe("guard", () => {
   it("is admin-only on both mounts", async () => {
     const alice = await login(ALICE.username, ALICE.password);
     expect(await errorCode(await call("GET", `/api/plans/${plan.code}/members`, undefined, alice))).toBe("FORBIDDEN");
-    expect(await errorCode(await call("PATCH", "/api/members/MB00000001", { amount: 1 }, alice))).toBe("FORBIDDEN");
+    expect(await errorCode(await call("PATCH", "/api/members/MB00000001", { left_on: "2026-01-01" }, alice))).toBe("FORBIDDEN");
   });
 });
 
 describe("add", () => {
-  it("adds a seat with the admin-set amount, joined today in Vietnam by default", async () => {
+  it("adds a seat, joined today in Vietnam by default", async () => {
     const res = await addMember(ALICE.code);
     expect(res.status).toBe(201);
     const member = await memberOf(res);
     expect(member).toMatchObject({
       user: { code: ALICE.code, username: "alice", display_name: "Alice" },
-      amount: 30_000,
       joined_on: todayInVietnam(),
       left_on: null,
     });
@@ -91,9 +91,10 @@ describe("add", () => {
     expect(((await plans.json()) as ApiSuccess<{ plan: Plan }>).data.plan.active_members).toBe(1);
   });
 
-  it("accepts a free seat (amount 0) and an explicit join date", async () => {
-    const member = await memberOf(await addMember(ALICE.code, { amount: 0, joined_on: "2026-01-15" }));
-    expect(member).toMatchObject({ amount: 0, joined_on: "2026-01-15" });
+  it("accepts an explicit join date and has no per-seat amount", async () => {
+    const member = await memberOf(await addMember(ALICE.code, { joined_on: "2026-01-15", amount: 1 }));
+    expect(member.joined_on).toBe("2026-01-15");
+    expect(member).not.toHaveProperty("amount");
   });
 
   it("validates the body", async () => {
@@ -101,13 +102,10 @@ describe("add", () => {
       [{ user_code: undefined }, "MISSING_USER_CODE"],
       [{ user_code: "PL00000001" }, "INVALID_USER_CODE"],
       [{ user_code: "ACFFFFFFFF" }, "INVALID_USER_CODE"],
-      [{ amount: undefined }, "MISSING_AMOUNT"],
-      [{ amount: -1 }, "INVALID_AMOUNT"],
-      [{ amount: 1.5 }, "INVALID_AMOUNT"],
       [{ joined_on: "2026-02-30" }, "INVALID_JOINED_ON"],
     ];
     for (const [overrides, code] of cases) {
-      const res = await call("POST", `/api/plans/${plan.code}/members`, { user_code: ALICE.code, amount: 30_000, ...overrides });
+      const res = await call("POST", `/api/plans/${plan.code}/members`, { user_code: ALICE.code, ...overrides });
       expect(res.status, code).toBe(400);
       expect(await errorCode(res)).toBe(code);
     }
@@ -141,11 +139,10 @@ describe("add", () => {
 });
 
 describe("update and leave", () => {
-  it("changes the amount", async () => {
+  it("only accepts left_on; everything else is ignored", async () => {
     const member = await memberOf(await addMember(ALICE.code));
-    const res = await call("PATCH", `/api/members/${member.code}`, { amount: 35_000, user_id: 1, plan_id: 2 });
-    expect((await memberOf(res)).amount).toBe(35_000);
-    expect(await errorCode(await call("PATCH", `/api/members/${member.code}`, { joined_on: "2026-01-01" }))).toBe("NOTHING_TO_UPDATE");
+    const res = await call("PATCH", `/api/members/${member.code}`, { amount: 35_000, user_id: 1, joined_on: "2026-01-01" });
+    expect(await errorCode(res)).toBe("NOTHING_TO_UPDATE");
   });
 
   it("leaving frees the seat and keeps the row; coming back is a new seat", async () => {
@@ -172,9 +169,9 @@ describe("update and leave", () => {
   });
 
   it("addresses seats by code only", async () => {
-    expect(await errorCode(await call("PATCH", "/api/members/1", { amount: 1 }))).toBe("INVALID_CODE");
-    expect(await errorCode(await call("PATCH", `/api/members/${plan.code}`, { amount: 1 }))).toBe("INVALID_CODE");
-    expect((await call("PATCH", "/api/members/MBFFFFFFFF", { amount: 1 })).status).toBe(404);
+    expect(await errorCode(await call("PATCH", "/api/members/1", { left_on: "2026-01-01" }))).toBe("INVALID_CODE");
+    expect(await errorCode(await call("PATCH", `/api/members/${plan.code}`, { left_on: "2026-01-01" }))).toBe("INVALID_CODE");
+    expect((await call("PATCH", "/api/members/MBFFFFFFFF", { left_on: "2026-01-01" })).status).toBe(404);
   });
 });
 

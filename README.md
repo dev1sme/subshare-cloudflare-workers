@@ -12,7 +12,7 @@ Chạy hoàn toàn trên **Cloudflare**: một Worker phục vụ cả giao di�
 ## ✨ Tính năng
 
 - **Quản lý gói**: tạo gói, giá tiền, chu kỳ (tháng/năm), số suất tối đa.
-- **Quản lý thành viên**: thêm người vào gói, đặt số tiền mỗi người đóng.
+- **Quản lý thành viên**: thêm người vào gói; mỗi gói đặt giá và số tiền mỗi thành viên đóng.
 - **Kỳ thanh toán**: tự tạo kỳ mới mỗi tháng, mỗi thành viên có trạng thái *Chưa đóng / Chờ xác nhận / Đã đóng*.
 - **Nộp tiền**: thành viên xem số tiền cần đóng, quét mã VietQR, bấm *Tôi đã chuyển*.
 - **Xác nhận**: quản trị viên đối chiếu sao kê rồi xác nhận.
@@ -81,7 +81,7 @@ Chi tiết và các bẫy đã biết: [docs/deployment.md](docs/deployment.md).
 |---|---|
 | `users` | Người dùng (username, tên hiển thị, vai trò) |
 | `plans` | Gói đăng ký (tên, giá, chu kỳ, số suất, tài khoản nhận tiền) |
-| `plan_members` | Ai thuộc gói nào, đóng bao nhiêu mỗi chu kỳ |
+| `plan_members` | Ai thuộc gói nào, vào / rời khi nào |
 | `billing_periods` | Các kỳ thanh toán, giá chốt tại thời điểm tạo |
 | `payments` | Khoản của từng người mỗi kỳ, trạng thái |
 
