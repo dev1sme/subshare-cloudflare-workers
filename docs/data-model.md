@@ -1,6 +1,6 @@
 # Mô hình dữ liệu
 
-> **Bản thiết kế, chưa có migration.** Tên bảng và cột dưới đây là đề xuất; migration đầu tiên chốt chúng, và từ đó file này phải khớp migration.
+> Đã chốt bằng `migrations/0001_initial_schema.sql`. File này phải khớp migration; thay đổi schema là migration mới, không sửa file đã apply.
 
 Tên bảng và cột **tiếng Anh**; enum **UPPER_SNAKE tiếng Anh**.
 
@@ -23,6 +23,18 @@ payments         (id, code, billing_period_id, user_id, amount, status,
 | `plan_members UNIQUE(plan_id, user_id) WHERE left_on IS NULL` | Một người không ở hai suất đang hoạt động của cùng gói; người đã rời giữ lại làm lịch sử. |
 | `users UNIQUE(email)` | Đăng nhập bằng email. |
 | `UNIQUE(code)` trên mọi bảng có `code` | Xem dưới. |
+
+Chi tiết đã chốt trong migration 0001:
+
+- Mọi bảng là `STRICT`: sai kiểu (chuỗi vào cột `INTEGER`) bị từ chối thay vì lưu lặng lẽ. Lỗi đó là `SQLITE_CONSTRAINT_DATATYPE` — validate phải chặn trước; lọt tới D1 thì thành 500.
+- `users.email` là `COLLATE NOCASE`: `A@x` và `a@x` là một tài khoản.
+- `code` có CHECK tiền tố (`substr(code, 1, 2) = 'PL'`, …) — chỉ tiền tố, độ dài và bảng chữ do `parseCode` kiểm.
+- `period` có CHECK dạng `YYYY-MM`, tháng `01`–`12`.
+- `payments`: `status = 'PAID'` buộc `confirmed_at` và `confirmed_by` khác NULL.
+- `plan_members`: `left_on >= joined_on`; `weight >= 1`.
+- `price > 0`, `amount >= 0`, `max_slots >= 1`, `active IN (0, 1)`.
+- `created_at` mặc định `strftime('%Y-%m-%dT%H:%M:%SZ', 'now')` (UTC).
+- Mọi cột FK có index, để kiểm FK khi xoá bảng cha không quét bảng con. Thêm `billing_periods(period)` cho lọc theo khoảng, `payments(status)` cho danh sách `PENDING`.
 
 Xoá bị chặn bởi FK, không cascade: gói còn kỳ, kỳ còn khoản thanh toán → 409 `RELATED_DATA_EXISTS`. Thành viên rời gói thì đặt `left_on`, không xoá dòng.
 
