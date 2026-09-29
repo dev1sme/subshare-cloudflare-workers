@@ -99,3 +99,8 @@ Các câu đọc độc lập của một màn đi trong **một** `db.batch()`.
 Mọi giá trị tới D1 qua `.bind()`. Chuỗi duy nhất được nội suy vào SQL là hằng cấp file (danh sách cột), placeholder sinh ra (`ids.map(() => "?")`), và tên cột từ `buildSet`.
 
 `buildSet` lấy tên cột từ key của đối số, nên truyền thẳng body request vào là mở lỗ injection. Mọi nơi gọi dựng patch **từng field một** từ allowlist — trong `src/server/` không có `...body`.
+
+`src/server/db/sql.ts`:
+
+- `buildSet(patch)` bỏ qua value `undefined`, giữ `null` (đặt cột về NULL), trả `null` khi không còn gì. Kiểu value là `SqlValue = string | number | null`, nên body request (`Record<string, unknown>`) **không compile** khi truyền vào — hàng rào injection nằm ở kiểu, có test `@ts-expect-error` giữ nó.
+- `Where` gom điều kiện lọc tuỳ chọn: `add("period BETWEEN ? AND ?", from, to)` chỉ áp khi **mọi** value có mặt, và throw nếu số `?` lệch số value. Lọc `IS NULL` dùng `addRaw`.

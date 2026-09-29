@@ -46,12 +46,13 @@ export function insertUser(
     .first<UserRow>();
 }
 
-// null when the patch would demote the last admin.
+// null when the patch would demote the last admin. The caller rejects an empty patch first.
 export function updateUser(db: D1Database, id: number, patch: UserPatch): Promise<UserRow | null> {
   const set = buildSet(patch);
+  if (!set) throw new Error("updateUser: empty patch");
   const guard = patch.role === "MEMBER" ? ` AND ${KEEPS_AN_ADMIN}` : "";
   return db
-    .prepare(`UPDATE users SET ${set.sql} WHERE id = ?${guard} RETURNING ${COLUMNS}`)
+    .prepare(`UPDATE users SET ${set.clause} WHERE id = ?${guard} RETURNING ${COLUMNS}`)
     .bind(...set.values, id)
     .first<UserRow>();
 }
