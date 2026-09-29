@@ -44,7 +44,7 @@ These are the ones that cost money, break production, or leak data when broken. 
 - **Never tune PBKDF2 iterations from a local benchmark.** The dev machine is ~3× faster than a Worker's CPU; free tier allows 10 ms CPU per request. Measure on the deployed Worker. → `docs/auth.md`
 - **Plaintext passwords are never stored, logged, or readable back.** A password is returned exactly once, in the response that created it. → `docs/auth.md`
 - **A member's share is snapshotted onto `payments` when a period is created.** Never recompute a past period from today's plan price or member list. → `docs/data-model.md`
-- **Money is `INTEGER` VND.** Splitting must distribute the remainder deterministically; the shares of a period always sum to the plan price. → `docs/data-model.md`
+- **Money is `INTEGER` VND, set by the admin.** No automatic splitting: `plans.price` and each `plan_members.amount` are entered by hand. A plan's payer (`plans.payer_id`, always an ADMIN) has no seat and no payment row. → `docs/data-model.md`
 - **The VietQR payload is built in-house.** Never route it through `img.vietqr.io` or any QR image service — that tells a third party who owes how much. → `docs/payments.md`
 - **Handlers never call `c.json` directly.** Go through `ok` / `failure` / `notFound` in `src/server/envelope.ts`. → `docs/api.md`
 - **Never pass a request body into `buildSet`.** Column names come from a fixed allowlist at each call site; `...body` would be an injection hole. → `docs/api.md`

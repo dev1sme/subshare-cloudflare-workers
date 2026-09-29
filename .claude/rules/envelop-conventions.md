@@ -111,7 +111,7 @@ Còn lại mới là thiếu thật.
 - `timestamp` trong `meta` phải trả kiểu số, không được trả chuỗi
 - Boolean trả kiểu boolean thật, không dùng chuỗi `"true"` hoặc `"false"`
 - Numeric field phải ổn định kiểu dữ liệu giữa các endpoint
-- Enum field trả giá trị ổn định, machine-readable, **UPPER_SNAKE tiếng Anh** — trong dự án này: `UNPAID` / `PENDING` / `PAID`, `MONTHLY` / `YEARLY`, `EQUAL` / `CUSTOM`, `ADMIN` / `MEMBER`. Giá trị enum được CHECK-constraint trong D1, nên đổi chúng cần migration
+- Enum field trả giá trị ổn định, machine-readable, **UPPER_SNAKE tiếng Anh** — trong dự án này: `UNPAID` / `PENDING` / `PAID`, `MONTHLY` / `YEARLY`, `ADMIN` / `MEMBER`. Giá trị enum được CHECK-constraint trong D1, nên đổi chúng cần migration
 - Nullable field phải rõ ràng là `null` hoặc không có mặt theo một quy ước thống nhất
 
 ### 1.4 Exposure rules

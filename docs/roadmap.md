@@ -15,9 +15,8 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 
 - [x] Quản lý tài khoản (`/api/accounts`): tạo, đổi tên / vai trò, đặt lại mật khẩu, xoá; `requireAdmin` đọc vai trò từ DB
 
-- [ ] Quản lý gói: giá, chu kỳ `MONTHLY`/`YEARLY`, số suất tối đa, thông tin ngân hàng
-- [ ] Quản lý thành viên: thêm vào gói, chia đều hoặc theo trọng số, rời gói
-- [ ] `domain/split.ts` + test: tổng các phần luôn bằng giá
+- [ ] Quản lý gói: giá (VND, gồm phí, đặt tay), chu kỳ `MONTHLY`/`YEARLY`, số suất cho thành viên, payer (admin), thông tin ngân hàng
+- [ ] Quản lý thành viên: thêm vào gói với số tiền đặt tay, đổi số tiền, rời gói; payer không được là thành viên của gói mình
 - [ ] Tạo kỳ: tay (admin) và Cron Trigger đầu tháng giờ Việt Nam, idempotent
 - [ ] Màn thành viên: khoản cần đóng, VietQR, nút "Tôi đã chuyển"
 - [ ] Màn admin: danh sách `PENDING` chờ xác nhận, xác nhận / trả về
@@ -29,6 +28,8 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 - [ ] Thống kê chi tiêu theo tháng / năm (lọc kỳ theo khoảng để dùng index)
 
 ## Đã loại
+
+- Chia tiền tự động (đều / theo trọng số, `domain/split.ts`) — giá gói trả bằng USD kèm phí và chia hay ra số lẻ; admin đặt giá và số tiền từng người bằng tay.
 
 - Ảnh biên lai / R2 — xác nhận bằng đối chiếu sao kê là đủ.
 - Cloudflare Pages, monorepo deploy tách — một Worker phục vụ cả SPA và API.

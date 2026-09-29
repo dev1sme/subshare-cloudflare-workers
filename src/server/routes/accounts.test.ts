@@ -120,6 +120,21 @@ describe("update", () => {
     expect(row?.role).toBe("ADMIN");
   });
 
+  it("keeps a plan's payer an admin", async () => {
+    await addOtherAdmin();
+    await env.DB.prepare(
+      "INSERT INTO plans (code, name, price, cycle, max_slots, payer_id) SELECT 'PL00000001', 'P', 1000, 'MONTHLY', 2, id FROM users WHERE code = ?",
+    )
+      .bind(OTHER_ADMIN.code)
+      .run();
+    const admin = await login(ADMIN.username, ADMIN.password);
+    const res = await call("PATCH", `/api/accounts/${OTHER_ADMIN.code}`, admin, { role: "MEMBER" });
+    expect(res.status).toBe(409);
+    expect(await errorCode(res)).toBe("USER_IS_PLAN_PAYER");
+    // Renaming the payer is fine.
+    expect((await call("PATCH", `/api/accounts/${OTHER_ADMIN.code}`, admin, { display_name: "Payer" })).status).toBe(200);
+  });
+
   it("addresses accounts by code only", async () => {
     const admin = await login(ADMIN.username, ADMIN.password);
     expect(await errorCode(await call("PATCH", "/api/accounts/1", admin, { display_name: "X" }))).toBe("INVALID_CODE");
@@ -151,9 +166,11 @@ describe("delete", () => {
 
     await addOtherAdmin();
     await env.DB.batch([
-      env.DB.prepare("INSERT INTO plans (code, name, price, cycle, max_slots) VALUES ('PL00000001', 'P', 1000, 'MONTHLY', 2)"),
       env.DB.prepare(
-        "INSERT INTO plan_members (code, plan_id, user_id, joined_on) SELECT 'MB00000001', p.id, u.id, '2026-09-01' FROM plans p, users u WHERE u.code = ?",
+        "INSERT INTO plans (code, name, price, cycle, max_slots, payer_id) SELECT 'PL00000001', 'P', 1000, 'MONTHLY', 2, id FROM users WHERE code = ?",
+      ).bind(ADMIN.code),
+      env.DB.prepare(
+        "INSERT INTO plan_members (code, plan_id, user_id, amount, joined_on) SELECT 'MB00000001', p.id, u.id, 500, '2026-09-01' FROM plans p, users u WHERE u.code = ?",
       ).bind(OTHER_ADMIN.code),
     ]);
     const res = await call("DELETE", `/api/accounts/${OTHER_ADMIN.code}`, admin);

@@ -18,6 +18,7 @@ const en: typeof vi = {
     NOTHING_TO_UPDATE: "There is nothing to save.",
     CANNOT_DELETE_SELF: "You cannot delete the account you are signed in with.",
     LAST_ADMIN_REQUIRED: "At least one admin must remain.",
+    USER_IS_PLAN_PAYER: "This admin pays for a plan; assign another payer first.",
   },
   fields: {
     username: "username",

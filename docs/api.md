@@ -31,6 +31,7 @@ Chuẩn envelope, định dạng thuộc tính và quy tắc `error.code` ở [`
 | PATCH không có field hợp lệ | 400 | `NOTHING_TO_UPDATE` |
 | Xoá chính mình | 409 | `CANNOT_DELETE_SELF` |
 | Hạ quyền / xoá admin cuối | 409 | `LAST_ADMIN_REQUIRED` |
+| Hạ quyền admin đang là payer của gói | 409 | `USER_IS_PLAN_PAYER` |
 | Lỗi khác | 500 | `INTERNAL_ERROR` (lỗi thật chỉ vào `console.error`) |
 
 `handleError` (gắn làm `app.onError`) nhận ra lỗi constraint của D1 chỉ qua chuỗi message (`UNIQUE constraint failed`, …), xét cả `err.cause`. Chữ ký là `failure(c, code, message, status = 400, details = null)` — mã đứng ngay sau `c` để lệnh grep trong `envelop-conventions.md` bắt được mọi mã.
@@ -51,7 +52,7 @@ Sub-path tĩnh (`/api/plans/summary`, …) đăng ký **trước** `/:code` — 
 |---|---|
 | `/api/plans` | `GET /`, `GET /:code`, `POST /`, `PATCH /:code`, `DELETE /:code` |
 | `/api/plans/:code/members` | `GET /`, `POST /` |
-| `/api/members` | `PATCH /:code` (đổi `weight`, đặt `left_on`) |
+| `/api/members` | `PATCH /:code` (đổi `amount`, đặt `left_on`) |
 | `/api/plans/:code/periods` | `GET /`, `POST /` (tạo kỳ tay; cùng đường với cron) |
 | `/api/payments` | `GET /?status=&period=`, `PATCH /:code` (`PAID` / trả về `UNPAID`) |
 | `/api/accounts` | `GET /`, `POST /`, `PATCH /:code`, `POST /:code/reset-password`, `DELETE /:code` |

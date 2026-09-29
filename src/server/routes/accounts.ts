@@ -11,6 +11,7 @@ import {
   updateUser,
   updateUserPasswordHash,
 } from "../db/users";
+import { isPayerOfAnyPlan } from "../db/plans";
 import { CODE_PREFIX, generateCode } from "../domain/code";
 import { MIN_PASSWORD_LENGTH, generatePassword, hashPassword } from "../domain/password";
 import { failure, notFound, ok } from "../envelope";
@@ -76,6 +77,10 @@ accountRoutes.patch("/:code", async (c) => {
   if (has(body, "display_name")) patch.display_name = requireString(body, "display_name", DISPLAY_NAME_MAX);
   if (has(body, "role")) patch.role = requireEnum(body, "role", ROLES);
   if (Object.keys(patch).length === 0) fail("NOTHING_TO_UPDATE", "No updatable field was sent.");
+  // A plan's payer receives the members' money and must stay an admin.
+  if (patch.role === "MEMBER" && account.role === "ADMIN" && (await isPayerOfAnyPlan(c.env.DB, account.id))) {
+    return failure(c, "USER_IS_PLAN_PAYER", "This admin pays for a plan; assign another payer first.", 409);
+  }
 
   const row = await updateUser(c.env.DB, account.id, patch);
   if (!row) return failure(c, "LAST_ADMIN_REQUIRED", "At least one admin must remain.", 409);

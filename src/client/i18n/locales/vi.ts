@@ -18,6 +18,7 @@ const vi = {
     NOTHING_TO_UPDATE: "Không có thay đổi nào để lưu.",
     CANNOT_DELETE_SELF: "Không thể xoá tài khoản đang đăng nhập.",
     LAST_ADMIN_REQUIRED: "Phải còn ít nhất một quản trị viên.",
+    USER_IS_PLAN_PAYER: "Người này đang là người thanh toán của một gói; hãy đổi người thanh toán trước.",
   },
   fields: {
     username: "tên đăng nhập",

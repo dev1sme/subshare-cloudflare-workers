@@ -52,7 +52,7 @@ src/server/           API Hono trên Worker
   headers.ts          security header cho /api/*
   validate.ts         validate request viết tay
   routes/             mỗi nhóm tài nguyên một file
-  domain/             logic thuần: split.ts, period.ts, vietqr.ts, code.ts, password.ts
+  domain/             logic thuần: period.ts, vietqr.ts, code.ts, password.ts, username.ts
   db/                 một module mỗi bảng + sql.ts
 src/shared/types.ts   kiểu API dùng chung client ↔ server
 scripts/              hash-password.mjs (tạo admin đầu tiên)
@@ -61,7 +61,7 @@ migrations/           SQL cho D1
 
 README cũ mô tả monorepo `apps/api` + `apps/web` deploy riêng — cấu trúc đó bị thay bằng một package một Worker ở trên.
 
-Route handler validate và quyết định; **không viết SQL** — SQL nằm trong `db/`. Chia tiền nằm trong `domain/split.ts` để test được mà không cần database.
+Route handler validate và quyết định; **không viết SQL** — SQL nằm trong `db/`. Logic thuần (kỳ theo giờ Việt Nam, payload VietQR) nằm trong `domain/` để test được mà không cần database. Không có chia tiền tự động — số tiền do admin đặt ([data-model.md](data-model.md)).
 
 TypeScript chia project reference: client (DOM lib), Worker (type workerd, sinh bằng `wrangler types`), node (`vite.config.ts`). Client **không** import từ `src/server/`, chỉ từ `src/shared/`.
 

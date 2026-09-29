@@ -16,7 +16,7 @@ Thành viên **không bao giờ** tự đặt `PAID`. `PENDING` chỉ là lời 
 
 ## Tài khoản nhận tiền
 
-Thông tin ngân hàng (`bank_bin` mã BIN NAPAS, `bank_account_no`, `bank_account_name`) nằm trên `plans`, vì mỗi gói có thể do một người khác trả tiền dịch vụ. Là **dữ liệu nhập qua UI**, không commit vào repo, config hay seed.
+Thông tin ngân hàng (`bank_bin` mã BIN NAPAS, `bank_account_no`, `bank_account_name`) nằm trên `plans`: tiền của gói chảy về **payer** của gói (`plans.payer_id`, luôn là admin — xem [data-model.md](data-model.md)), và một admin có thể nhận tiền mỗi gói vào một tài khoản khác nhau. Là **dữ liệu nhập qua UI**, không commit vào repo, config hay seed.
 
 Gói chưa có thông tin ngân hàng, hoặc khoản đã `PAID` → response trả `bank_transfer: null`, UI chỉ hiện mã khoản dạng chữ.
 
