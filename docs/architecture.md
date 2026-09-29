@@ -57,7 +57,12 @@ src/server/           API Hono trên Worker
 src/shared/types.ts   kiểu API dùng chung client ↔ server
 scripts/              hash-password.mjs (tạo admin đầu tiên)
 migrations/           SQL cho D1
+test/                 Vitest, chạy trong workerd qua @cloudflare/vitest-plugin
+  setup/              apply-migrations.ts (D1 thật cho mỗi file test), env.d.ts
+  server/             soi gương src/server/: test/server/routes/plans.test.ts ↔ src/server/routes/plans.ts
 ```
+
+Test **không** nằm trong `src/`: mọi `*.test.ts` ở `test/`, đường dẫn soi gương file nó kiểm, để `src/` chỉ có code chạy thật. `vitest.config.ts` chỉ nhận `test/**/*.test.ts`. Mỗi file test bắt đầu từ schema thật (mọi migration) và không có dòng nào — storage tách theo file.
 
 README cũ mô tả monorepo `apps/api` + `apps/web` deploy riêng — cấu trúc đó bị thay bằng một package một Worker ở trên.
 

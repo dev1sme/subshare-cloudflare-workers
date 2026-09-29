@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CODE_PREFIX, generateCode, isCode } from "./code";
+import { CODE_PREFIX, generateCode, isCode } from "../../../src/server/domain/code";
 
 describe("codes", () => {
   it("generates prefixed uppercase hex", () => {

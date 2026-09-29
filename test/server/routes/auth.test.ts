@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { env } from "cloudflare:workers";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { ApiFailure, ApiSuccess, User } from "../../shared/types";
-import { type AppEnv, requireAdmin, requireMember } from "../auth";
-import { hashPassword } from "../domain/password";
-import { handleError, ok } from "../envelope";
-import worker from "../index";
+import type { ApiFailure, ApiSuccess, User } from "../../../src/shared/types";
+import { type AppEnv, requireAdmin, requireMember } from "../../../src/server/auth";
+import { hashPassword } from "../../../src/server/domain/password";
+import { handleError, ok } from "../../../src/server/envelope";
+import worker from "../../../src/server/index";
 
 const ADMIN = { code: "AC0000000A", username: "admin", password: "admin-password" };
 const MEMBER = { code: "AC0000000B", username: "member", password: "member-password" };

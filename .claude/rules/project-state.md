@@ -21,7 +21,7 @@ Decided before any code exists (amended 2026-09-29: no automatic splitting — t
 
 When something gets built, deployed, or migrated, update this file in the same commit — and state **how it was verified** (a query result, a probe, a `wrangler` output), not just that it was done. "All migrations applied" means `SELECT COUNT(*) FROM d1_migrations` matched the file count, never that the directory looked complete.
 
-Test runner: Vitest 4 with `@cloudflare/vitest-plugin` (`npm run test`, config in `vitest.config.ts`). No tests yet; `passWithNoTests` is on until the first one lands. The plugin requires Vitest `^4.1` — do not bump to Vitest 5 until it supports it.
+Test runner: Vitest 4 with `@cloudflare/vitest-plugin` (`npm run test`, config in `vitest.config.ts`). Tests live in `test/`, mirroring `src/` (moved there 2026-09-29; 67/67 still pass). The plugin requires Vitest `^4.1` — do not bump to Vitest 5 until it supports it.
 
 Username login verified locally on 2026-09-29 after resetting the local D1: `npm run test` 38/38 (adds `normalizeUsername` and the `users.username` CHECK rejecting uppercase / too short / leading dot / space / `@`); `PRAGMA table_info(users)` shows `username`, no `email`; against `npm run dev`, a user created as `Local.Admin` is stored as `local.admin`, login with `" LOCAL.ADMIN "` → 200, wrong password → 401. Throwaway user deleted; local tables are empty.
 

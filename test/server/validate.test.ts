@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ValidationError, fail, requireInteger, requireString, validationDetails } from "./validate";
+import { ValidationError, fail, requireInteger, requireString, validationDetails } from "../../src/server/validate";
 
 function codeOf(fn: () => unknown): string {
   try {

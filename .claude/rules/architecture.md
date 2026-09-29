@@ -8,6 +8,7 @@ Must hold:
 - `run_worker_first = ["/api/*"]` with `not_found_handling = "single-page-application"`. A new prefix outside `/api` must be added there or it answers `index.html` with 200.
 - Route handlers never write SQL — that lives in `src/server/db/`, one module per table. Pure logic (periods in `Asia/Ho_Chi_Minh`, the VietQR payload) lives in `src/server/domain/`, testable without a database.
 - Client never imports from `src/server/`, only `src/shared/`.
+- Tests live in `test/`, never in `src/`: `test/server/routes/plans.test.ts` tests `src/server/routes/plans.ts`. Shared setup is in `test/setup/`.
 - `*Page.tsx` composes only: no `api.ts`, no table/modal JSX, no `try/catch`. `use*.ts` owns data + mutations (return `Promise<boolean>`, raise own toast). Feature components never import `api.ts`.
 - Anything passed into a child's `useEffect` is memoised (`useCallback` / `useMemo`) — an unmemoised function or array there renders in a loop.
 - Confirm via an in-app dialog hook, never `window.confirm`.

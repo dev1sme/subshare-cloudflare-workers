@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
-import type { ApiFailure, ApiSuccess } from "../shared/types";
-import { failure, handleError, notFound, ok } from "./envelope";
-import { securityHeaders } from "./headers";
-import { fail, readBody } from "./validate";
-import worker from "./index";
+import type { ApiFailure, ApiSuccess } from "../../src/shared/types";
+import { failure, handleError, notFound, ok } from "../../src/server/envelope";
+import { securityHeaders } from "../../src/server/headers";
+import { fail, readBody } from "../../src/server/validate";
+import worker from "../../src/server/index";
 
 function testApp() {
   const app = new Hono();

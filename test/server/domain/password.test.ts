@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DUMMY_PASSWORD_HASH, PBKDF2_ITERATIONS, generatePassword, hashPassword, verifyPassword } from "./password";
+import { DUMMY_PASSWORD_HASH, PBKDF2_ITERATIONS, generatePassword, hashPassword, verifyPassword } from "../../../src/server/domain/password";
 
 describe("password hashing", () => {
   it("round-trips and rejects a wrong password", async () => {

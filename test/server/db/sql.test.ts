@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Where, buildSet } from "./sql";
+import { Where, buildSet } from "../../../src/server/db/sql";
 
 describe("buildSet", () => {
   it("skips undefined, keeps null", () => {

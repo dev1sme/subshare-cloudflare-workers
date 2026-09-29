@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeUsername } from "./username";
+import { normalizeUsername } from "../../../src/server/domain/username";
 
 describe("normalizeUsername", () => {
   it("trims and lowercases", () => {

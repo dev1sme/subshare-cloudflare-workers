@@ -1,8 +1,8 @@
 import { env } from "cloudflare:workers";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { Account, ApiFailure, ApiSuccess } from "../../shared/types";
-import { hashPassword } from "../domain/password";
-import worker from "../index";
+import type { Account, ApiFailure, ApiSuccess } from "../../../src/shared/types";
+import { hashPassword } from "../../../src/server/domain/password";
+import worker from "../../../src/server/index";
 
 const ADMIN = { code: "AC0000000A", username: "admin", password: "admin-password" };
 const OTHER_ADMIN = { code: "AC0000000C", username: "admin2", password: "admin2-password" };

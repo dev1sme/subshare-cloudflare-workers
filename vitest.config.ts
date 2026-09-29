@@ -17,6 +17,8 @@ export default defineConfig({
     }),
   ],
   test: {
-    setupFiles: ["./test/apply-migrations.ts"],
+    // Tests live under test/, mirroring src/ (test/server/routes/plans.test.ts <-> src/server/routes/plans.ts).
+    include: ["test/**/*.test.ts"],
+    setupFiles: ["./test/setup/apply-migrations.ts"],
   },
 });
