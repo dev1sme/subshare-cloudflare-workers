@@ -5,7 +5,7 @@ import type { ApiFailure, ApiSuccess, User } from "../../../src/shared/types";
 import { type AppEnv, requireAdmin, requireMember } from "../../../src/server/auth";
 import { hashPassword } from "../../../src/server/domain/password";
 import { handleError, ok } from "../../../src/server/envelope";
-import worker from "../../../src/server/index";
+import { app as worker } from "../../../src/server/index";
 
 const ADMIN = { code: "AC0000000A", username: "admin", password: "admin-password" };
 const MEMBER = { code: "AC0000000B", username: "member", password: "member-password" };

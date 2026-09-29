@@ -23,3 +23,19 @@ export function isIsoDate(value: string): boolean {
   const date = new Date(Date.UTC(year, month - 1, day));
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
+
+const PERIOD = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+// The billing period (YYYY-MM) that `now` falls in, in Vietnam time.
+export function currentPeriodInVietnam(now: Date = new Date()): string {
+  return todayInVietnam(now).slice(0, 7);
+}
+
+export function isPeriod(value: string): boolean {
+  return PERIOD.test(value);
+}
+
+// A period bills every seat present on its first day.
+export function firstDayOf(period: string): string {
+  return `${period}-01`;
+}

@@ -40,6 +40,7 @@ Chuẩn envelope, định dạng thuộc tính và quy tắc `error.code` ở [`
 | Gói đã ngừng | 409 | `PLAN_INACTIVE` |
 | Gói hết suất | 409 | `PLAN_FULL` |
 | Ngày rời trước ngày vào | 400 | `LEFT_BEFORE_JOINED` |
+| Kỳ sai dạng hoặc ở tương lai | 400 | `INVALID_PERIOD` |
 | Lỗi khác | 500 | `INTERNAL_ERROR` (lỗi thật chỉ vào `console.error`) |
 
 `handleError` (gắn làm `app.onError`) nhận ra lỗi constraint của D1 chỉ qua chuỗi message (`UNIQUE constraint failed`, …), xét cả `err.cause`. Chữ ký là `failure(c, code, message, status = 400, details = null)` — mã đứng ngay sau `c` để lệnh grep trong `envelop-conventions.md` bắt được mọi mã.
@@ -84,6 +85,21 @@ Tài khoản có hai chốt: không xoá tài khoản đang đăng nhập (`CANN
 - `bank_bin` 6 chữ số (BIN NAPAS), `bank_account_no` 4–19 chữ số; hai trường đặt hoặc xoá **cùng nhau** (`INCOMPLETE_BANK_DETAILS`), vì QR cần cả hai. `null` hoặc `""` là xoá.
 - `max_slots` không được nhỏ hơn `active_members` → 409 `SLOTS_BELOW_MEMBERS`.
 - `price` (payer trả, gồm phí) và `member_amount` (mỗi thành viên đóng) đều đặt tay, độc lập. Đổi một trong hai chỉ ảnh hưởng kỳ tạo sau đó. Gói còn suất hoặc kỳ không xoá được (`RELATED_DATA_EXISTS`) — đặt `active: false`.
+
+Kỳ thanh toán **đã có code** (`GET`/`POST /api/plans/:code/periods` trong `routes/plans.ts`, `requireAdmin`):
+
+| Route | Body | `data` |
+|---|---|---|
+| `GET /api/plans/:code/periods` | — | `{ periods }` — mới nhất trước |
+| `POST /api/plans/:code/periods` | `period?` (`YYYY-MM`, mặc định tháng hiện tại giờ Việt Nam) | `{ period, created }` — 201 khi vừa tạo, 200 khi đã có |
+
+`period` = `{ code, period, price, payment_count, paid_count, amount_total, amount_paid, created_at }`.
+
+- **Idempotent**: kỳ đã có thì trả nguyên như cũ (`created: false`), **không** tính lại theo giá hay suất hôm nay. Cơ chế: một `db.batch` gồm `INSERT billing_periods … ON CONFLICT DO NOTHING` và các `INSERT payments … SELECT … WHERE bp.code = <mã vừa sinh cho lần gọi này>` — kỳ đã có thì mã mới không khớp dòng nào, không payment nào được chèn.
+- Một payment cho mỗi suất có mặt **ngày 1 của kỳ** ([data-model.md](data-model.md#ai-vào-kỳ-nào)), `amount` = `plans.member_amount` đọc trong cùng transaction.
+- Kỳ ở tương lai → 400 `INVALID_PERIOD` (sẽ chốt giá và suất của hôm nay cho một tháng chưa bắt đầu). Gói ngừng → 409 `PLAN_INACTIVE`.
+- Mã `BP…`/`PM…` sinh bằng Web Crypto trong Worker, không dùng `randomblob()` của SQLite.
+- Cron dùng **đúng hàm này** (`createPeriod` trong `db/periods.ts`) — xem [deployment.md](deployment.md).
 
 Thành viên của gói **đã có code** (`GET`/`POST /api/plans/:code/members` trong `routes/plans.ts`, `PATCH /api/members/:code` trong `routes/members.ts`, đều `requireAdmin`):
 

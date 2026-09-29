@@ -27,6 +27,7 @@ const vi = {
     PAYER_CANNOT_BE_MEMBER: "Người thanh toán của gói không thể là thành viên của chính gói đó.",
     PLAN_FULL: "Gói đã hết suất.",
     LEFT_BEFORE_JOINED: "Ngày rời gói không được trước ngày vào gói.",
+    INVALID_PERIOD: "Kỳ thanh toán không hợp lệ hoặc ở tương lai.",
   },
   fields: {
     username: "tên đăng nhập",
@@ -48,6 +49,7 @@ const vi = {
     member_amount: "số tiền mỗi thành viên",
     joined_on: "ngày vào gói",
     left_on: "ngày rời gói",
+    period: "kỳ thanh toán",
   } as Record<string, string>,
 };
 

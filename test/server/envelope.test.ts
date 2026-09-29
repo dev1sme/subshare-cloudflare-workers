@@ -4,7 +4,7 @@ import type { ApiFailure, ApiSuccess } from "../../src/shared/types";
 import { failure, handleError, notFound, ok } from "../../src/server/envelope";
 import { securityHeaders } from "../../src/server/headers";
 import { fail, readBody } from "../../src/server/validate";
-import worker from "../../src/server/index";
+import { app as worker } from "../../src/server/index";
 
 function testApp() {
   const app = new Hono();

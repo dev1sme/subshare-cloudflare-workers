@@ -6,8 +6,9 @@ import { accountRoutes } from "./routes/accounts";
 import { authRoutes } from "./routes/auth";
 import { memberRoutes } from "./routes/members";
 import { planRoutes } from "./routes/plans";
+import { createDuePeriods } from "./scheduled";
 
-const app = new Hono<AppEnv>();
+export const app = new Hono<AppEnv>();
 
 // Headers only — not a guard. Guards are picked at each route's own mount.
 app.use(securityHeaders);
@@ -30,4 +31,10 @@ app.route("/api/plans", planRoutes);
 // requireAdmin, applied inside the sub-app.
 app.route("/api/members", memberRoutes);
 
-export default app;
+export default {
+  fetch: app.fetch,
+  // One Cron Trigger for every recurring job (the account's 5 triggers are shared).
+  scheduled(controller, env, ctx) {
+    ctx.waitUntil(createDuePeriods(env.DB, new Date(controller.scheduledTime)));
+  },
+} satisfies ExportedHandler<Env>;

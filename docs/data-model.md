@@ -95,6 +95,8 @@ Khi tạo kỳ `YYYY-MM`: một dòng `payments` cho mỗi suất **còn trong g
 - Rời ngày 15/10 → vẫn đóng kỳ `2026-10`, không vào kỳ `2026-11`.
 - Payer không có suất → không bao giờ có dòng.
 
+Kỳ tạo tay (`POST /api/plans/:code/periods`) hoặc bằng cron, cùng một hàm, idempotent. Cron chỉ tạo kỳ cho gói `MONTHLY` đang dùng. [Chưa chốt] Gói `YEARLY` chưa có tháng neo, nên hiện chỉ tạo tay.
+
 ## Dựng lại bảng trong migration
 
 SQLite không thêm được cột `NOT NULL REFERENCES` hay bỏ cột có CHECK tại chỗ → phải dựng lại bảng. D1 **không cho tắt `foreign_keys`** trong migration, nên thứ tự "tạo `X_new`, copy, drop `X`, rename" của tài liệu SQLite **hỏng khi bảng có dữ liệu** (`FOREIGN KEY constraint failed`, D1 rollback): `DROP TABLE X` xoá dòng cha, làm bảng con mồ côi, và dòng đã copy vào `X_new` trước đó không được tính là cha quay lại. Thứ tự đúng (xem `0003`):

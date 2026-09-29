@@ -65,3 +65,17 @@ export type Member = {
   joined_on: string;
   left_on: string | null;
 };
+
+// One billing period of a plan, with its payments summarised.
+export type Period = {
+  code: string;
+  period: string;
+  // plans.price when the period was created.
+  price: number;
+  payment_count: number;
+  paid_count: number;
+  // Sum of payments.amount (each a snapshot of plans.member_amount).
+  amount_total: number;
+  amount_paid: number;
+  created_at: string;
+};

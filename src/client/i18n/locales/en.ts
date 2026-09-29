@@ -27,6 +27,7 @@ const en: typeof vi = {
     PAYER_CANNOT_BE_MEMBER: "The plan's payer cannot be a member of it.",
     PLAN_FULL: "The plan has no free seat.",
     LEFT_BEFORE_JOINED: "The leave date cannot be before the join date.",
+    INVALID_PERIOD: "The billing period is invalid or in the future.",
   },
   fields: {
     username: "username",
@@ -48,6 +49,7 @@ const en: typeof vi = {
     member_amount: "amount per member",
     joined_on: "join date",
     left_on: "leave date",
+    period: "billing period",
   },
 };
 

@@ -83,6 +83,8 @@ Sau migrate remote, **kiểm bằng bảng, không bằng thư mục**: `SELECT 
 - Mọi query lọc hay join phải có index dùng được. Lọc theo khoảng (`period BETWEEN ? AND ?`) thay vì bọc cột trong hàm (`substr(period, 1, 4) = ?`) — bọc hàm là bỏ index, quét toàn bảng.
 - Chờ D1 không tính vào CPU; gộp các câu độc lập vào một `db.batch()`.
 - **Một** Cron Trigger cho mọi việc định kỳ, rẽ nhánh trong `scheduled()`. Trước khi thêm, đếm trigger đã có trên account.
+- `scheduled()` đã có code (`src/server/index.ts` → `createDuePeriods` trong `src/server/scheduled.ts`): tạo kỳ tháng hiện tại (giờ Việt Nam) cho mọi gói `MONTHLY` đang dùng; idempotent nên chạy **hằng ngày** cũng an toàn và tự thử lại nếu lần trước lỗi. **Trigger chưa khai báo** trong `wrangler.jsonc` — cần đếm trigger trên account trước. Đề xuất `"crons": ["5 17 * * *"]` (00:05 giờ Việt Nam). Mỗi gói tốn 2 lệnh D1; trần 50 subrequest/lần chạy → tối đa ~24 gói trước khi phải chia lô.
+- Thử `scheduled()` ở local: `npm run dev` rồi `curl "http://localhost:5173/cdn-cgi/handler/scheduled?cron=*+*+*+*+*"`.
 - Cron chạy theo **UTC**; mọi tính toán kỳ dùng `Asia/Ho_Chi_Minh`. Việc cron làm phải idempotent (unique index + `ON CONFLICT DO NOTHING`) vì nó có thể chạy lại.
 - `ctx.waitUntil()` có 30 giây sau khi response kết thúc. Promise nào cũng phải `await` hoặc đưa vào `waitUntil` — promise trôi nổi bị huỷ khi invocation kết thúc, mất việc mà không báo lỗi.
 - Không dùng biến global mutable để giữ dữ liệu theo request: isolate được dùng lại giữa các request, dữ liệu rò sang người khác.

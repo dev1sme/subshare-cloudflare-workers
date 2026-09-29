@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { ApiFailure, ApiSuccess, Member, Plan } from "../../../src/shared/types";
 import { todayInVietnam } from "../../../src/server/domain/period";
 import { hashPassword } from "../../../src/server/domain/password";
-import worker from "../../../src/server/index";
+import { app as worker } from "../../../src/server/index";
 
 const ADMIN = { code: "AC0000000A", username: "admin", password: "admin-password" };
 const ALICE = { code: "AC000000A1", username: "alice", password: "alice-password" };

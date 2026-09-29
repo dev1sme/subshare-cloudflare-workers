@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import type { Cycle, Member, Plan } from "../../shared/types";
+import type { Cycle, Member, Period, Plan } from "../../shared/types";
 import { requireAdmin, type AppEnv } from "../auth";
 import {
   type PlanFields,
@@ -14,7 +14,8 @@ import {
 import { findUserByCode } from "../db/users";
 import { type MemberRow, insertMemberIfSeatFree, listMembersOfPlan } from "../db/members";
 import { CODE_PREFIX, generateCode } from "../domain/code";
-import { todayInVietnam } from "../domain/period";
+import { type PeriodRow, createPeriod, listPeriodsOfPlan } from "../db/periods";
+import { currentPeriodInVietnam, isPeriod, todayInVietnam } from "../domain/period";
 import { failure, notFound, ok } from "../envelope";
 import {
   type Body,
@@ -71,6 +72,19 @@ export function toMember(row: MemberRow): Member {
     user: { code: row.user_code, username: row.username, display_name: row.display_name },
     joined_on: row.joined_on,
     left_on: row.left_on,
+  };
+}
+
+function toPeriod(row: PeriodRow): Period {
+  return {
+    code: row.code,
+    period: row.period,
+    price: row.price,
+    payment_count: row.payment_count,
+    paid_count: row.paid_count,
+    amount_total: row.amount_total,
+    amount_paid: row.amount_paid,
+    created_at: row.created_at,
   };
 }
 
@@ -196,4 +210,36 @@ planRoutes.post("/:code/members", async (c) => {
   });
   if (!row) return failure(c, "PLAN_FULL", "The plan has no free seat.", 409);
   return ok(c, { member: toMember(row) }, "Member added.", 201);
+});
+
+// Newest first, each with its payments summarised.
+planRoutes.get("/:code/periods", async (c) => {
+  const plan = await findPlanByCode(c.env.DB, parseCode(CODE_PREFIX.plan, c.req.param("code")));
+  if (!plan) return notFound(c);
+  const rows = await listPeriodsOfPlan(c.env.DB, plan.id);
+  return ok(c, { periods: rows.map(toPeriod) });
+});
+
+// Creates a period by hand — the same path the monthly cron takes. Idempotent: an existing period
+// is returned untouched (200, created: false), never recomputed from today's plan or seats.
+planRoutes.post("/:code/periods", async (c) => {
+  const plan = await findPlanByCode(c.env.DB, parseCode(CODE_PREFIX.plan, c.req.param("code")));
+  if (!plan) return notFound(c);
+
+  const body = await readBody(c);
+  const current = currentPeriodInVietnam();
+  let period = current;
+  if (has(body, "period")) {
+    const raw = body.period;
+    if (typeof raw !== "string" || !isPeriod(raw)) fail("INVALID_PERIOD");
+    // A future period would snapshot today's price and seats for a month that has not started.
+    if (raw > current) fail("INVALID_PERIOD", "The period cannot be in the future.");
+    period = raw;
+  }
+  if (plan.active !== 1) return failure(c, "PLAN_INACTIVE", "The plan is not active.", 409);
+
+  const { row, created } = await createPeriod(c.env.DB, plan.id, period);
+  return created
+    ? ok(c, { period: toPeriod(row), created }, "Period created.", 201)
+    : ok(c, { period: toPeriod(row), created }, "Period already exists.");
 });
