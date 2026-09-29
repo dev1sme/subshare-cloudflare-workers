@@ -29,6 +29,8 @@ Payload QR **do app tự dựng** (`src/server/domain/vietqr.ts`, EMVCo TLV theo
 - Số tiền mã hoá là `payments.amount` của đúng khoản đó.
 - Nội dung chuyển khoản là **`payments.code`** (vd `PM3C8EA506`) — để admin đối chiếu sao kê theo mã, không theo tên.
 - CRC là CRC-16/CCITT-FALSE tính trên payload **kể cả** tag `6304` ở cuối. Sửa phần này thì kiểm với vector chuẩn: `"123456789"` → `29B1`.
+- Đã có code (`buildVietQrPayload`): `00`=`01`, `01`=`12` (QR động, một số tiền), `38` = { `00` `A000000727`, `01` { `00` BIN, `01` số tài khoản }, `02` `QRIBFTTA` (chuyển tới số tài khoản) }, `53`=`704`, `54` số tiền, `58`=`VN`, `62` { `08` nội dung }, `6304` + CRC. Nội dung chỉ nhận chữ in hoa và số (mã `PM…`/`PP…`) — ngân hàng cắt hoặc làm hỏng ký tự khác.
+- CRC đã đối chiếu với `binascii.crc_hqx(…, 0xFFFF)` của Python. [Chưa xác minh] Chưa quét bằng app ngân hàng thật — làm khi có màn thành viên.
 
 ## Copy từng dòng
 
