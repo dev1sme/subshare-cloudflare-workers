@@ -124,6 +124,8 @@ const en: typeof vi = {
     other: "Other",
   },
   paymentsAdmin: {
+    groupSummary_one: "{{count}} payment · {{amount}}",
+    groupSummary_other: "{{count}} payments · {{amount}}",
     views: "View by status",
     pending: "To confirm",
     unpaid: "Unpaid",

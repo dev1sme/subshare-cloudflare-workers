@@ -1,7 +1,7 @@
 import { Check, Undo2 } from "lucide-react";
 import { m } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { ServiceLogo } from "../../../components/ServiceLogo";
+import { UserAvatar } from "../../../components/UserAvatar";
 import { Button } from "../../../components/ui/button";
 import { formatDate, formatMoney, formatPeriod } from "../../../format";
 import { spring } from "../../../lib/motion";
@@ -14,8 +14,8 @@ type ReviewRowProps = {
   onRevert: (item: ReviewItem) => void;
 };
 
-// One money row for the admin: who, which plan and period, how much, and the one or two moves the
-// view allows (docs/payments.md). Enters from below, leaves sideways once moved.
+// One member's money row inside its plan's group: who, which period, how much, and the one or two
+// moves the view allows (docs/payments.md). Enters from below, leaves sideways once moved.
 export function ReviewRow({ item, view, onConfirm, onRevert }: ReviewRowProps) {
   const { t } = useTranslation();
   const { row } = item;
@@ -36,18 +36,16 @@ export function ReviewRow({ item, view, onConfirm, onRevert }: ReviewRowProps) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0, transition: spring }}
       exit={{ opacity: 0, x: 80, transition: { duration: 0.2, ease: [0.3, 0, 0.8, 0.15] } }}
-      className="flex flex-col gap-3 rounded-card bg-surface-container-low p-4 sm:flex-row sm:items-center"
+      className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center"
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <ServiceLogo provider={row.plan.provider} name={row.plan.name} className="size-11 rounded-xl text-sm" />
+        <UserAvatar name={row.user.display_name} />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-3">
             <p className="truncate font-bold">{row.user.display_name}</p>
             <p className="shrink-0 font-bold tabular-nums">{formatMoney(row.amount)}</p>
           </div>
-          <p className="truncate text-sm text-on-surface-variant">
-            {row.plan.name} · {what}
-          </p>
+          <p className="truncate text-sm text-on-surface-variant">{what}</p>
           {view === "pending" && row.marked_at && (
             <p className="text-xs text-on-surface-variant">{t("paymentsAdmin.reportedOn", { date: formatDate(row.marked_at) })}</p>
           )}

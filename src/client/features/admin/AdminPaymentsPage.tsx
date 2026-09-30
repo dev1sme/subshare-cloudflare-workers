@@ -9,6 +9,7 @@ import { SelectField } from "../../components/ui/select-field";
 import { useConfirm } from "../../hooks/useConfirm";
 import { formatMoney, formatPeriod } from "../../format";
 import { currentPeriod, recentPeriods } from "../../lib/period";
+import { PaymentPlanGroup } from "./components/PaymentPlanGroup";
 import { ReviewRow } from "./components/ReviewRow";
 import { type PaymentsView, type ReviewItem, useAdminPayments } from "./useAdminPayments";
 
@@ -20,6 +21,12 @@ export default function AdminPaymentsPage() {
   const [period, setPeriod] = useState(currentPeriod);
   const periods = useMemo(() => recentPeriods(12), []);
   const { items, total, error, loading, reload, setStatus } = useAdminPayments(view, period);
+  // Grouped by plan, keeping the order rows came in (oldest report first / the API's order).
+  const groups = useMemo(() => {
+    const byPlan = new Map<string, ReviewItem[]>();
+    for (const item of items) byPlan.set(item.row.plan.code, [...(byPlan.get(item.row.plan.code) ?? []), item]);
+    return [...byPlan.values()];
+  }, [items]);
 
   const revert = async (item: ReviewItem) => {
     const key = view === "pending" ? "sendBack" : "undo";
@@ -74,19 +81,28 @@ export default function AdminPaymentsPage() {
       )}
       {!loading && error && <LoadError code={error} onRetry={reload} />}
       {!loading && !error && (
-        <ul className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           <AnimatePresence initial={false}>
-            {items.map((item) => (
-              <ReviewRow
-                key={item.code}
-                item={item}
-                view={view}
-                onConfirm={(i) => void setStatus(i, "PAID")}
-                onRevert={(i) => void revert(i)}
-              />
+            {groups.map((group) => (
+              <PaymentPlanGroup
+                key={group[0].row.plan.code}
+                plan={group[0].row.plan}
+                count={group.length}
+                total={group.reduce((sum, item) => sum + item.row.amount, 0)}
+              >
+                {group.map((item) => (
+                  <ReviewRow
+                    key={item.code}
+                    item={item}
+                    view={view}
+                    onConfirm={(i) => void setStatus(i, "PAID")}
+                    onRevert={(i) => void revert(i)}
+                  />
+                ))}
+              </PaymentPlanGroup>
             ))}
           </AnimatePresence>
-        </ul>
+        </div>
       )}
       {/* After the list, so the last row slides out above it instead of under it. */}
       {!loading && !error && items.length === 0 && (

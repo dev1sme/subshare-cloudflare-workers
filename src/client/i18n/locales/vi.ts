@@ -125,6 +125,9 @@ const vi = {
     other: "Khác",
   },
   paymentsAdmin: {
+    // Vietnamese has one plural form; _one exists only so en.ts (typed from this file) can have it.
+    groupSummary_one: "{{count}} khoản · {{amount}}",
+    groupSummary_other: "{{count}} khoản · {{amount}}",
     views: "Xem theo trạng thái",
     pending: "Chờ xác nhận",
     unpaid: "Chưa đóng",
