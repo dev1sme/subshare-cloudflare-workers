@@ -35,10 +35,12 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
   - [x] Tài khoản: tạo / sửa tên, vai trò / đặt lại mật khẩu (hiện một lần) / xoá
 - [ ] Hoàn tác một lần trả trước đã `PAID` (API có, UI chưa)
 - [ ] Dashboard admin: ai còn nợ, qua mọi kỳ
+- [x] PWA bước 1: manifest + icon, cài lên màn hình chính ([architecture.md](architecture.md#pwa))
+- [ ] PWA bước 2: service worker chỉ cache app shell, `/api/*` luôn đi mạng
 
 ## Sau này
 
-- [ ] Nhắc nợ **và thông báo đẩy** (gói đã mở, …). Kênh chưa chốt (Web Push / bot chat) — hiện chỉ thông báo trong app; nếu là bot chat: token mã hoá at-rest (AES-GCM, khoá là secret), không response nào trả token, gửi qua `ctx.waitUntil` + `Promise.allSettled` để lỗi gửi không làm hỏng thao tác gốc, và **chat nhóm không bao giờ nhận số tiền hay tên người nợ**.
+- [ ] Nhắc nợ **và thông báo đẩy** (gói đã mở, …). Kênh chưa chốt (Web Push — PWA bước 3, iOS chỉ nhận khi đã cài app / bot chat) — hiện chỉ thông báo trong app; nếu là bot chat: token mã hoá at-rest (AES-GCM, khoá là secret), không response nào trả token, gửi qua `ctx.waitUntil` + `Promise.allSettled` để lỗi gửi không làm hỏng thao tác gốc, và **chat nhóm không bao giờ nhận số tiền hay tên người nợ**.
 - [ ] Thống kê chi tiêu theo tháng / năm (lọc kỳ theo khoảng để dùng index)
 
 ## Đã loại

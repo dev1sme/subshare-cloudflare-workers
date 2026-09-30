@@ -33,7 +33,7 @@ Mọi phần đều đã có code: server, migration `0001`–`0009`, test, và 
 
 ```
 index.html            entry Vite
-public/               copy nguyên vào output client — _headers, favicon.svg
+public/               copy nguyên vào output client — _headers, favicon.svg, manifest.webmanifest, icon PNG
 src/client/           React SPA
   main.tsx            provider: ChunkErrorBoundary > BrowserRouter > Motion > Session > Confirm, Toaster
   App.tsx             cổng phiên đăng nhập (chờ /api/auth/me rồi mới render route)
@@ -105,6 +105,16 @@ Mọi màn sau đăng nhập là một chunk `React.lazy` — ranh giới vai tr
 Router là `<BrowserRouter>` khai báo, **không** phải data router (`createBrowserRouter`): `errorElement` của data router bắt lỗi của `React.lazy` trước khi nó tới error boundary bên dưới.
 
 Tab mở xuyên qua một lần deploy sẽ xin hash chunk không còn tồn tại; SPA fallback trả `index.html`, import fail vì MIME type, React unmount hết thành màn trắng. Một error boundary riêng cho lỗi chunk **reload một lần**, và chỉ hiện nút nếu lỗi lặp lại trong ~10 giây. Lỗi không phải chunk thì ném lại — đây không phải error boundary chung.
+
+## PWA
+
+Cài được lên màn hình chính: `public/manifest.webmanifest` (`display: standalone`, `start_url` / `scope` / `id` = `/`) cùng icon PNG, link từ `index.html` kèm `theme-color` và `apple-touch-icon` (iOS không đọc icon SVG). Tất cả là file tĩnh trong `public/` — không đi qua Worker, không thêm binding. Icon sinh bằng `scripts/generate-icons.mjs` ([design-system.md](design-system.md#logo-subshare)).
+
+Làm theo từng bước, dừng được ở bất kỳ bước nào:
+
+1. **Manifest + icon** — đã làm. Chưa có service worker: Chrome không còn đòi service worker để cho cài, iOS thì chưa bao giờ đòi.
+2. **Service worker tối giản** — chưa làm. Chỉ cache app shell (asset đã hash), `/api/*` **luôn đi mạng**: trạng thái tiền cache cũ là sai (member thấy "Cần đóng" sau khi admin đã xác nhận). Viết tay, không `vite-plugin-pwa` / Workbox. Bản mới phải thay bản cũ ngay (`skipWaiting` + reload) để không đấu với `ChunkErrorBoundary`; `sw.js` cần `Cache-Control: no-cache` trong `_headers`.
+3. **Web Push** — chưa làm, sau lần deploy đầu (xem [roadmap.md](roadmap.md), mục nhắc nợ).
 
 ## Ngôn ngữ & giao diện
 

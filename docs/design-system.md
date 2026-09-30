@@ -35,7 +35,9 @@ Sinh bằng `scripts/generate-palette.mjs` (`@material/material-color-utilities`
 
 - **Chữ S có hai đầu là mũi tên, trên ô teal** (kiểu icon app). Chữ S = "Sub + Share"; hai mũi tên = gia hạn hằng tháng, hai phía cùng góp. Nửa trên `on-primary`, nửa dưới `primary-container`, nền `primary`, bo 9/32. Component `BrandLogo` (header, trang login).
 - Có ô nền vì chữ S trơn màu mực biến mất trên tab tối; bản có ô đọc được trên cả tab sáng lẫn tối, và dùng luôn làm favicon.
-- Favicon `public/favicon.svg`: cùng hình; file ảnh nên màu viết thẳng hex, **đổi palette thì sửa tay ba màu trong file này**.
+- Favicon `public/favicon.svg`: cùng hình; file ảnh nên màu viết thẳng hex, **đổi palette thì sửa tay ba màu trong file này**, rồi chạy `node scripts/generate-icons.mjs` và commit lại các PNG.
+- Icon cài app (PWA, [architecture.md](architecture.md#pwa)) sinh từ favicon: `icon-192.png`, `icon-512.png` giữ góc bo (purpose `any`); `icon-maskable-512.png` và `apple-touch-icon.png` (180) **vuông tràn viền** — nền tảng tự cắt theo mask của nó, còn iOS tô vùng trong suốt thành đen. Chữ S đã nằm trong vùng an toàn của maskable (hình tròn 80%), nên chỉ bỏ góc bo.
+- `theme-color` (trong `index.html` và manifest) = `surface`, cùng màu header — thanh trạng thái liền với app. Đổi palette thì sửa cả hai chỗ.
 - Ba chọn 2026-09-30 qua ba vòng so sánh (chia phần / vòng lặp / chữ S / thẻ xếp quạt / vé xé đôi → chữ S → ghép chữ S với mũi tên của phương án vòng lặp), xem ở 16 / 32 / 64 / 128px, trên header và trên tab sáng / tối.
 
 ## Hình
