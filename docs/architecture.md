@@ -29,20 +29,24 @@ Build và dev chạy qua [`@cloudflare/vite-plugin`](https://developers.cloudfla
 
 ## Cấu trúc thư mục
 
-`src/server/`, `migrations/`, `scripts/`, `test/` đã có; `src/client/` mới là khung (chỉ `main.tsx`, `App.tsx`, `i18n/locales/`) — phần còn lại của nhánh client là **dự kiến**.
+`src/server/`, `migrations/`, `scripts/`, `test/` đã có. `src/client/` có phần nền (provider, router, layout, `api.ts`, `errors.ts`, `format.ts`, `components/ui/`); các màn trong `features/` còn là placeholder.
 
 ```
 index.html            entry Vite
 public/               copy nguyên vào output client — _headers, favicon
 src/client/           React SPA
-  App.tsx             cổng phiên đăng nhập
-  routes.tsx          bảng route theo vai trò
-  api.ts              wrapper có kiểu cho mọi endpoint
+  main.tsx            provider: ChunkErrorBoundary > BrowserRouter > Session > Confirm, Toaster
+  App.tsx             cổng phiên đăng nhập (chờ /api/auth/me rồi mới render route)
+  routes.tsx          bảng route theo vai trò, RequireRole, React.lazy
+  api.ts              wrapper có kiểu cho mọi endpoint, trả ApiResult thay vì throw
   errors.ts           mã lỗi API -> câu hiển thị
   format.ts           tiền / ngày / kỳ
-  i18n/locales/       vi.ts, en.ts
-  hooks/              useResource, useConfirm, …
-  components/         UI dùng ở hơn một feature
+  i18n/               index.ts (khởi tạo i18next), locales/vi.ts, en.ts
+  lib/cn.ts           gộp class Tailwind
+  hooks/              useSession, useConfirm (context + hook, không JSX), useResource…
+  components/         UI dùng ở hơn một feature; provider có JSX (SessionProvider, ConfirmProvider)
+    ui/               primitive theo mẫu shadcn (button, input, label, card, alert-dialog, sonner)
+  layouts/            MemberLayout, AdminLayout — eager, <Suspense> bên trong
   features/<name>/
     XxxPage.tsx       chỉ ghép component
     components/       UI riêng của feature, mỗi component một file
@@ -91,11 +95,17 @@ Guard phía client chỉ là tiện điều hướng; API mới là nơi ép vai
 
 Mọi màn sau đăng nhập là một chunk `React.lazy` — ranh giới vai trò là ranh giới chia tự nhiên, thành viên mở trang nợ trên điện thoại không phải tải panel quản trị. Giữ eager: trang login, trang 404, và các layout (lazy layout gây waterfall mà không tiết kiệm gì). `<Suspense>` nằm trong layout để sidebar/header không biến mất khi chunk đang tải.
 
+Router là `<BrowserRouter>` khai báo, **không** phải data router (`createBrowserRouter`): `errorElement` của data router bắt lỗi của `React.lazy` trước khi nó tới error boundary bên dưới.
+
 Tab mở xuyên qua một lần deploy sẽ xin hash chunk không còn tồn tại; SPA fallback trả `index.html`, import fail vì MIME type, React unmount hết thành màn trắng. Một error boundary riêng cho lỗi chunk **reload một lần**, và chỉ hiện nút nếu lỗi lặp lại trong ~10 giây. Lỗi không phải chunk thì ném lại — đây không phải error boundary chung.
 
 ## Ngôn ngữ & giao diện
 
+Màu, chữ, kích thước chạm, toast, dialog: [design-system.md](design-system.md).
+
+
 - Server không tham gia i18n: `message` trong envelope là tiếng Anh cho log; SPA dựng câu từ `error.code`.
-- Mặc định **tiếng Việt**, không theo `navigator.language` — điện thoại để tiếng Anh không có nghĩa người dùng muốn đọc app bằng tiếng Anh.
+- Mặc định **tiếng Việt**, không theo `navigator.language` — điện thoại để tiếng Anh không có nghĩa người dùng muốn đọc app bằng tiếng Anh. Lựa chọn tiếng Anh (khi có nút chuyển) lưu ở `localStorage`, bọc `try/catch`.
+- Lỗi mạng (không nhận được envelope) là mã phía client `NETWORK_ERROR`, có câu riêng trong `errors`.
 - Ngày hiển thị `dd/mm/yyyy` ở **cả hai** ngôn ngữ.
 - Nếu có chế độ sáng/tối: script chọn theme phải inline trong `index.html` và chạy trước lần vẽ đầu, không thì nháy trắng; CSP cho phép nó bằng sha256 (→ [security-headers.md](security-headers.md)).

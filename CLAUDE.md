@@ -21,6 +21,7 @@ Read the rule file that matches the task, then the doc it points to, **before** 
 | --- | --- | --- |
 | `.claude/rules/project-state.md` | `docs/roadmap.md` | assume what is built, deployed, or what data exists remotely vs locally |
 | `.claude/rules/architecture.md` | `docs/architecture.md` | add a file, move code between layers, touch the Vite/Wrangler build, or write a React hook or page |
+| `.claude/rules/ui.md` | `docs/design-system.md` | add a component, a colour, a font, a toast/dialog, or a screen |
 | `.claude/rules/commands.md` | `docs/deployment.md` | run any npm script, wrangler, or a migration |
 | `.claude/rules/platform-limits.md` | `docs/deployment.md#hạn-mức-miễn-phí` | add a query, a cron, a subrequest, or anything CPU-heavy |
 | `.claude/rules/mcp-servers.md` | — | call a `cloudflare-bindings` or `cloudflare-docs` MCP tool |

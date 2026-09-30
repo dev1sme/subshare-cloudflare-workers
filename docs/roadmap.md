@@ -16,10 +16,11 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 - [x] Quản lý tài khoản (`/api/accounts`): tạo, đổi tên / vai trò, đặt lại mật khẩu, xoá; `requireAdmin` đọc vai trò từ DB
 
 - [x] Quản lý gói: giá (VND, gồm phí, đặt tay), chu kỳ `MONTHLY`/`YEARLY`, số suất cho thành viên, payer (admin), thông tin ngân hàng
-- [x] Quản lý thành viên: thêm vào gói với số tiền đặt tay, đổi số tiền, rời gói; payer không được là thành viên của gói mình
+- [x] Quản lý thành viên: thêm vào gói, rời gói; số tiền là `plans.member_amount`, chung cho cả gói; payer không được là thành viên của gói mình
 - [x] Tạo kỳ: tay (admin) và hàm `scheduled()` idempotent
 - [ ] Khai báo Cron Trigger (đếm trigger trên account trước) — cần deploy
 - [x] API thành viên: khoản cần đóng, VietQR, "Tôi đã chuyển", trả trước 3/6/12 tháng
+- [x] Nền UI: token + font tự host, primitive shadcn, i18next, `api.ts`, phiên, router theo vai trò, layout, `useConfirm`, toast, error boundary lỗi chunk
 - [ ] Màn thành viên (UI)
 - [x] API admin: danh sách `PENDING`, xác nhận / trả về (payment và trả trước)
 - [ ] Màn admin (UI)

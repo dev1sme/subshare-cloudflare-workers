@@ -3,6 +3,7 @@ import type vi from "./vi";
 const en: typeof vi = {
   errors: {
     NOT_FOUND: "Not found.",
+    NETWORK_ERROR: "Cannot reach the server. Check your connection and try again.",
     INTERNAL_ERROR: "Something went wrong, please try again.",
     DUPLICATE_DATA: "This already exists.",
     RELATED_DATA_EXISTS: "Cannot delete: related data exists.",
@@ -33,6 +34,41 @@ const en: typeof vi = {
     PREPAYMENT_OVERLAP: "These months are already paid or covered by another prepayment.",
     CANNOT_DELETE_PREPAYMENT: "This prepayment cannot be deleted.",
     INVALID_MONTHS: "Prepay 3, 6 or 12 months only.",
+  },
+  validation: {
+    missing: "Please enter the {{field}}.",
+    invalid: "Invalid value: {{field}}.",
+    tooLong: "Too long: {{field}}.",
+  },
+  app: {
+    name: "SubShare",
+    loading: "Loading…",
+    signOut: "Sign out",
+    mainNav: "Main navigation",
+  },
+  nav: {
+    myPayments: "My payments",
+    admin: "Admin",
+    plans: "Plans",
+    accounts: "Accounts",
+    payments: "Review payments",
+  },
+  confirm: {
+    ok: "OK",
+    cancel: "Cancel",
+  },
+  notFound: {
+    title: "Page not found",
+    body: "This link does not exist or you are not allowed to see it.",
+    home: "Go home",
+  },
+  chunkError: {
+    title: "The app was just updated",
+    body: "Reload the page to use the new version.",
+    reload: "Reload",
+  },
+  placeholder: {
+    comingSoon: "This screen is being built.",
   },
   fields: {
     username: "username",

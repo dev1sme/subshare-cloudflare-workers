@@ -3,6 +3,7 @@
 const vi = {
   errors: {
     NOT_FOUND: "Không tìm thấy dữ liệu.",
+    NETWORK_ERROR: "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.",
     INTERNAL_ERROR: "Có lỗi xảy ra, vui lòng thử lại.",
     DUPLICATE_DATA: "Dữ liệu đã tồn tại.",
     RELATED_DATA_EXISTS: "Không thể xoá vì còn dữ liệu liên quan.",
@@ -33,6 +34,42 @@ const vi = {
     PREPAYMENT_OVERLAP: "Khoảng tháng này đã được trả hoặc đã có lần trả trước khác.",
     CANNOT_DELETE_PREPAYMENT: "Không thể xoá lần trả trước này.",
     INVALID_MONTHS: "Chỉ trả trước 3, 6 hoặc 12 tháng.",
+  },
+  // Sentences built from MISSING_/INVALID_/TOO_LONG_<FIELD> when a code has no own key.
+  validation: {
+    missing: "Vui lòng nhập {{field}}.",
+    invalid: "Giá trị không hợp lệ: {{field}}.",
+    tooLong: "Quá dài: {{field}}.",
+  },
+  app: {
+    name: "SubShare",
+    loading: "Đang tải…",
+    signOut: "Đăng xuất",
+    mainNav: "Điều hướng chính",
+  },
+  nav: {
+    myPayments: "Khoản cần đóng",
+    admin: "Quản trị",
+    plans: "Gói",
+    accounts: "Tài khoản",
+    payments: "Duyệt thanh toán",
+  },
+  confirm: {
+    ok: "Đồng ý",
+    cancel: "Huỷ",
+  },
+  notFound: {
+    title: "Không tìm thấy trang",
+    body: "Đường dẫn không tồn tại hoặc bạn không có quyền xem.",
+    home: "Về trang chính",
+  },
+  chunkError: {
+    title: "Ứng dụng vừa được cập nhật",
+    body: "Tải lại trang để dùng phiên bản mới.",
+    reload: "Tải lại",
+  },
+  placeholder: {
+    comingSoon: "Màn này đang được xây dựng.",
   },
   fields: {
     username: "tên đăng nhập",

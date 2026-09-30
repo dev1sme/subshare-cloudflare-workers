@@ -1,1 +1,69 @@
 @import "tailwindcss";
+
+/* Self-hosted: font-src is 'self' (docs/security-headers.md). Each file declares the vietnamese,
+   latin-ext and latin subsets by unicode-range; the browser downloads only what a page uses. */
+@import "@fontsource/be-vietnam-pro/400.css";
+@import "@fontsource/be-vietnam-pro/500.css";
+@import "@fontsource/be-vietnam-pro/600.css";
+
+/* Bundled so toasts are styled under style-src 'self'. Sonner also injects the same CSS as an
+   inline <style> at runtime; CSP blocks that copy, which is harmless once this one is loaded. */
+@import "sonner/dist/styles.css";
+
+/* Design tokens — design-system/subshare/MASTER.md. Components use these names, never raw hex.
+   Light only for now; dark mode redefines the same variables later. */
+@theme {
+  --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: #f8fafc;
+  --color-foreground: #0f172a;
+  --color-card: #ffffff;
+  --color-card-foreground: #0f172a;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #475569;
+  --color-border: #e2e8f0;
+  --color-input: #cbd5e1;
+  --color-ring: #047857;
+
+  /* emerald-700: 5.5:1 against white text (emerald-600 is only ~3.8:1). */
+  --color-primary: #047857;
+  --color-primary-hover: #065f46;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f1f5f9;
+  --color-secondary-hover: #e2e8f0;
+  --color-secondary-foreground: #0f172a;
+
+  /* Red means money still owed or a destructive action — never a plain call to action. */
+  --color-destructive: #b91c1c;
+  --color-destructive-hover: #991b1b;
+  --color-destructive-foreground: #ffffff;
+
+  /* Payment status: UNPAID / PENDING / PAID. Text colours pass 4.5:1 on their soft background. */
+  --color-owed: #b91c1c;
+  --color-owed-soft: #fef2f2;
+  --color-pending: #b45309;
+  --color-pending-soft: #fffbeb;
+  --color-paid: #047857;
+  --color-paid-soft: #ecfdf5;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
