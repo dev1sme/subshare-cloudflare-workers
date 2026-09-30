@@ -1,12 +1,12 @@
 # Mô hình dữ liệu
 
-> Đã chốt bằng `migrations/0001_initial_schema.sql` … `0006_join_requests.sql`. File này phải khớp migration; thay đổi schema là migration mới, không sửa file đã apply.
+> Đã chốt bằng `migrations/0001_initial_schema.sql` … `0007_plan_provider.sql`. File này phải khớp migration; thay đổi schema là migration mới, không sửa file đã apply.
 
 Tên bảng và cột **tiếng Anh**; enum **UPPER_SNAKE tiếng Anh**.
 
 ```
 users            (id, code, username, display_name, password_hash, role, created_at)
-plans            (id, code, name, price, member_amount, cycle, max_slots, payer_id,
+plans            (id, code, name, provider, price, member_amount, cycle, max_slots, payer_id,
                   bank_bin, bank_account_no, bank_account_name, active,
                   accepting_requests, created_at)
 plan_members     (id, code, plan_id, user_id, joined_on, left_on)
@@ -76,11 +76,18 @@ Tiền tố là thứ chặn việc dùng mã gói ở chỗ cần mã khoản �
 |---|---|
 | `users.role` | `ADMIN` \| `MEMBER` |
 | `plans.cycle` | `MONTHLY` \| `YEARLY` |
+| `plans.provider` | `YOUTUBE` \| `SPOTIFY` \| `NETFLIX` \| `APPLE` \| `GOOGLE` \| `MICROSOFT` \| `OPENAI` \| `CLAUDE` \| `CANVA` \| `DUOLINGO` \| `NOTION` \| `OTHER` |
 | `payments.status`, `prepayments.status` | `UNPAID` \| `PENDING` \| `PAID` |
 | `prepayments.months` | `3` \| `6` \| `12` |
 | `join_requests.status` | `PENDING` \| `APPROVED` \| `REJECTED` \| `CANCELLED` |
 
 Đều có CHECK constraint. SQLite không sửa được CHECK, nên đổi giá trị enum là dựng lại bảng trong migration — chọn cẩn thận ngay từ đầu.
+
+## Nhà cung cấp của gói
+
+`plans.provider` cho biết gói là của dịch vụ nào, để màn hình gộp gói theo nhà cung cấp và hiện logo. Là **danh sách cố định**, không phải text tự do: text tự do sẽ sinh ra "Youtube" lẫn "YouTube" thành hai nhóm, và một tên gõ tay không có logo. Danh sách nằm ở `src/shared/providers.ts` (khớp CHECK); logo và màu hãng ở `src/client/lib/providers.ts`.
+
+Mặc định `OTHER`. Migration `0007` không đoán provider từ tên gói — admin đặt lại. Thêm nhà cung cấp là dựng lại bảng `plans` trong một migration mới, như mọi enum.
 
 ## Kiểu dữ liệu
 

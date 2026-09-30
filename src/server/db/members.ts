@@ -1,3 +1,4 @@
+import type { Provider } from "../../shared/providers";
 // plan_members: seats in a plan. Rows are never deleted — leaving sets left_on.
 import { buildSet } from "./sql";
 
@@ -71,6 +72,7 @@ export type SeatRow = {
   plan_id: number;
   plan_code: string;
   plan_name: string;
+  plan_provider: Provider;
   member_amount: number;
   user_id: number;
 };
@@ -79,7 +81,7 @@ export type SeatRow = {
 export async function listSeatsOfUser(db: D1Database, userCode: string): Promise<SeatRow[]> {
   const { results } = await db
     .prepare(
-      `SELECT p.id AS plan_id, p.code AS plan_code, p.name AS plan_name, p.member_amount, m.user_id
+      `SELECT p.id AS plan_id, p.code AS plan_code, p.name AS plan_name, p.provider AS plan_provider, p.member_amount, m.user_id
        FROM plan_members m JOIN plans p ON p.id = m.plan_id
        WHERE m.user_id = (SELECT id FROM users WHERE code = ?) AND m.left_on IS NULL AND p.active = 1
        ORDER BY p.name COLLATE NOCASE`,

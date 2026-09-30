@@ -1,3 +1,4 @@
+import type { Provider } from "../../shared/providers";
 // prepayments: 3/6/12 months of one plan paid at once. Spec: docs/data-model.md#trả-trước.
 import type { PaymentStatus } from "../../shared/types";
 import type { Where } from "./sql";
@@ -18,6 +19,7 @@ export type PrepaymentRow = {
   confirmed_at: string | null;
   plan_code: string;
   plan_name: string;
+  plan_provider: Provider;
   bank_bin: string | null;
   bank_account_no: string | null;
   bank_account_name: string | null;
@@ -31,7 +33,7 @@ const NOW = "strftime('%Y-%m-%dT%H:%M:%SZ', 'now')";
 const SELECT_PREPAYMENT = `
   SELECT pp.id, pp.code, pp.plan_id, pp.user_id, pp.start_period, pp.end_period, pp.months,
          pp.amount_per_month, pp.amount, pp.status, pp.created_at, pp.marked_at, pp.confirmed_at,
-         p.code AS plan_code, p.name AS plan_name, p.bank_bin, p.bank_account_no, p.bank_account_name,
+         p.code AS plan_code, p.name AS plan_name, p.provider AS plan_provider, p.bank_bin, p.bank_account_no, p.bank_account_name,
          u.code AS user_code, u.username, u.display_name
   FROM prepayments pp
   JOIN plans p ON p.id = pp.plan_id

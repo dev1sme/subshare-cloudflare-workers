@@ -25,7 +25,7 @@ const LIST_LIMIT = 500;
 export function toPrepayment(row: PrepaymentRow): Prepayment {
   return {
     code: row.code,
-    plan: { code: row.plan_code, name: row.plan_name },
+    plan: { code: row.plan_code, name: row.plan_name, provider: row.plan_provider },
     user: { code: row.user_code, username: row.username, display_name: row.display_name },
     start_period: row.start_period,
     end_period: row.end_period,

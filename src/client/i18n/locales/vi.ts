@@ -177,6 +177,7 @@ const vi = {
     failed: "Không chép được. Hãy chọn và chép thủ công.",
   },
   fields: {
+    provider: "nhà cung cấp",
     username: "tên đăng nhập",
     password: "mật khẩu",
     current_password: "mật khẩu hiện tại",

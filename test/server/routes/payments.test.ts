@@ -167,7 +167,7 @@ describe("prepayments", () => {
 
   it("lists my plans with the monthly amount", async () => {
     const { plans } = await data<{ plans: MyPlan[] }>(await call("GET", "/api/me/plans", alice));
-    expect(plans).toEqual([{ code: plan.code, name: "YouTube Family", member_amount: 37_000 }]);
+    expect(plans).toEqual([{ code: plan.code, name: "YouTube Family", provider: "OTHER", member_amount: 37_000 }]);
   });
 
   it("starts at the current month, charges months x amount with no discount, and shows the QR", async () => {

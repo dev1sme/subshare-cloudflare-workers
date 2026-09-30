@@ -175,6 +175,7 @@ const en: typeof vi = {
     failed: "Could not copy. Select and copy it manually.",
   },
   fields: {
+    provider: "provider",
     username: "username",
     password: "password",
     current_password: "current password",

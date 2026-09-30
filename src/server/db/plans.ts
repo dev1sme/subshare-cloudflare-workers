@@ -1,3 +1,4 @@
+import type { Provider } from "../../shared/providers";
 import type { Cycle } from "../../shared/types";
 import { buildSet } from "./sql";
 
@@ -5,6 +6,7 @@ export type PlanRow = {
   id: number;
   code: string;
   name: string;
+  provider: Provider;
   price: number;
   member_amount: number;
   cycle: Cycle;
@@ -24,6 +26,7 @@ export type PlanRow = {
 // Columns an admin may set through POST / PATCH /api/plans.
 export type PlanFields = {
   name: string;
+  provider: Provider;
   price: number;
   member_amount: number;
   cycle: Cycle;
@@ -38,7 +41,7 @@ export type PlanFields = {
 
 // The active-seat count is served by the partial index plan_members_active_unique (plan_id, ... WHERE left_on IS NULL).
 const SELECT_PLAN = `
-  SELECT p.id, p.code, p.name, p.price, p.member_amount, p.cycle, p.max_slots, p.payer_id,
+  SELECT p.id, p.code, p.name, p.provider, p.price, p.member_amount, p.cycle, p.max_slots, p.payer_id,
          p.bank_bin, p.bank_account_no, p.bank_account_name, p.active, p.accepting_requests, p.created_at,
          u.code AS payer_code, u.display_name AS payer_display_name,
          (SELECT COUNT(*) FROM plan_members m WHERE m.plan_id = p.id AND m.left_on IS NULL) AS active_members
@@ -59,12 +62,13 @@ export async function insertPlan(db: D1Database, code: string, fields: PlanField
   const [, selected] = await db.batch<PlanRow>([
     db
       .prepare(
-        `INSERT INTO plans (code, name, price, member_amount, cycle, max_slots, payer_id, bank_bin, bank_account_no, bank_account_name, active, accepting_requests)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO plans (code, name, provider, price, member_amount, cycle, max_slots, payer_id, bank_bin, bank_account_no, bank_account_name, active, accepting_requests)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         code,
         fields.name,
+        fields.provider,
         fields.price,
         fields.member_amount,
         fields.cycle,

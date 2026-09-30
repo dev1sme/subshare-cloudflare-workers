@@ -1,3 +1,4 @@
+import type { Provider } from "../../shared/providers";
 // join_requests: a member asks for a seat in an open plan; an admin approves (creating the seat)
 // or rejects. Every status change is guarded inside its own UPDATE (… AND status = 'PENDING'), so
 // two admins, or an admin and the member cancelling, cannot both win. Spec: docs/data-model.md.
@@ -16,6 +17,7 @@ export type JoinRequestRow = {
   decided_at: string | null;
   plan_code: string;
   plan_name: string;
+  plan_provider: Provider;
   member_amount: number;
   max_slots: number;
   plan_active: number;
@@ -27,7 +29,7 @@ export type JoinRequestRow = {
 
 const SELECT_REQUEST = `
   SELECT r.id, r.code, r.plan_id, r.user_id, r.status, r.note, r.created_at, r.decided_at,
-         p.code AS plan_code, p.name AS plan_name, p.member_amount, p.max_slots, p.active AS plan_active,
+         p.code AS plan_code, p.name AS plan_name, p.provider AS plan_provider, p.member_amount, p.max_slots, p.active AS plan_active,
          (SELECT COUNT(*) FROM plan_members m WHERE m.plan_id = p.id AND m.left_on IS NULL) AS active_members,
          u.code AS user_code, u.username, u.display_name
   FROM join_requests r
@@ -59,6 +61,7 @@ export async function listJoinRequestsOfUser(db: D1Database, userCode: string): 
 export type OpenPlanRow = {
   plan_code: string;
   plan_name: string;
+  plan_provider: Provider;
   member_amount: number;
   cycle: Cycle;
   max_slots: number;
@@ -71,7 +74,7 @@ export type OpenPlanRow = {
 export async function listOpenPlansForUser(db: D1Database, userCode: string): Promise<OpenPlanRow[]> {
   const { results } = await db
     .prepare(
-      `SELECT p.code AS plan_code, p.name AS plan_name, p.member_amount, p.cycle, p.max_slots,
+      `SELECT p.code AS plan_code, p.name AS plan_name, p.provider AS plan_provider, p.member_amount, p.cycle, p.max_slots,
               (SELECT COUNT(*) FROM plan_members m WHERE m.plan_id = p.id AND m.left_on IS NULL) AS active_members,
               (SELECT r.code FROM join_requests r WHERE r.plan_id = p.id AND r.user_id = u.id AND r.status = 'PENDING') AS pending_request_code
        FROM plans p, (SELECT id FROM users WHERE code = ?) u

@@ -19,7 +19,7 @@ const LIST_LIMIT = 500;
 export function toPayment(row: PaymentRow): Payment {
   return {
     code: row.code,
-    plan: { code: row.plan_code, name: row.plan_name },
+    plan: { code: row.plan_code, name: row.plan_name, provider: row.plan_provider },
     user: { code: row.user_code, username: row.username, display_name: row.display_name },
     period: row.period,
     amount: row.amount,

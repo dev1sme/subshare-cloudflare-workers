@@ -42,7 +42,7 @@ const PREPAY_HORIZON = 36;
 
 meRoutes.get("/plans", async (c) => {
   const seats = await listSeatsOfUser(c.env.DB, c.get("session").code);
-  const plans: MyPlan[] = seats.map((s) => ({ code: s.plan_code, name: s.plan_name, member_amount: s.member_amount }));
+  const plans: MyPlan[] = seats.map((s) => ({ code: s.plan_code, name: s.plan_name, provider: s.plan_provider, member_amount: s.member_amount }));
   return ok(c, { plans });
 });
 
@@ -155,6 +155,7 @@ meRoutes.get("/open-plans", async (c) => {
   const plans: OpenPlan[] = rows.map((row) => ({
     code: row.plan_code,
     name: row.plan_name,
+    provider: row.plan_provider,
     member_amount: row.member_amount,
     cycle: row.cycle,
     max_slots: row.max_slots,

@@ -28,6 +28,7 @@ export function toJoinRequest(row: JoinRequestRow): JoinRequest {
     plan: {
       code: row.plan_code,
       name: row.plan_name,
+      provider: row.plan_provider,
       member_amount: row.member_amount,
       max_slots: row.max_slots,
       active_members: row.active_members,

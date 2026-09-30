@@ -1,3 +1,5 @@
+import type { Provider } from "./providers";
+
 // API types shared between client and server. The client imports from here, never from src/server/.
 
 // Response envelope — spec: .claude/rules/envelop-conventions.md.
@@ -41,6 +43,7 @@ export type Cycle = "MONTHLY" | "YEARLY";
 export type Plan = {
   code: string;
   name: string;
+  provider: Provider;
   // VND per cycle the payer pays the provider, fees included, set by the admin.
   price: number;
   // VND per cycle every member pays, set by the admin. Independent of price.
@@ -97,7 +100,7 @@ export type BankTransfer = {
   qr: string;
 };
 
-type PlanRef = { code: string; name: string };
+type PlanRef = { code: string; name: string; provider: Provider };
 type UserRef = { code: string; username: string; display_name: string };
 
 // One member's share of one monthly period.

@@ -1,3 +1,4 @@
+import type { Provider } from "../../shared/providers";
 // payments: one member's share of one period. Status transitions are guarded inside each UPDATE
 // (WHERE status IN ...), so two admins clicking at once cannot both apply. Spec: docs/payments.md.
 import type { PaymentStatus } from "../../shared/types";
@@ -15,6 +16,7 @@ export type PaymentRow = {
   period: string;
   plan_code: string;
   plan_name: string;
+  plan_provider: Provider;
   bank_bin: string | null;
   bank_account_no: string | null;
   bank_account_name: string | null;
@@ -28,7 +30,7 @@ const NOW = "strftime('%Y-%m-%dT%H:%M:%SZ', 'now')";
 
 const SELECT_PAYMENT = `
   SELECT pm.id, pm.code, pm.user_id, pm.amount, pm.status, pm.marked_at, pm.confirmed_at, pm.prepayment_id,
-         bp.period, p.code AS plan_code, p.name AS plan_name,
+         bp.period, p.code AS plan_code, p.name AS plan_name, p.provider AS plan_provider,
          p.bank_bin, p.bank_account_no, p.bank_account_name,
          u.code AS user_code, u.username, u.display_name,
          pp.code AS prepayment_code

@@ -102,6 +102,21 @@ describe("create and read", () => {
     expect(((await list.json()) as ApiSuccess<{ plans: Plan[] }>).data.plans).toHaveLength(1);
   });
 
+  it("stores the provider, OTHER by default, and rejects one not on the list", async () => {
+    expect((await createPlan()).provider).toBe("OTHER");
+    const plan = await createPlan({ provider: "YOUTUBE" });
+    expect(plan.provider).toBe("YOUTUBE");
+
+    const patched = await call("PATCH", `/api/plans/${plan.code}`, { provider: "APPLE" });
+    expect(((await patched.json()) as ApiSuccess<{ plan: Plan }>).data.plan.provider).toBe("APPLE");
+
+    for (const provider of ["youtube", "HBO", 1, null]) {
+      const res = await call("POST", "/api/plans", { ...YOUTUBE, provider });
+      expect(res.status).toBe(400);
+      expect(((await res.json()) as ApiFailure).error.code).toBe(provider === null ? "MISSING_PROVIDER" : "INVALID_PROVIDER");
+    }
+  });
+
   it("lists plans by name ignoring case", async () => {
     await createPlan({ name: "YouTube Family" });
     await createPlan({ name: "iCloud 2TB" });

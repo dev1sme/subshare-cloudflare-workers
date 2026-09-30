@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { PROVIDERS } from "../../shared/providers";
 import type { Cycle, Member, Period, Plan } from "../../shared/types";
 import { requireAdmin, type AppEnv } from "../auth";
 import {
@@ -52,6 +53,7 @@ function toPlan(row: PlanRow): Plan {
   return {
     code: row.code,
     name: row.name,
+    provider: row.provider,
     price: row.price,
     member_amount: row.member_amount,
     cycle: row.cycle,
@@ -120,6 +122,8 @@ planRoutes.post("/", async (c) => {
   const body = await readBody(c);
   const fields: PlanFields = {
     name: requireString(body, "name", NAME_MAX),
+    // Defaults like the column: a plan for a service not on the list is still a plan.
+    provider: has(body, "provider") ? requireEnum(body, "provider", PROVIDERS) : "OTHER",
     price: requireInteger(body, "price", 1, PRICE_MAX),
     member_amount: requireInteger(body, "member_amount", 1, PRICE_MAX),
     cycle: requireEnum(body, "cycle", CYCLES),
@@ -147,6 +151,7 @@ planRoutes.patch("/:code", async (c) => {
   // Built field by field from the allowlist — never from the body itself.
   const patch: Partial<PlanFields> = {};
   if (has(body, "name")) patch.name = requireString(body, "name", NAME_MAX);
+  if (has(body, "provider")) patch.provider = requireEnum(body, "provider", PROVIDERS);
   if (has(body, "price")) patch.price = requireInteger(body, "price", 1, PRICE_MAX);
   if (has(body, "member_amount")) patch.member_amount = requireInteger(body, "member_amount", 1, PRICE_MAX);
   if (has(body, "cycle")) patch.cycle = requireEnum(body, "cycle", CYCLES);

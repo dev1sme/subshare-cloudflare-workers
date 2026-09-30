@@ -82,12 +82,13 @@ Tài khoản có hai chốt: không xoá tài khoản đang đăng nhập (`CANN
 |---|---|---|
 | `GET /` | — | `{ plans }` (đang dùng trước, rồi theo tên) |
 | `GET /:code` | — | `{ plan }` |
-| `POST /` | `name`, `price`, `member_amount`, `cycle`, `max_slots`, `payer_code`, `bank_bin?`, `bank_account_no?`, `bank_account_name?`, `active?` | `{ plan }` — 201 |
+| `POST /` | `name`, `provider?` (mặc định `OTHER`), `price`, `member_amount`, `cycle`, `max_slots`, `payer_code`, `bank_bin?`, `bank_account_no?`, `bank_account_name?`, `active?` | `{ plan }` — 201 |
 | `PATCH /:code` | bất kỳ trường nào ở trên | `{ plan }` |
 | `DELETE /:code` | — | `null` |
 
-`plan` = `{ code, name, price, member_amount, cycle, max_slots, active_members, payer: { code, display_name }, bank_bin, bank_account_no, bank_account_name, active, created_at }` — `active` là boolean, không có `id` hay `payer_id`.
+`plan` = `{ code, name, provider, price, member_amount, cycle, max_slots, active_members, payer: { code, display_name }, bank_bin, bank_account_no, bank_account_name, active, created_at }` — `active` là boolean, không có `id` hay `payer_id`.
 
+- `provider` là một giá trị trong danh sách cố định (`docs/data-model.md#nhà-cung-cấp-của-gói`); ngoài danh sách → `INVALID_PROVIDER`. Mọi tham chiếu gói lồng trong response khác (`payment.plan`, `prepayment.plan`, `join_request.plan`, `/api/me/plans`, `/api/me/open-plans`) cũng mang `provider`.
 - `payer_code` là mã tài khoản (`AC…`) của một **admin**: sai hình dạng hoặc không tồn tại → `INVALID_PAYER_CODE`, không phải admin → `PAYER_MUST_BE_ADMIN`. Đổi payer sang người đang có suất trong chính gói đó → 409 `PAYER_IS_MEMBER`.
 - `bank_bin` 6 chữ số (BIN NAPAS), `bank_account_no` 4–19 chữ số; hai trường đặt hoặc xoá **cùng nhau** (`INCOMPLETE_BANK_DETAILS`), vì QR cần cả hai. `null` hoặc `""` là xoá.
 - `max_slots` không được nhỏ hơn `active_members` → 409 `SLOTS_BELOW_MEMBERS`.
