@@ -14,16 +14,23 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     statusRef.current = session.status;
   }, [session.status]);
 
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let cancelled = false;
+    setSession({ status: "loading", user: null });
     void api.auth.me().then((result) => {
       if (cancelled) return;
-      setSession(result.ok ? { status: "signedIn", user: result.data.user } : { status: "signedOut", user: null });
+      if (result.ok) setSession({ status: "signedIn", user: result.data.user });
+      // Only the server saying "no session" signs out. A dropped connection or a 500 on a phone
+      // with a flaky network must not send a signed-in member back to the password form.
+      else if (result.code === "UNAUTHORIZED") setSession({ status: "signedOut", user: null });
+      else setSession({ status: "unreachable", user: null, code: result.code });
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
   // Any request answering UNAUTHORIZED ends the session; the route guard then shows the login page.
   useEffect(
@@ -61,6 +68,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return true;
   }, [t]);
 
-  const value = useMemo(() => ({ session, signIn, signOut }), [session, signIn, signOut]);
+  const value = useMemo(() => ({ session, signIn, signOut, retry }), [session, signIn, signOut, retry]);
   return <SessionContext value={value}>{children}</SessionContext>;
 }
