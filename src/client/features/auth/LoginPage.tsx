@@ -34,7 +34,7 @@ export default function LoginPage() {
             <p className="text-lg text-on-surface-variant">{t("login.subtitle")}</p>
           </div>
         </m.header>
-        <m.section variants={listItem} className="rounded-card border border-outline-variant/60 bg-surface-container-lowest p-6">
+        <m.section variants={listItem} className="rounded-card border border-outline-variant/60 bg-surface-container-lowest p-6 [--field-bg:var(--color-surface-container-lowest)]">
           <h1 className="mb-5 text-2xl font-semibold">{t("login.title")}</h1>
           <LoginForm onSubmit={signIn} />
         </m.section>

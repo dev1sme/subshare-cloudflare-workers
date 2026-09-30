@@ -101,6 +101,12 @@
 }
 
 @layer base {
+  /* The backing of a floating field label (TextField, SelectField): the colour the field sits on.
+     A container with another surface sets it, e.g. [--field-bg:var(--color-surface-container-high)]. */
+  :root {
+    --field-bg: var(--color-surface);
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;

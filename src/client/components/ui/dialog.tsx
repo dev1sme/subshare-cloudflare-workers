@@ -12,7 +12,7 @@ export function DialogContent({ className, ...props }: ComponentProps<typeof Dia
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-on-surface/32 data-[state=closed]:animate-scrim-out data-[state=open]:animate-scrim-in" />
       <DialogPrimitive.Content
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 gap-4 rounded-card bg-surface-container-high p-6 data-[state=closed]:animate-dialog-out data-[state=open]:animate-dialog-in",
+          "fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 gap-4 rounded-card bg-surface-container-high p-6 [--field-bg:var(--color-surface-container-high)] data-[state=closed]:animate-dialog-out data-[state=open]:animate-dialog-in",
           className,
         )}
         {...props}

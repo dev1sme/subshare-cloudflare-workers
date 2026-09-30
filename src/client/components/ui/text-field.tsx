@@ -10,6 +10,7 @@ type TextFieldProps = Omit<ComponentProps<"input">, "placeholder"> & {
 // M3 outlined text field with a floating label. The label is a real <label> (never a placeholder
 // posing as one); it rests inside the field and floats onto the border on focus or when filled.
 // The `placeholder=" "` is what lets CSS tell "filled" from "empty" (:placeholder-shown).
+// The label's backing matches whatever the field sits on: --field-bg (see index.css).
 export function TextField({ label, trailing, className, id, ...props }: TextFieldProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
@@ -29,7 +30,7 @@ export function TextField({ label, trailing, className, id, ...props }: TextFiel
       <label
         htmlFor={inputId}
         className={cn(
-          "pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 bg-surface-container-lowest px-1 text-base text-on-surface-variant transition-all duration-200 ease-emphasized",
+          "pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 bg-(--field-bg) px-1 text-base text-on-surface-variant transition-all duration-200 ease-emphasized",
           "peer-focus:top-0 peer-focus:text-xs peer-focus:text-primary",
           "peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:text-xs",
         )}

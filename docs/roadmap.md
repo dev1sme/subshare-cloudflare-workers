@@ -27,7 +27,12 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 - [x] API admin: danh sách `PENDING`, xác nhận / trả về (payment và trả trước)
 - [x] Xin vào gói: `plans.accepting_requests`, `join_requests` (migration 0006), API member + admin, màn "Khám phá" và màn "Yêu cầu"
 - [x] Đổi giao diện sang Material 3 Expressive + animation (`motion`)
-- [ ] Màn admin (UI): duyệt thanh toán, CRUD gói (hiện màn Gói chỉ có công tắc "Nhận đăng ký"), tài khoản
+- [x] Đổi giao diện sang "lấy dịch vụ làm trung tâm": `plans.provider` (migration 0007), logo hãng (`simple-icons`), trang chủ "Gói của tôi", gộp theo nhà cung cấp; bảng màu teal (`scripts/generate-palette.mjs`), logo chữ S + mũi tên, favicon
+- [ ] Màn admin (UI):
+  - [x] Duyệt thanh toán: chờ xác nhận (payment + trả trước) / chưa đóng / đã đóng theo kỳ
+  - [ ] CRUD gói (hiện màn Gói chỉ có công tắc "Nhận đăng ký"), thành viên, kỳ
+  - [ ] Tài khoản
+  - [ ] Hoàn tác một lần trả trước đã `PAID` (API có, UI chưa)
 - [ ] Dashboard admin: ai còn nợ, qua mọi kỳ
 
 ## Sau này

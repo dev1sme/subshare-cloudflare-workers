@@ -1,4 +1,4 @@
-import type { ApiResponse, BankTransfer, ErrorDetails, JoinRequest, MyPlan, OpenPlan, Payment, Plan, User } from "../shared/types";
+import type { ApiResponse, BankTransfer, ErrorDetails, JoinRequest, MyPlan, OpenPlan, Payment, PaymentStatus, Plan, Prepayment, User } from "../shared/types";
 
 // Typed wrapper for every endpoint. Returns a result instead of throwing, so hooks branch on
 // `ok` and never need try/catch. Components never import this file — only use*.ts hooks do.
@@ -79,5 +79,16 @@ export const api = {
       request<{ join_request: JoinRequest }>("POST", `/join-requests/${encodeURIComponent(code)}/approve`, {}),
     rejectJoinRequest: (code: string) =>
       request<{ join_request: JoinRequest }>("POST", `/join-requests/${encodeURIComponent(code)}/reject`),
+    // Always filtered by status (and period): an unfiltered list reads the whole payments table.
+    payments: (status: PaymentStatus, period?: string) =>
+      request<{ payments: Payment[] }>(
+        "GET",
+        `/payments?${new URLSearchParams(period ? { status, period } : { status }).toString()}`,
+      ),
+    setPaymentStatus: (code: string, status: "PAID" | "UNPAID") =>
+      request<{ payment: Payment }>("PATCH", `/payments/${encodeURIComponent(code)}`, { status }),
+    prepayments: (status: PaymentStatus) => request<{ prepayments: Prepayment[] }>("GET", `/prepayments?status=${status}`),
+    setPrepaymentStatus: (code: string, status: "PAID" | "UNPAID") =>
+      request<{ prepayment: Prepayment }>("PATCH", `/prepayments/${encodeURIComponent(code)}`, { status }),
   },
 };

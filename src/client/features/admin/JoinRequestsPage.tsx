@@ -36,7 +36,6 @@ export default function JoinRequestsPage() {
         </div>
       )}
       {error && <LoadError code={error} onRetry={reload} />}
-      {!loading && !error && requests.length === 0 && <EmptyState tone="success" icon="done" title={t("requests.empty")} />}
       <ul className="flex flex-col gap-3">
         <AnimatePresence initial={false}>
           {requests.map((request) => (
@@ -49,6 +48,8 @@ export default function JoinRequestsPage() {
           ))}
         </AnimatePresence>
       </ul>
+      {/* After the list, so the last card slides out above it instead of under it. */}
+      {!loading && !error && requests.length === 0 && <EmptyState tone="success" icon="done" title={t("requests.empty")} />}
     </div>
   );
 }
