@@ -1,63 +1,55 @@
+import { CircleCheck, CircleAlert, Compass, Hammer, Layers, SearchX, type LucideIcon } from "lucide-react";
 import { m } from "motion/react";
 import type { ReactNode } from "react";
 import { cn } from "../lib/cn";
-import { springExpressive } from "../lib/motion";
+import { emphasizedDecelerate } from "../lib/motion";
 
 type Tone = "neutral" | "success" | "error";
 
-const TONE: Record<Tone, { blob: string; accent: string }> = {
-  neutral: { blob: "fill-primary-container", accent: "fill-tertiary-container" },
-  success: { blob: "fill-success-container", accent: "fill-primary-container" },
-  error: { blob: "fill-error-container", accent: "fill-secondary-container" },
+// Named so a screen says what it is about, not which picture it wants.
+const ICONS = {
+  plans: Layers,
+  explore: Compass,
+  done: CircleCheck,
+  error: CircleAlert,
+  missing: SearchX,
+  soon: Hammer,
+} satisfies Record<string, LucideIcon>;
+
+const TONE: Record<Tone, string> = {
+  neutral: "bg-secondary-container text-on-secondary-container",
+  success: "bg-success-container text-on-success-container",
+  error: "bg-error-container text-on-error-container",
 };
 
-// Illustrated empty / result state: two soft shapes that settle in, then the message.
-// The illustration is decorative; the title and body carry the meaning.
+// Empty / result state: one icon that says what the screen is about, then the message. The icon
+// is decorative; title and body carry the meaning. It fades in with the text, nothing bounces.
 export function EmptyState({
   tone = "neutral",
+  icon = "plans",
   title,
   body,
   children,
 }: {
   tone?: Tone;
+  icon?: keyof typeof ICONS;
   title: string;
   body?: string;
   children?: ReactNode;
 }) {
-  const colors = TONE[tone];
+  const Icon = ICONS[icon];
   return (
-    <div className="flex flex-col items-center gap-3 py-8 text-center">
-      <svg viewBox="0 0 120 96" className="h-24 w-32" aria-hidden="true">
-        <m.path
-          d="M60 8c26 0 48 14 48 38S88 90 58 90 12 74 12 48 34 8 60 8z"
-          className={colors.blob}
-          initial={{ scale: 0.6, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1, transition: springExpressive }}
-          style={{ transformOrigin: "60px 48px" }}
-        />
-        <m.rect
-          x="70"
-          y="14"
-          width="30"
-          height="30"
-          rx="10"
-          className={colors.accent}
-          initial={{ rotate: -40, scale: 0, opacity: 0 }}
-          animate={{ rotate: 12, scale: 1, opacity: 1, transition: { ...springExpressive, delay: 0.1 } }}
-          style={{ transformOrigin: "85px 29px" }}
-        />
-        <m.circle
-          cx="34"
-          cy="70"
-          r="9"
-          className={cn(colors.accent, "opacity-80")}
-          initial={{ scale: 0 }}
-          animate={{ scale: 1, transition: { ...springExpressive, delay: 0.18 } }}
-        />
-      </svg>
+    <m.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0, transition: { duration: 0.3, ease: emphasizedDecelerate } }}
+      className="flex flex-col items-center gap-3 py-10 text-center"
+    >
+      <span aria-hidden="true" className={cn("mb-1 flex size-16 items-center justify-center rounded-3xl", TONE[tone])}>
+        <Icon className="size-8" strokeWidth={1.75} />
+      </span>
       <p className="text-lg font-semibold">{title}</p>
       {body && <p className="max-w-xs text-sm text-on-surface-variant">{body}</p>}
       {children}
-    </div>
+    </m.div>
   );
 }

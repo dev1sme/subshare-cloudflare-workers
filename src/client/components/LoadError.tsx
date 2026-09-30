@@ -11,7 +11,7 @@ export function LoadError({ code, onRetry }: { code: string; onRetry: () => void
   const missing = code === "NOT_FOUND" || code === "INVALID_CODE";
   return (
     <div role="alert">
-      <EmptyState tone="error" title={t(missing ? "payments.missing" : "payments.loadFailed")} body={errorMessage(t, code)}>
+      <EmptyState tone="error" icon={missing ? "missing" : "error"} title={t(missing ? "payments.missing" : "payments.loadFailed")} body={errorMessage(t, code)}>
         {!missing && (
           <Button variant="tonal" onClick={onRetry}>
             <RefreshCw aria-hidden="true" />

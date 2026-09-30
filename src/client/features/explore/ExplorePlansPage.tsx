@@ -3,9 +3,11 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { OpenPlan } from "../../../shared/types";
 import { EmptyState } from "../../components/EmptyState";
+import { ProviderSection } from "../../components/ProviderSection";
 import { LoadError } from "../../components/LoadError";
 import { useConfirm } from "../../hooks/useConfirm";
 import { listStagger } from "../../lib/motion";
+import { groupByProvider } from "../../lib/providers";
 import { AskToJoinDialog } from "./components/AskToJoinDialog";
 import { ExploreSkeleton } from "./components/ExploreSkeleton";
 import { OpenPlanCard } from "./components/OpenPlanCard";
@@ -35,11 +37,15 @@ export default function ExplorePlansPage() {
         <p className="text-on-surface-variant">{t("explore.subtitle")}</p>
       </header>
       {plans.length === 0 ? (
-        <EmptyState title={t("explore.empty")} />
+        <EmptyState icon="explore" title={t("explore.empty")} />
       ) : (
-        <m.ul variants={listStagger} initial="hidden" animate="visible" className="flex flex-col gap-3">
-          {plans.map((plan) => (
-            <OpenPlanCard key={plan.code} plan={plan} onAsk={setAsking} onCancel={(p) => void confirmCancel(p)} />
+        <m.ul variants={listStagger} initial="hidden" animate="visible" className="flex flex-col gap-8">
+          {groupByProvider(plans).map(({ provider, items }) => (
+            <ProviderSection key={provider} provider={provider}>
+              {items.map((plan) => (
+                <OpenPlanCard key={plan.code} plan={plan} onAsk={setAsking} onCancel={(p) => void confirmCancel(p)} />
+              ))}
+            </ProviderSection>
           ))}
         </m.ul>
       )}

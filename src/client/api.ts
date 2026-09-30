@@ -1,4 +1,4 @@
-import type { ApiResponse, BankTransfer, ErrorDetails, JoinRequest, OpenPlan, Payment, Plan, User } from "../shared/types";
+import type { ApiResponse, BankTransfer, ErrorDetails, JoinRequest, MyPlan, OpenPlan, Payment, Plan, User } from "../shared/types";
 
 // Typed wrapper for every endpoint. Returns a result instead of throwing, so hooks branch on
 // `ok` and never need try/catch. Components never import this file — only use*.ts hooks do.
@@ -57,6 +57,7 @@ export const api = {
       request<null>("POST", "/auth/change-password", { current_password, new_password }),
   },
   me: {
+    plans: () => request<{ plans: MyPlan[] }>("GET", "/me/plans"),
     payments: () => request<{ payments: Payment[] }>("GET", "/me/payments"),
     payment: (code: string) =>
       request<{ payment: Payment; bank_transfer: BankTransfer | null }>("GET", `/me/payments/${encodeURIComponent(code)}`),

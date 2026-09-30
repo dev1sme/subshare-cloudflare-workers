@@ -1,28 +1,37 @@
+import { m } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "../../components/EmptyState";
 import { LoadError } from "../../components/LoadError";
-import { DueSummary } from "./components/DueSummary";
+import { listStagger } from "../../lib/motion";
+import { MyPlanCard } from "./components/MyPlanCard";
+import { OwedSummary } from "./components/OwedSummary";
 import { PaymentList } from "./components/PaymentList";
 import { PaymentListSkeleton } from "./components/PaymentListSkeleton";
-import { useMyPayments } from "./useMyPayments";
+import { useMyPlans } from "./useMyPlans";
 
+// Member home: the plans they share, each with what is still open on it. Money is a property of a
+// plan here, not the headline.
 export default function MyPaymentsPage() {
   const { t } = useTranslation();
-  const { due, paid, totalDue, error, loading, reload } = useMyPayments();
+  const { plans, history, unpaidTotal, pendingTotal, empty, error, loading, reload } = useMyPlans();
 
   if (loading) return <PaymentListSkeleton />;
   if (error) return <LoadError code={error} onRetry={reload} />;
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-bold tracking-tight">{t("nav.myPayments")}</h1>
-      {due.length === 0 && paid.length === 0 ? (
-        <EmptyState title={t("payments.empty")} />
+      <h1 className="text-3xl font-bold tracking-tight">{t("nav.myPlans")}</h1>
+      {empty ? (
+        <EmptyState icon="plans" title={t("home.empty")} body={t("home.emptyBody")} />
       ) : (
         <>
-          <DueSummary totalDue={totalDue} dueCount={due.length} />
-          <PaymentList title={t("payments.due")} payments={due} />
-          <PaymentList title={t("payments.paid")} payments={paid} />
+          <OwedSummary unpaid={unpaidTotal} pending={pendingTotal} />
+          <m.ul variants={listStagger} initial="hidden" animate="visible" className="flex flex-col gap-3">
+            {plans.map((summary) => (
+              <MyPlanCard key={summary.plan.code} summary={summary} />
+            ))}
+          </m.ul>
+          <PaymentList title={t("home.history")} payments={history} />
         </>
       )}
     </div>

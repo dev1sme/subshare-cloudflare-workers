@@ -2,7 +2,6 @@ import { Clock, UserPlus } from "lucide-react";
 import { m } from "motion/react";
 import { useTranslation } from "react-i18next";
 import type { OpenPlan } from "../../../../shared/types";
-import { PlanAvatar } from "../../../components/PlanAvatar";
 import { SlotMeter } from "../../../components/SlotMeter";
 import { Button } from "../../../components/ui/button";
 import { formatMoney } from "../../../format";
@@ -19,14 +18,10 @@ export function OpenPlanCard({ plan, onAsk, onCancel }: OpenPlanCardProps) {
   const free = plan.max_slots - plan.active_members;
   return (
     <m.li variants={listItem} layout="position" className="flex flex-col gap-4 rounded-card bg-surface-container-low p-5">
-      <div className="flex items-center gap-4">
-        <PlanAvatar code={plan.code} name={plan.name} className="size-14 text-lg" />
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-lg font-bold">{plan.name}</h2>
-          <p className="font-semibold text-primary tabular-nums">
-            {t("explore.perMonth", { amount: formatMoney(plan.member_amount) })}
-          </p>
-        </div>
+      {/* The provider's logo heads the section; the card leads with what differs: name and price. */}
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className="min-w-0 truncate text-lg font-bold">{plan.name}</h3>
+        <p className="shrink-0 font-semibold tabular-nums">{t("explore.perMonth", { amount: formatMoney(plan.member_amount) })}</p>
       </div>
       <div className="flex items-center justify-between gap-3">
         <SlotMeter used={plan.active_members} total={plan.max_slots} />

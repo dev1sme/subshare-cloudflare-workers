@@ -7,7 +7,7 @@ export function ComingSoon({ titleKey }: { titleKey: string }) {
   return (
     <section className="flex flex-col gap-2">
       <h1 className="text-3xl font-bold tracking-tight">{t(titleKey)}</h1>
-      <EmptyState title={t("placeholder.comingSoon")} />
+      <EmptyState icon="soon" title={t("placeholder.comingSoon")} />
     </section>
   );
 }

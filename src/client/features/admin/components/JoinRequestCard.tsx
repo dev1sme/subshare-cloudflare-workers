@@ -2,6 +2,7 @@ import { Check, X } from "lucide-react";
 import { m } from "motion/react";
 import { useTranslation } from "react-i18next";
 import type { JoinRequest } from "../../../../shared/types";
+import { ServiceLogo } from "../../../components/ServiceLogo";
 import { SlotMeter } from "../../../components/SlotMeter";
 import { UserAvatar } from "../../../components/UserAvatar";
 import { Button } from "../../../components/ui/button";
@@ -34,16 +35,19 @@ export function JoinRequestCard({ request, onApprove, onReject }: JoinRequestCar
         </div>
         <span className="text-xs text-on-surface-variant">{t("requests.askedOn", { date: formatDate(request.created_at) })}</span>
       </div>
-      <div className="flex flex-col gap-2 rounded-2xl bg-surface-container px-4 py-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="truncate font-semibold">{request.plan.name}</p>
-          <p className="shrink-0 text-sm font-semibold text-primary tabular-nums">{formatMoney(request.plan.member_amount)}</p>
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <SlotMeter used={request.plan.active_members} total={request.plan.max_slots} />
-          <span className="text-xs text-on-surface-variant">
-            {t("requests.seats", { used: request.plan.active_members, total: request.plan.max_slots })}
-          </span>
+      <div className="flex items-center gap-3 rounded-2xl bg-surface-container px-3 py-3">
+        <ServiceLogo provider={request.plan.provider} name={request.plan.name} className="size-11 rounded-xl text-sm" />
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="truncate font-semibold">{request.plan.name}</p>
+            <p className="shrink-0 text-sm font-semibold tabular-nums">{formatMoney(request.plan.member_amount)}</p>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <SlotMeter used={request.plan.active_members} total={request.plan.max_slots} />
+            <span className="text-xs text-on-surface-variant">
+              {t("requests.seats", { used: request.plan.active_members, total: request.plan.max_slots })}
+            </span>
+          </div>
         </div>
       </div>
       {request.note && (

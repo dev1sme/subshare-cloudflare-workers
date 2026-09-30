@@ -2,7 +2,6 @@ import { m } from "motion/react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Plan } from "../../../../shared/types";
-import { PlanAvatar } from "../../../components/PlanAvatar";
 import { Switch } from "../../../components/ui/switch";
 import { formatMoney } from "../../../format";
 import { listItem } from "../../../lib/motion";
@@ -26,7 +25,6 @@ export function PlanAdminRow({ plan, onToggleAccepting }: PlanAdminRowProps) {
   return (
     <m.li variants={listItem} className="flex flex-col gap-4 rounded-card bg-surface-container-low p-5 sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-1 items-center gap-4">
-        <PlanAvatar code={plan.code} name={plan.name} />
         <div className="min-w-0">
           <p className="truncate font-bold">{plan.name}</p>
           <p className="text-sm text-on-surface-variant">

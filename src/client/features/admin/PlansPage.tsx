@@ -1,9 +1,11 @@
 import { m } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "../../components/EmptyState";
+import { ProviderSection } from "../../components/ProviderSection";
 import { LoadError } from "../../components/LoadError";
 import { Skeleton } from "../../components/Skeleton";
 import { listStagger } from "../../lib/motion";
+import { groupByProvider } from "../../lib/providers";
 import { PlanAdminRow } from "./components/PlanAdminRow";
 import { usePlansAdmin } from "./usePlansAdmin";
 
@@ -27,11 +29,15 @@ export default function PlansPage() {
         </div>
       )}
       {error && <LoadError code={error} onRetry={reload} />}
-      {!loading && !error && plans.length === 0 && <EmptyState title={t("plansAdmin.empty")} />}
+      {!loading && !error && plans.length === 0 && <EmptyState icon="plans" title={t("plansAdmin.empty")} />}
       {plans.length > 0 && (
-        <m.ul variants={listStagger} initial="hidden" animate="visible" className="flex flex-col gap-3">
-          {plans.map((plan) => (
-            <PlanAdminRow key={plan.code} plan={plan} onToggleAccepting={setAccepting} />
+        <m.ul variants={listStagger} initial="hidden" animate="visible" className="flex flex-col gap-8">
+          {groupByProvider(plans).map(({ provider, items }) => (
+            <ProviderSection key={provider} provider={provider}>
+              {items.map((plan) => (
+                <PlanAdminRow key={plan.code} plan={plan} onToggleAccepting={setAccepting} />
+              ))}
+            </ProviderSection>
           ))}
         </m.ul>
       )}

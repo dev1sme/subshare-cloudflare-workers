@@ -10,7 +10,7 @@ export default function NotFoundPage() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center p-6">
       <p className="text-6xl font-bold tracking-tight text-primary tabular-nums">404</p>
-      <EmptyState title={t("notFound.title")} body={t("notFound.body")}>
+      <EmptyState icon="missing" title={t("notFound.title")} body={t("notFound.body")}>
         <Link to="/" className={buttonVariants({ className: "mt-2" })}>
           {t("notFound.home")}
         </Link>

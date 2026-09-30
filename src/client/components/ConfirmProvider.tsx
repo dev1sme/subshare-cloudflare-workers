@@ -35,10 +35,11 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     <ConfirmContext value={confirm}>
       {children}
       <AlertDialog open={options !== null} onOpenChange={(open) => !open && settle(false)}>
-        <AlertDialogContent>
+        {/* Without a description, aria-describedby={undefined} is Radix's documented opt-out: no
+            warning, and no empty paragraph taking up space between the title and the buttons. */}
+        <AlertDialogContent {...(options?.description ? {} : { "aria-describedby": undefined })}>
           <AlertDialogTitle>{options?.title}</AlertDialogTitle>
-          {/* Radix warns when Content has no Description; an empty one keeps aria-describedby valid. */}
-          <AlertDialogDescription>{options?.description ?? ""}</AlertDialogDescription>
+          {options?.description && <AlertDialogDescription>{options.description}</AlertDialogDescription>}
           <AlertDialogFooter>
             <AlertDialogCancel>{t("confirm.cancel")}</AlertDialogCancel>
             <AlertDialogAction destructive={options?.destructive} onClick={() => settle(true)}>

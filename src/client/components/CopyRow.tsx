@@ -1,5 +1,5 @@
 import { Check, Copy } from "lucide-react";
-import { AnimatePresence, m } from "motion/react";
+import { m } from "motion/react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -47,17 +47,15 @@ export function CopyRow({ label, value, display }: CopyRowProps) {
         onClick={() => void copy()}
         aria-label={t("copy.action", { label: label.toLowerCase() })}
       >
-        <AnimatePresence mode="popLayout" initial={false}>
-          <m.span
-            key={copied ? "done" : "copy"}
-            initial={{ scale: 0.4, opacity: 0, rotate: -45 }}
-            animate={{ scale: 1, opacity: 1, rotate: 0, transition: springExpressive }}
-            exit={{ scale: 0.4, opacity: 0, transition: { duration: 0.1 } }}
-            className="flex"
-          >
-            {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-          </m.span>
-        </AnimatePresence>
+        {/* Enter-only swap: popLayout would inject a <style> tag that CSP blocks (see StatusBadge). */}
+        <m.span
+          key={copied ? "done" : "copy"}
+          initial={copied ? { scale: 0.4, opacity: 0, rotate: -45 } : false}
+          animate={{ scale: 1, opacity: 1, rotate: 0, transition: springExpressive }}
+          className="flex"
+        >
+          {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+        </m.span>
       </Button>
     </div>
   );

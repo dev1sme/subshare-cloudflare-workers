@@ -22,7 +22,7 @@ export default function JoinRequestsPage() {
   };
 
   const reject = async (request: JoinRequest) => {
-    const title = t("requests.rejectTitle", { user: request.user.display_name });
+    const title = t("requests.rejectTitle", { user: request.user.display_name, plan: request.plan.name });
     if (await confirm({ title, destructive: true, confirmLabel: t("requests.reject") })) await decide(request, "reject");
   };
 
@@ -36,7 +36,7 @@ export default function JoinRequestsPage() {
         </div>
       )}
       {error && <LoadError code={error} onRetry={reload} />}
-      {!loading && !error && requests.length === 0 && <EmptyState tone="success" title={t("requests.empty")} />}
+      {!loading && !error && requests.length === 0 && <EmptyState tone="success" icon="done" title={t("requests.empty")} />}
       <ul className="flex flex-col gap-3">
         <AnimatePresence initial={false}>
           {requests.map((request) => (

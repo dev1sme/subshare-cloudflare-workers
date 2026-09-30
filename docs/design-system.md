@@ -1,39 +1,48 @@
 # Design system
 
-**Material 3 Expressive**, chốt 2026-09-30 (thay bản Minimalism/Swiss đầu tiên — ba thấy đơn điệu và muốn có animation). Định hướng lấy từ `ui-ux-pro-max` (`--domain style "material 3 expressive"`, design system `--variance 6 --motion 6`), bảng màu sinh bằng thư viện chính thức của Material. Token nằm ở `src/client/index.css` (`@theme` của Tailwind v4); file này giải thích vì sao.
+**Material 3 Expressive, lấy dịch vụ làm trung tâm**, chốt 2026-09-30. Bản M3 đầu tiên xoay quanh tiền (thẻ gradient tổng nợ, số đếm chạy) nên trông như app ngân hàng; ba muốn nhìn vào là thấy **dịch vụ** — YouTube, Spotify, ai ở gói nào — tiền chỉ là thuộc tính của gói. (Trước đó nữa là bản Minimalism/Swiss — ba thấy đơn điệu.) Định hướng lấy từ `ui-ux-pro-max` (`--domain style "material 3 expressive"`, design system `--variance 6 --motion 6`), bảng màu sinh bằng thư viện chính thức của Material. Token nằm ở `src/client/index.css` (`@theme` của Tailwind v4); file này giải thích vì sao.
 
 ## Định hướng
 
-- **Màu tonal, hình tương phản, chuyển động spring.** Nền không trắng tinh (`surface` #fdf7ff), nâng tầng bằng màu container chứ không bằng bóng đổ.
+- **Dịch vụ trước, tiền sau.** Trang chủ thành viên là "Gói của tôi": mỗi gói một thẻ có logo, khoản còn mở nằm trong thẻ. Khám phá và trang Gói của admin gộp theo nhà cung cấp.
+- **Khung trung tính, màu đến từ logo.** Nền và nút gần như xám; điểm màu trên màn là logo của từng hãng và màu trạng thái. Nâng tầng bằng màu container chứ không bằng bóng đổ.
 - **Mobile-first**: thành viên mở app trên điện thoại để chuyển khoản. Màn thành viên một cột (`max-w-lg`).
 - Điều hướng: M3 navigation bar ở đáy trên điện thoại (≤ 5 mục), navigation rail từ `md`. Chỉ báo mục đang chọn là một viên thuốc trượt giữa các mục.
 
 ## Màu
 
-Sinh một lần bằng `@material/material-color-utilities` (`SchemeVibrant`, seed `#6750A4`, light). `success` / `warning` lấy từ `TonalPalette` hue 145 / 70, chroma 48 (tone 40 / 90 / 30). Đổi seed = chạy lại script sinh rồi thay khối `@theme` — **không** sửa tay từng màu.
+Sinh bằng `scripts/generate-palette.mjs` (`@material/material-color-utilities`, `SchemeNeutral`, seed `#6750A4`, light — cách chạy ở đầu file). `SchemeNeutral` cho mặt nền gần xám và `primary` tím xám dịu (#615c6b), để logo hãng nổi lên. `success` / `warning` lấy từ `TonalPalette` hue 145 / 70, chroma 48 (tone 40 / 90 / 30). Đổi seed hay scheme = sửa script, chạy lại, thay khối màu trong `@theme` — **không** sửa tay từng màu.
 
 | Vai trò | Dùng cho |
 |---|---|
 | `surface`, `surface-container-{lowest,low,,high,highest}` | nền trang; thẻ (`low`), dialog (`high`), ô trắng quanh QR (`lowest`) |
 | `on-surface`, `on-surface-variant`, `outline(-variant)` | chữ / chữ phụ / viền |
-| `primary` / `primary-container` | nút chính, link, thẻ tổng nợ (gradient `primary → tertiary`) |
+| `primary` / `primary-container` | nút chính, link |
 | `secondary-container` | nút tonal, chỉ báo điều hướng |
-| `tertiary(-container)` | điểm nhấn: avatar, hình trang trí |
+| `tertiary(-container)` | điểm nhấn nhỏ: viền ghi chú của thành viên |
 | `error(-container)` | **còn nợ** (`UNPAID`) và thao tác phá huỷ |
 | `warning-container` | `PENDING` |
 | `success-container` | `PAID` |
 | `inverse-surface` | snackbar (toast) |
 
-- Seed tím tách **màu thương hiệu** khỏi **màu trạng thái**: xanh = đã đóng, đỏ = còn nợ, tím không mang nghĩa tiền.
-- Contrast đã đo (WCAG): chữ trên `primary` 6.4:1, `on-primary-container` 7.2:1, `on-surface-variant` trên nền 8.9:1, chữ `UNPAID` 7.2:1 — đều ≥ AA.
+- Khung trung tính tách **màu hãng** và **màu trạng thái** khỏi giao diện: xanh = đã đóng, đỏ = còn nợ, cam = chờ xác nhận; `primary` không mang nghĩa tiền.
+- Contrast đã đo (WCAG, 2026-09-30): chữ trên `primary` 6.5:1, `primary` trên nền 6.1:1, `on-surface-variant` trên nền 8.9:1 (trên thẻ 8.4:1), chữ trong badge `UNPAID` / `PENDING` / `PAID` 7.2 / 7.3 / 7.2:1, chữ `success` trên thẻ 5.9:1 — đều ≥ AA.
+- Logo hãng trên ô trắng có thể thấp (Spotify 1.9:1, Duolingo 2.1:1): chấp nhận vì logo là trang trí, tên luôn đi kèm — không bao giờ để logo một mình mang nghĩa.
 - Trạng thái thanh toán **không chỉ dựa vào màu**: luôn có chữ và icon.
 - Chưa có dark mode (scheme dark sinh được từ cùng seed). Khi thêm: định nghĩa lại cùng biến, script chọn theme inline có sha256 trong CSP ([security-headers.md](security-headers.md)).
 
 ## Hình
 
 - Nút và chip: viên thuốc (`rounded-full`). Thẻ: `rounded-card` (28px). Ô nhập: `rounded-field` (16px).
-- `PlanAvatar`: mỗi gói một **hình + màu tonal cố định** chọn theo hash của `code` — cùng gói nhìn giống nhau ở mọi màn. Chữ cái đầu, **không bao giờ logo thương hiệu**.
-- Hình trang trí (login, thẻ tổng nợ, trạng thái trống) luôn `aria-hidden`; chữ mang toàn bộ nghĩa.
+- **Không có hình trang trí.** Không blob, không hình tròn trôi nền. Màn trống dùng một icon Lucide nói đúng chủ đề (`EmptyState icon="plans" | "explore" | …`).
+
+## Logo dịch vụ
+
+- `ServiceLogo`: logo hãng **màu của hãng trên ô trắng**, bo như icon app (`rounded-2xl`). Chọn theo `plans.provider` (`docs/data-model.md#nhà-cung-cấp-của-gói`), không theo tên gói.
+- Path SVG lấy từ package `simple-icons` (CC0), **bundle vào app** — không tải từ CDN (`img-src 'self'`), import từng icon nên chỉ icon dùng tới vào bundle. Bảng provider → logo / màu / tên ở `src/client/lib/providers.ts`.
+- Hãng đã yêu cầu Simple Icons gỡ logo (Microsoft, OpenAI, Canva) → chữ cái đầu trên màu hãng. `OTHER` → chữ cái đầu của tên gói trên `secondary-container`.
+- Logo là **trang trí** (`aria-hidden`): tên gói hay tên hãng bên cạnh luôn mang nghĩa. Dùng logo chỉ để nhận ra dịch vụ, trong app private — [Suy luận] rủi ro nhãn hiệu thấp; không dùng logo làm thương hiệu của app.
+- Màu hex của hãng là ngoại lệ thứ hai (sau `QrCode`) được dùng hex thô: đặt qua thuộc tính SVG / CSSOM, không vi phạm `style-src 'self'`.
 
 ## Chữ
 
@@ -60,7 +69,14 @@ Token chung ở `src/client/lib/motion.ts` — một nhịp cho cả app:
 - Kết quả đúng không phụ thuộc animation: trạng thái được đặt thẳng, animation chỉ trình bày nó.
 - `motion` đặt style qua CSSOM (`element.style`) nên **không** vi phạm `style-src 'self'` — đã kiểm console trên `vite preview`.
 
-Các chuyển động hiện có: chuyển trang; danh sách xuất hiện lần lượt; thẻ tổng nợ đếm số; badge đổi trạng thái bật ra; icon copy → check; QR hiện dần; dialog phóng từ 92%; báo chuyển xong → dấu check tự vẽ trong một hình tròn; nền login có các hình trôi vào một lần; skeleton shimmer khi tải; nút co 0.97 khi bấm.
+Chuyển động **gắn với nội dung**, không có hình trang trí chuyển động:
+
+- **Logo bay từ thẻ gói sang màn thanh toán** (shared layout, `layoutId` = `planLogoId(code)`). Link mang `state.plan` để màn chi tiết vẽ header ngay, logo có chỗ đáp trước khi request trả về. Mỗi màn chỉ một phần tử mang một `layoutId` — hàng lịch sử không dùng.
+- **Badge trạng thái morph**: viên thuốc đổi độ rộng theo nhãn mới (`layout`), màu chuyển bằng CSS, nhãn mới trượt lên. Nhãn cũ biến mất ngay, không có animation thoát.
+- Danh sách và nhóm nhà cung cấp xuất hiện lần lượt; hàng logo ở login vào lần lượt một lần.
+- Icon copy → check; QR hiện dần; dialog phóng từ 92%; skeleton shimmer khi tải; nút co 0.97 khi bấm.
+
+**Không dùng `AnimatePresence mode="popLayout"`**: nó chèn thẻ `<style>` lúc chạy để rút phần tử đang thoát ra khỏi layout; CSP `style-src 'self'` chặn thẻ đó, nên hai phần tử cùng nằm trong layout (badge từng rộng gấp đôi với cả hai nhãn). Dùng hoán đổi chỉ-có-vào (đổi `key`, `initial` khi đổi) hoặc `mode="wait"`.
 
 ## Tương tác
 
@@ -78,8 +94,8 @@ Các chuyển động hiện có: chuyển trang; danh sách xuất hiện lần
 Viết tay trong `src/client/components/` (CLI `shadcn` cần `npx`, không chạy được ở đây), primitive từ `radix-ui`:
 
 - `ui/button` (`filled`, `tonal`, `outlined`, `text`, `error`, `icon`), `ui/text-field`, `ui/card`, `ui/alert-dialog`, `ui/sonner`.
-- `NavBar`, `AppHeader`, `UserAvatar`, `PlanAvatar`, `StatusBadge`, `CopyRow`, `QrCode`, `AnimatedNumber`, `PageTransition`, `EmptyState`, `Skeleton`, `LoadError`.
-- `QrCode` là **ngoại lệ duy nhất** dùng hex thô (`#000` / `#fff`): máy quét cần module tối trên nền sáng, bất kể theme.
+- `NavBar`, `AppHeader`, `UserAvatar`, `ServiceLogo`, `ProviderSection`, `StatusBadge`, `CopyRow`, `QrCode`, `PageTransition`, `EmptyState`, `Skeleton`, `LoadError`.
+- Hex thô chỉ ở hai chỗ: `QrCode` (`#000` / `#fff` — máy quét cần module tối trên nền sáng) và `ServiceLogo` (màu hãng).
 
 ## Đã loại
 
@@ -89,4 +105,6 @@ Viết tay trong `src/client/components/` (CLI `shadcn` cần `npx`, không ch�
 | Google Fonts CDN | Vi phạm `font-src 'self'`, lộ IP người dùng cho Google |
 | GSAP | `motion` đã có spring, exit và layout animation cho React; không cần thư viện thứ hai |
 | Haptic feedback, FAB | Checklist M3 cho Android native; web không có haptic đáng tin, app không có hành động chính đủ lớn cho FAB |
-| Logo dịch vụ (YouTube, Netflix…) | Nhãn hiệu của bên khác; dùng `PlanAvatar` chữ cái đầu |
+| `PlanAvatar` chữ cái đầu + hình tonal theo hash | Không cho biết là dịch vụ nào; thay bằng `ServiceLogo` (2026-09-30) |
+| Thẻ gradient tổng nợ đếm số, dấu check tự vẽ trong hình tròn, nền login có hình trôi | Làm app trông như app ngân hàng / trang trí vô nghĩa; thay bằng hai con số gọn ("Cần chuyển" / "Chờ xác nhận") và badge morph |
+| Logo từ CDN / `img.logo.dev` | Vi phạm `img-src 'self'`, lộ IP người dùng cho bên thứ ba |

@@ -1,4 +1,4 @@
-import { Compass, Wallet } from "lucide-react";
+import { Compass, Layers } from "lucide-react";
 import { Suspense } from "react";
 import { Outlet, useLocation } from "react-router";
 import { AppHeader } from "../components/AppHeader";
@@ -7,7 +7,7 @@ import { PageTransition } from "../components/PageTransition";
 import { Spinner } from "../components/Spinner";
 
 const NAV_ITEMS: NavItem[] = [
-  { to: "/payments", labelKey: "nav.myPayments", icon: Wallet },
+  { to: "/payments", labelKey: "nav.myPlans", icon: Layers },
   { to: "/plans", labelKey: "nav.explore", icon: Compass },
 ];
 
