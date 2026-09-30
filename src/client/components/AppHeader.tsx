@@ -22,7 +22,15 @@ export function AppHeader({ width }: { width: string }) {
           {t("app.name")}
         </Link>
         <div className="flex min-w-0 items-center gap-1">
-          {session.user && <UserAvatar name={session.user.display_name} />}
+          {session.user && (
+            <Link
+              to={session.user.role === "ADMIN" ? "/admin/account" : "/account"}
+              aria-label={t("account.title")}
+              className="state-layer relative flex size-11 items-center justify-center overflow-hidden rounded-full focus-visible:outline-3 focus-visible:outline-primary"
+            >
+              <UserAvatar name={session.user.display_name} />
+            </Link>
+          )}
           <SignOutButton />
         </div>
       </div>

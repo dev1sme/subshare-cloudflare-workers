@@ -20,7 +20,7 @@ export default function AdminPaymentsPage() {
   const [view, setView] = useState<PaymentsView>("pending");
   const [period, setPeriod] = useState(currentPeriod);
   const periods = useMemo(() => recentPeriods(12), []);
-  const { items, total, error, loading, reload, busy, setStatus } = useAdminPayments(view, period);
+  const { items, total, error, loading, reload, busy, setStatus, revertPrepayment } = useAdminPayments(view, period);
   // Grouped by plan, keeping the order rows came in (oldest report first / the API's order).
   const groups = useMemo(() => {
     const byPlan = new Map<string, ReviewItem[]>();
@@ -37,6 +37,17 @@ export default function AdminPaymentsPage() {
       confirmLabel: t(`paymentsAdmin.${key}`),
     });
     if (confirmed) await setStatus(item, "UNPAID");
+  };
+
+  const undoPrepayment = async (prepaymentCode: string, item: ReviewItem) => {
+    const user = item.row.user.display_name;
+    const confirmed = await confirm({
+      title: t("paymentsAdmin.undoPrepaymentTitle", { code: prepaymentCode, user }),
+      description: t("paymentsAdmin.undoPrepaymentBody"),
+      destructive: true,
+      confirmLabel: t("paymentsAdmin.undoPrepayment"),
+    });
+    if (confirmed) await revertPrepayment(prepaymentCode, user);
   };
 
   return (
@@ -95,9 +106,10 @@ export default function AdminPaymentsPage() {
                     key={item.code}
                     item={item}
                     view={view}
-                    busy={busy.has(item.code)}
+                    busy={busy.has(item.code) || (item.kind === "payment" && !!item.row.prepayment_code && busy.has(item.row.prepayment_code))}
                     onConfirm={(i) => void setStatus(i, "PAID")}
                     onRevert={(i) => void revert(i)}
+                    onRevertPrepayment={(code, i) => void undoPrepayment(code, i)}
                   />
                 ))}
               </PaymentPlanGroup>

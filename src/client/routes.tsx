@@ -11,6 +11,7 @@ import { MemberLayout } from "./layouts/MemberLayout";
 // admin panel. Login, 404 and the layouts stay eager (a lazy layout is a waterfall for nothing).
 const MyPaymentsPage = lazy(() => import("./features/payments/MyPaymentsPage"));
 const PaymentDetailPage = lazy(() => import("./features/payments/PaymentDetailPage"));
+const PrepaymentDetailPage = lazy(() => import("./features/payments/PrepaymentDetailPage"));
 const ExplorePlansPage = lazy(() => import("./features/explore/ExplorePlansPage"));
 const JoinRequestsPage = lazy(() => import("./features/admin/JoinRequestsPage"));
 const AdminPaymentsPage = lazy(() => import("./features/admin/AdminPaymentsPage"));
@@ -18,6 +19,8 @@ const PlansPage = lazy(() => import("./features/admin/PlansPage"));
 const PlanNewPage = lazy(() => import("./features/admin/PlanNewPage"));
 const PlanDetailPage = lazy(() => import("./features/admin/PlanDetailPage"));
 const AccountsPage = lazy(() => import("./features/admin/AccountsPage"));
+// Both roles: each layout mounts it under its own path.
+const AccountPage = lazy(() => import("./features/account/AccountPage"));
 
 const HOME: Record<Role, string> = {
   ADMIN: "/admin/payments",
@@ -63,7 +66,9 @@ export function AppRoutes() {
       >
         <Route path="/payments" element={<MyPaymentsPage />} />
         <Route path="/payments/:code" element={<PaymentDetailPage />} />
+        <Route path="/prepayments/:code" element={<PrepaymentDetailPage />} />
         <Route path="/plans" element={<ExplorePlansPage />} />
+        <Route path="/account" element={<AccountPage />} />
       </Route>
       <Route
         path="/admin"
@@ -81,6 +86,7 @@ export function AppRoutes() {
         <Route path="plans/new" element={<PlanNewPage />} />
         <Route path="plans/:code" element={<PlanDetailPage />} />
         <Route path="accounts" element={<AccountsPage />} />
+        <Route path="account" element={<AccountPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

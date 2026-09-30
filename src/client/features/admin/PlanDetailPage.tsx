@@ -8,7 +8,7 @@ import { ServiceLogo } from "../../components/ServiceLogo";
 import { Skeleton } from "../../components/Skeleton";
 import { Button } from "../../components/ui/button";
 import { useConfirm } from "../../hooks/useConfirm";
-import { BackLink } from "./components/BackLink";
+import { BackLink } from "../../components/BackLink";
 import { PlanForm } from "./components/PlanForm";
 import { PlanMembers } from "./components/PlanMembers";
 import { PlanPeriods } from "./components/PlanPeriods";

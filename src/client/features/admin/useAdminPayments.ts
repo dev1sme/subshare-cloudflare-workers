@@ -61,6 +61,27 @@ export function useAdminPayments(view: PaymentsView, period: string) {
     [finish, reload, setData, start, t],
   );
 
+  // A PAID prepayment goes back to UNPAID as a whole, and every month it settled with it
+  // (docs/payments.md#trả-trước): all of those rows leave the "paid" view at once.
+  const revertPrepayment = useCallback(
+    async (prepaymentCode: string, user: string) => {
+      if (!start(prepaymentCode)) return false;
+      const result = await api.admin.setPrepaymentStatus(prepaymentCode, "UNPAID");
+      finish(prepaymentCode);
+      if (!result.ok) {
+        toast.error(errorMessage(t, result.code));
+        reload();
+        return false;
+      }
+      setData((current) => ({
+        items: current.items.filter((item) => item.kind !== "payment" || item.row.prepayment_code !== prepaymentCode),
+      }));
+      toast.success(t("paymentsAdmin.prepaymentRevertedToast", { user }));
+      return true;
+    },
+    [finish, reload, setData, start, t],
+  );
+
   const items = data?.items ?? [];
   return {
     items,
@@ -71,5 +92,6 @@ export function useAdminPayments(view: PaymentsView, period: string) {
     reload,
     busy,
     setStatus,
+    revertPrepayment,
   };
 }

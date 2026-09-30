@@ -23,7 +23,7 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 - [x] API thành viên: khoản cần đóng, VietQR, "Tôi đã chuyển", trả trước 3/6/12 tháng
 - [x] Nền UI: token + font tự host, primitive shadcn, i18next, `api.ts`, phiên, router theo vai trò, layout, `useConfirm`, toast, error boundary lỗi chunk
 - [x] Màn thành viên: đăng nhập, khoản cần đóng, chi tiết + VietQR + copy từng dòng, "Tôi đã chuyển"
-- [ ] Màn thành viên: trả trước 3/6/12 tháng, đổi mật khẩu
+- [x] Màn thành viên: trả trước 3/6/12 tháng, đổi mật khẩu (màn "Tài khoản của tôi" cho cả admin)
 - [ ] Quét VietQR bằng app ngân hàng thật
 - [x] API admin: danh sách `PENDING`, xác nhận / trả về (payment và trả trước)
 - [x] Xin vào gói: `plans.accepting_requests`, `join_requests` (migration 0006), API member + admin, màn "Khám phá" và màn "Yêu cầu"
@@ -34,7 +34,8 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
   - [x] Duyệt thanh toán: chờ xác nhận (payment + trả trước) / chưa đóng / đã đóng theo kỳ
   - [x] CRUD gói, thành viên (thêm / rời), kỳ (xem, tạo tháng này)
   - [x] Tài khoản: tạo / sửa tên, vai trò / đặt lại mật khẩu (hiện một lần) / xoá
-- [ ] Hoàn tác một lần trả trước đã `PAID` (API có, UI chưa)
+- [x] Hoàn tác một lần trả trước đã `PAID`
+- [ ] Đo `cpuTime` của đổi mật khẩu trên Worker thật (PBKDF2 hai lần)
 - [ ] Dashboard admin: ai còn nợ, qua mọi kỳ
 - [x] PWA bước 1: manifest + icon, cài lên màn hình chính ([architecture.md](architecture.md#pwa))
 - [x] PWA bước 2: service worker chỉ cache app shell, `/api/*` luôn đi mạng

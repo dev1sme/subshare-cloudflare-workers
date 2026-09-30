@@ -1,19 +1,20 @@
 import { Send } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Payment } from "../../../../shared/types";
 import { Button } from "../../../components/ui/button";
 import { useConfirm } from "../../../hooks/useConfirm";
 import { formatMoney } from "../../../format";
 
 type MarkSentButtonProps = {
-  payment: Payment;
+  // The payment or prepayment: what to transfer, and the code that goes in the transfer note.
+  amount: number;
+  code: string;
   onMarkSent: () => Promise<boolean>;
 };
 
 // Asks first: "sent" is a claim the admin will check against the bank statement.
 // Sticky above the fold on a phone so it is reachable after scrolling through the QR.
-export function MarkSentButton({ payment, onMarkSent }: MarkSentButtonProps) {
+export function MarkSentButton({ amount, code, onMarkSent }: MarkSentButtonProps) {
   const { t } = useTranslation();
   const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
@@ -21,7 +22,7 @@ export function MarkSentButton({ payment, onMarkSent }: MarkSentButtonProps) {
   const markSent = async () => {
     const confirmed = await confirm({
       title: t("payments.markSentTitle"),
-      description: t("payments.markSentBody", { amount: formatMoney(payment.amount), code: payment.code }),
+      description: t("payments.markSentBody", { amount: formatMoney(amount), code }),
       confirmLabel: t("payments.markSent"),
     });
     if (!confirmed) return;

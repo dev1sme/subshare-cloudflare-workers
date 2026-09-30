@@ -89,6 +89,9 @@ export type Period = {
 
 export type PaymentStatus = "UNPAID" | "PENDING" | "PAID";
 
+// How many months a member may pay ahead at once (docs/payments.md#trả-trước).
+export const PREPAY_MONTHS = [3, 6, 12] as const;
+
 // Everything a member needs to transfer: copy rows and the VietQR payload the browser draws.
 // Null when the plan has no bank details or nothing is owed.
 export type BankTransfer = {

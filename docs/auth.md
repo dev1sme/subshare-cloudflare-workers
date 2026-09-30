@@ -41,7 +41,7 @@ Hai middleware, mỗi vai trò một cái: `requireAdmin`, `requireMember`. **Kh
 
 **Plaintext không bao giờ được lưu và không đọc lại được.** Mật khẩu (tối thiểu 8 ký tự, `PASSWORD_TOO_SHORT`) sinh ra hoặc tự chọn chỉ trả **đúng một lần** trong response tạo/đặt lại, kèm nút copy. Không endpoint, cột hay dòng log nào giữ plaintext, kể cả khi có ai xin tính năng "xem mật khẩu" — đặt lại cho cùng khả năng mà không mang rủi ro; người ta dùng lại mật khẩu ở chỗ khác.
 
-- **Tự đổi** (`POST /api/auth/change-password`) **có** yêu cầu mật khẩu hiện tại — cookie phiên trên một thiết bị bị bỏ quên không được đủ để khoá chủ thật ra ngoài.
+- **Tự đổi** (`POST /api/auth/change-password`) **có** yêu cầu mật khẩu hiện tại — cookie phiên trên một thiết bị bị bỏ quên không được đủ để khoá chủ thật ra ngoài. UI: màn "Tài khoản của tôi" (`/account`, admin `/admin/account`), mở từ avatar trên header; nhập lại mật khẩu mới được so ở client, server chỉ nhận một bản; form xoá trắng sau khi đổi.
 - **Admin đặt lại** **không** yêu cầu.
 
 Băm bằng Web Crypto (`crypto.subtle`) trong Worker, không Node `crypto`. So sánh bằng hàm so byte thời gian hằng. Token, salt, mật khẩu sinh ra dùng `crypto.getRandomValues`, không bao giờ `Math.random()`.

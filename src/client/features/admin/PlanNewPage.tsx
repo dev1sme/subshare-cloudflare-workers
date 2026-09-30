@@ -5,7 +5,7 @@ import { PROVIDERS, type Provider } from "../../../shared/providers";
 import { LoadError } from "../../components/LoadError";
 import { Skeleton } from "../../components/Skeleton";
 import { useSession } from "../../hooks/useSession";
-import { BackLink } from "./components/BackLink";
+import { BackLink } from "../../components/BackLink";
 import { PlanForm } from "./components/PlanForm";
 import { usePlanEditor } from "./usePlanEditor";
 

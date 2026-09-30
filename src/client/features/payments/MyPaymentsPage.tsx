@@ -1,4 +1,5 @@
 import { m } from "motion/react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "../../components/EmptyState";
 import { LoadError } from "../../components/LoadError";
@@ -8,8 +9,10 @@ import { MyPlanCard } from "./components/MyPlanCard";
 import { OwedSummary } from "./components/OwedSummary";
 import { PaymentList } from "./components/PaymentList";
 import { PaymentListSkeleton } from "./components/PaymentListSkeleton";
+import { PrepayDialog } from "./components/PrepayDialog";
 import { WishOpenedBanner } from "./components/WishOpenedBanner";
-import { useMyPlans } from "./useMyPlans";
+import { useCreatePrepayment } from "./useCreatePrepayment";
+import { type MyPlanSummary, useMyPlans } from "./useMyPlans";
 
 // Member home: the plans they share, each with what is still open on it. Money is a property of a
 // plan here, not the headline.
@@ -17,6 +20,9 @@ export default function MyPaymentsPage() {
   const { t } = useTranslation();
   const { plans, history, unpaidTotal, pendingTotal, empty, error, loading, reload } = useMyPlans();
   const { notices, dismiss } = useWishes();
+  const createPrepayment = useCreatePrepayment();
+  // Screen state: the plan whose prepay dialog is open.
+  const [prepayFor, setPrepayFor] = useState<MyPlanSummary | null>(null);
 
   if (loading) return <PaymentListSkeleton />;
   if (error) return <LoadError code={error} onRetry={reload} />;
@@ -32,12 +38,17 @@ export default function MyPaymentsPage() {
           <OwedSummary unpaid={unpaidTotal} pending={pendingTotal} />
           <m.ul variants={listStagger} initial="hidden" animate="visible" className="flex flex-col gap-3">
             {plans.map((summary) => (
-              <MyPlanCard key={summary.plan.code} summary={summary} />
+              <MyPlanCard key={summary.plan.code} summary={summary} onPrepay={setPrepayFor} />
             ))}
           </m.ul>
           <PaymentList title={t("home.history")} payments={history} />
         </>
       )}
+      <PrepayDialog
+        summary={prepayFor}
+        onClose={() => setPrepayFor(null)}
+        onSubmit={(summary, months) => createPrepayment(summary.plan, months)}
+      />
     </div>
   );
 }

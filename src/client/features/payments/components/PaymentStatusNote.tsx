@@ -5,15 +5,18 @@ import { formatDate } from "../../../format";
 import { cn } from "../../../lib/cn";
 import { spring } from "../../../lib/motion";
 
-// What happens next, in words, for anything that is not simply "unpaid".
-export function PaymentStatusNote({ payment }: { payment: Payment }) {
+type StatusRow = Pick<Payment, "status" | "marked_at" | "confirmed_at"> & { prepayment_code?: string | null };
+
+// What happens next, in words, for anything that is not simply "unpaid". Takes a payment or a
+// prepayment; `paidText` replaces the default sentence once it is PAID.
+export function PaymentStatusNote({ payment, paidText }: { payment: StatusRow; paidText?: string }) {
   const { t } = useTranslation();
   let text: string | null = null;
   if (payment.prepayment_code) text = t("payments.prepaidInfo", { code: payment.prepayment_code });
   else if (payment.status === "PENDING" && payment.marked_at)
     text = t("payments.pendingInfo", { date: formatDate(payment.marked_at) });
   else if (payment.status === "PAID" && payment.confirmed_at)
-    text = t("payments.paidInfo", { date: formatDate(payment.confirmed_at) });
+    text = paidText ?? t("payments.paidInfo", { date: formatDate(payment.confirmed_at) });
   if (!text) return null;
   return (
     <m.p

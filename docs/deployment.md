@@ -79,6 +79,8 @@ npm run db:migrate:remote
 npm run deploy              # build + wrangler deploy — không bao giờ `wrangler pages deploy`
 ```
 
+**Đổi `database_id` là đổi luôn D1 local**: miniflare lưu D1 local theo id, nên sau khi dán id thật, `--local` trỏ vào một database rỗng (dữ liệu cũ vẫn nằm trong `.wrangler/state` dưới id cũ). Chạy lại `npm run db:migrate`.
+
 Admin đầu tiên trên remote: `node scripts/hash-password.mjs <username> "<tên>" > <file tạm>` rồi `wrangler d1 execute subshare-db --remote --file <file tạm>`, xoá file sau đó — SQL chứa tên thật, không bao giờ nằm trong file được track.
 
 Sau migrate remote, **kiểm bằng bảng, không bằng thư mục**: `SELECT COUNT(*) FROM d1_migrations` phải bằng số file trong `migrations/`. Thư mục trông đủ trong khi remote chậm vài migration là kịch bản thật — mọi lệnh ghi trả 500 vì thiếu cột.

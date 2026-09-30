@@ -99,6 +99,15 @@ export const api = {
       request<{ payment: Payment; bank_transfer: BankTransfer | null }>("GET", `/me/payments/${encodeURIComponent(code)}`),
     markPaymentSent: (code: string) =>
       request<{ payment: Payment }>("POST", `/me/payments/${encodeURIComponent(code)}/mark-sent`),
+    prepayments: () => request<{ prepayments: Prepayment[] }>("GET", "/me/prepayments"),
+    prepayment: (code: string) =>
+      request<{ prepayment: Prepayment; bank_transfer: BankTransfer | null }>("GET", `/me/prepayments/${encodeURIComponent(code)}`),
+    // The server picks the range: from the first month from now that is neither paid nor covered.
+    createPrepayment: (plan_code: string, months: number) =>
+      request<{ prepayment: Prepayment; bank_transfer: BankTransfer | null }>("POST", "/me/prepayments", { plan_code, months }),
+    markPrepaymentSent: (code: string) =>
+      request<{ prepayment: Prepayment }>("POST", `/me/prepayments/${encodeURIComponent(code)}/mark-sent`),
+    deletePrepayment: (code: string) => request<null>("DELETE", `/me/prepayments/${encodeURIComponent(code)}`),
     openPlans: () => request<{ plans: OpenPlan[] }>("GET", "/me/open-plans"),
     joinRequests: () => request<{ join_requests: JoinRequest[] }>("GET", "/me/join-requests"),
     askToJoin: (plan_code: string, note: string) =>

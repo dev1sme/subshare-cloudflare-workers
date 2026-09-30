@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { PROVIDERS } from "../../shared/providers";
-import type { MyPlan, MyWish, OpenPlan } from "../../shared/types";
+import { type MyPlan, type MyWish, type OpenPlan, PREPAY_MONTHS } from "../../shared/types";
 import { requireMember, type AppEnv } from "../auth";
 import {
   cancelJoinRequest,
@@ -36,7 +36,6 @@ export const meRoutes = new Hono<AppEnv>();
 
 meRoutes.use(requireMember);
 
-const PREPAY_MONTHS = [3, 6, 12] as const;
 // How far ahead the first uncovered month is searched for.
 const PREPAY_HORIZON = 36;
 

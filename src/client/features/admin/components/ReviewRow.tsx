@@ -14,11 +14,13 @@ type ReviewRowProps = {
   busy: boolean;
   onConfirm: (item: ReviewItem) => void;
   onRevert: (item: ReviewItem) => void;
+  // Undo the whole prepayment a paid row belongs to.
+  onRevertPrepayment: (prepaymentCode: string, item: ReviewItem) => void;
 };
 
 // One member's money row inside its plan's group: who, which period, how much, and the one or two
 // moves the view allows (docs/payments.md). Enters from below, leaves sideways once moved.
-export function ReviewRow({ item, view, busy, onConfirm, onRevert }: ReviewRowProps) {
+export function ReviewRow({ item, view, busy, onConfirm, onRevert, onRevertPrepayment }: ReviewRowProps) {
   const { t } = useTranslation();
   const { row } = item;
   const what =
@@ -83,6 +85,12 @@ export function ReviewRow({ item, view, busy, onConfirm, onRevert }: ReviewRowPr
           <Button variant="text" disabled={busy} onClick={() => onRevert(item)}>
             <Undo2 aria-hidden="true" />
             {t("paymentsAdmin.undo")}
+          </Button>
+        )}
+        {view === "paid" && coveredBy && (
+          <Button variant="text" disabled={busy} onClick={() => onRevertPrepayment(coveredBy, item)}>
+            <Undo2 aria-hidden="true" />
+            {t("paymentsAdmin.undoPrepayment")}
           </Button>
         )}
       </div>
