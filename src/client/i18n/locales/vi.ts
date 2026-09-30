@@ -90,6 +90,9 @@ const vi = {
   payments: {
     due: "Cần đóng",
     paid: "Đã đóng",
+    // Vietnamese has one plural form; _one exists only so en.ts (typed from this file) can have it.
+    dueCount_one: "{{count}} khoản chưa được xác nhận",
+    dueCount_other: "{{count}} khoản chưa được xác nhận",
     totalDue: "Tổng còn phải đóng",
     nothingDue: "Bạn không còn khoản nào cần đóng.",
     empty: "Chưa có khoản nào.",
@@ -108,6 +111,8 @@ const vi = {
     markSent: "Tôi đã chuyển",
     markSentTitle: "Xác nhận đã chuyển khoản?",
     markSentBody: "Bạn đã chuyển {{amount}} với nội dung {{code}}. Quản trị viên sẽ đối chiếu sao kê rồi xác nhận.",
+    sentThanks: "Cảm ơn bạn!",
+    sentNext: "Quản trị viên sẽ đối chiếu sao kê rồi xác nhận khoản này.",
     markSentDone: "Đã báo chuyển khoản. Chờ quản trị viên xác nhận.",
     pendingInfo: "Bạn đã báo chuyển ngày {{date}}. Quản trị viên sẽ xác nhận sau khi đối chiếu sao kê.",
     paidInfo: "Đã xác nhận ngày {{date}}.",

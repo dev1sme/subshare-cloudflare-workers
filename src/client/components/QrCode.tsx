@@ -1,5 +1,7 @@
+import { m } from "motion/react";
 import { useMemo } from "react";
 import { encode } from "uqr";
+import { spring } from "../lib/motion";
 
 // Draws the VietQR payload built by the server as an SVG, entirely in the browser — the payload
 // never goes to a QR image service (docs/payments.md). ECC M is what banking QR codes commonly
@@ -17,16 +19,18 @@ export function QrCode({ value, label, className }: { value: string; label: stri
   }, [value]);
 
   return (
-    <svg
+    <m.svg
       role="img"
       aria-label={label}
       viewBox={`0 0 ${size} ${size}`}
       shapeRendering="crispEdges"
       className={className}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1, transition: spring }}
     >
       {/* Always black on white, whatever the theme: scanners expect dark modules on light. */}
       <rect width={size} height={size} fill="#ffffff" />
       <path d={path} fill="#000000" />
-    </svg>
+    </m.svg>
   );
 }

@@ -12,6 +12,7 @@ type MarkSentButtonProps = {
 };
 
 // Asks first: "sent" is a claim the admin will check against the bank statement.
+// Sticky above the fold on a phone so it is reachable after scrolling through the QR.
 export function MarkSentButton({ payment, onMarkSent }: MarkSentButtonProps) {
   const { t } = useTranslation();
   const confirm = useConfirm();
@@ -30,9 +31,11 @@ export function MarkSentButton({ payment, onMarkSent }: MarkSentButtonProps) {
   };
 
   return (
-    <Button className="w-full" disabled={busy} onClick={() => void markSent()}>
-      <Send aria-hidden="true" />
-      {t("payments.markSent")}
-    </Button>
+    <div className="sticky bottom-4 z-30">
+      <Button size="large" className="w-full shadow-lg shadow-primary/25" disabled={busy} onClick={() => void markSent()}>
+        <Send aria-hidden="true" />
+        {t("payments.markSent")}
+      </Button>
+    </div>
   );
 }

@@ -1,7 +1,9 @@
+import { m } from "motion/react";
 import { useTranslation } from "react-i18next";
 import type { Payment } from "../../../../shared/types";
 import { formatDate } from "../../../format";
 import { cn } from "../../../lib/cn";
+import { spring } from "../../../lib/motion";
 
 // What happens next, in words, for anything that is not simply "unpaid".
 export function PaymentStatusNote({ payment }: { payment: Payment }) {
@@ -14,14 +16,19 @@ export function PaymentStatusNote({ payment }: { payment: Payment }) {
     text = t("payments.paidInfo", { date: formatDate(payment.confirmed_at) });
   if (!text) return null;
   return (
-    <p
+    <m.p
+      key={payment.status}
       role="status"
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0, transition: spring }}
       className={cn(
-        "rounded-lg px-4 py-3 text-sm",
-        payment.status === "PAID" ? "bg-paid-soft text-paid" : "bg-pending-soft text-pending",
+        "rounded-2xl px-5 py-4 text-sm font-medium",
+        payment.status === "PAID"
+          ? "bg-success-container text-on-success-container"
+          : "bg-warning-container text-on-warning-container",
       )}
     >
       {text}
-    </p>
+    </m.p>
   );
 }

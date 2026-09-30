@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router";
 import App from "./App.tsx";
 import { ChunkErrorBoundary } from "./components/ChunkErrorBoundary";
 import { ConfirmProvider } from "./components/ConfirmProvider";
+import { MotionProvider } from "./components/MotionProvider";
 import { SessionProvider } from "./components/SessionProvider";
 import { Toaster } from "./components/ui/sonner";
 import "./i18n";
@@ -14,13 +15,15 @@ import "./index.css";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ChunkErrorBoundary>
-      <BrowserRouter>
-        <SessionProvider>
-          <ConfirmProvider>
-            <App />
-          </ConfirmProvider>
-        </SessionProvider>
-      </BrowserRouter>
+      <MotionProvider>
+        <BrowserRouter>
+          <SessionProvider>
+            <ConfirmProvider>
+              <App />
+            </ConfirmProvider>
+          </SessionProvider>
+        </BrowserRouter>
+      </MotionProvider>
       <Toaster />
     </ChunkErrorBoundary>
   </StrictMode>,

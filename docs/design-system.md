@@ -1,64 +1,92 @@
 # Design system
 
-Nguồn: sinh bằng `ui-ux-pro-max` (`"fintech bill splitting payment tracker mobile" --design-system --variance 3 --motion 3 --density 5`) ngày 2026-09-30, rồi **sửa tay** những chỗ không hợp app này (xem [Đã loại khỏi kết quả sinh](#đã-loại-khỏi-kết-quả-sinh)). Token nằm ở `src/client/index.css` (`@theme` của Tailwind v4); file này giải thích vì sao.
+**Material 3 Expressive**, chốt 2026-09-30 (thay bản Minimalism/Swiss đầu tiên — ba thấy đơn điệu và muốn có animation). Định hướng lấy từ `ui-ux-pro-max` (`--domain style "material 3 expressive"`, design system `--variance 6 --motion 6`), bảng màu sinh bằng thư viện chính thức của Material. Token nằm ở `src/client/index.css` (`@theme` của Tailwind v4); file này giải thích vì sao.
 
 ## Định hướng
 
-- **Minimalism / Swiss**: nền sáng, nhiều khoảng trắng, phân cấp bằng chữ, không gradient, không 3D, bóng đổ chỉ cho dialog.
-- **Mobile-first**: thành viên mở app trên điện thoại để chuyển khoản. Màn thành viên một cột (`max-w-lg`), không có menu phải học.
-- Admin: thanh tab dưới đáy trên điện thoại (≤ 5 mục, trong tầm ngón cái), sidebar từ `md` trở lên.
+- **Màu tonal, hình tương phản, chuyển động spring.** Nền không trắng tinh (`surface` #fdf7ff), nâng tầng bằng màu container chứ không bằng bóng đổ.
+- **Mobile-first**: thành viên mở app trên điện thoại để chuyển khoản. Màn thành viên một cột (`max-w-lg`).
+- Điều hướng: M3 navigation bar ở đáy trên điện thoại (≤ 5 mục), navigation rail từ `md`. Chỉ báo mục đang chọn là một viên thuốc trượt giữa các mục.
 
 ## Màu
 
-Component dùng **tên token**, không bao giờ hex thô (`bg-primary`, `text-owed`, không `bg-[#047857]`).
+Sinh một lần bằng `@material/material-color-utilities` (`SchemeVibrant`, seed `#6750A4`, light). `success` / `warning` lấy từ `TonalPalette` hue 145 / 70, chroma 48 (tone 40 / 90 / 30). Đổi seed = chạy lại script sinh rồi thay khối `@theme` — **không** sửa tay từng màu.
 
-| Token | Giá trị | Dùng cho |
-|---|---|---|
-| `background` / `foreground` | `#f8fafc` / `#0f172a` | nền trang / chữ |
-| `card` | `#ffffff` | thẻ, header, dialog |
-| `muted` / `muted-foreground` | `#f1f5f9` / `#475569` | nền phụ / chữ phụ (7.5:1 trên trắng) |
-| `border` / `input` | `#e2e8f0` / `#cbd5e1` | viền thẻ / viền ô nhập |
-| `primary` | `#047857` (emerald-700) | nút chính, link, focus ring |
-| `destructive` | `#b91c1c` | xoá, thao tác không hoàn tác |
-| `owed` / `pending` / `paid` (+ `-soft`) | đỏ / hổ phách / xanh | trạng thái `UNPAID` / `PENDING` / `PAID` |
+| Vai trò | Dùng cho |
+|---|---|
+| `surface`, `surface-container-{lowest,low,,high,highest}` | nền trang; thẻ (`low`), dialog (`high`), ô trắng quanh QR (`lowest`) |
+| `on-surface`, `on-surface-variant`, `outline(-variant)` | chữ / chữ phụ / viền |
+| `primary` / `primary-container` | nút chính, link, thẻ tổng nợ (gradient `primary → tertiary`) |
+| `secondary-container` | nút tonal, chỉ báo điều hướng |
+| `tertiary(-container)` | điểm nhấn: avatar, hình trang trí |
+| `error(-container)` | **còn nợ** (`UNPAID`) và thao tác phá huỷ |
+| `warning-container` | `PENDING` |
+| `success-container` | `PAID` |
+| `inverse-surface` | snackbar (toast) |
 
-- **Xanh = đã đóng, đỏ = còn nợ.** Vì thế đỏ không bao giờ là màu nút kêu gọi hành động — chỉ nợ và thao tác phá huỷ.
-- Chữ trắng trên `primary` đạt ~5.5:1 (AA). Kết quả sinh đề xuất `#059669` (emerald-600) — chỉ ~3.8:1 với chữ trắng, trượt AA cho chữ thường.
-- Trạng thái thanh toán **không chỉ dựa vào màu**: luôn kèm chữ (và icon nếu có).
-- Chưa có dark mode. Khi thêm: định nghĩa lại cùng các biến, và script chọn theme inline phải có sha256 trong CSP ([security-headers.md](security-headers.md)).
+- Seed tím tách **màu thương hiệu** khỏi **màu trạng thái**: xanh = đã đóng, đỏ = còn nợ, tím không mang nghĩa tiền.
+- Contrast đã đo (WCAG): chữ trên `primary` 6.4:1, `on-primary-container` 7.2:1, `on-surface-variant` trên nền 8.9:1, chữ `UNPAID` 7.2:1 — đều ≥ AA.
+- Trạng thái thanh toán **không chỉ dựa vào màu**: luôn có chữ và icon.
+- Chưa có dark mode (scheme dark sinh được từ cùng seed). Khi thêm: định nghĩa lại cùng biến, script chọn theme inline có sha256 trong CSP ([security-headers.md](security-headers.md)).
+
+## Hình
+
+- Nút và chip: viên thuốc (`rounded-full`). Thẻ: `rounded-card` (28px). Ô nhập: `rounded-field` (16px).
+- `PlanAvatar`: mỗi gói một **hình + màu tonal cố định** chọn theo hash của `code` — cùng gói nhìn giống nhau ở mọi màn. Chữ cái đầu, **không bao giờ logo thương hiệu**.
+- Hình trang trí (login, thẻ tổng nợ, trạng thái trống) luôn `aria-hidden`; chữ mang toàn bộ nghĩa.
 
 ## Chữ
 
-- **Be Vietnam Pro** 400 / 500 / 600, tự host qua `@fontsource/be-vietnam-pro` (`font-src 'self'`). Thiết kế cho tiếng Việt — dấu chồng (`ệ`, `ợ`) không va nhau. Mỗi weight khai báo subset `vietnamese` / `latin-ext` / `latin` bằng `unicode-range`; trình duyệt chỉ tải subset trang dùng.
-- Body 16px, line-height 1.5. Ô nhập `text-base` (16px) để Safari iOS không tự zoom khi focus.
-- Cột tiền dùng `tabular-nums` để chữ số thẳng hàng.
+- **Be Vietnam Pro** 400 / 500 / 600 / 700, tự host qua `@fontsource/be-vietnam-pro` (`font-src 'self'`). Thiết kế cho tiếng Việt — dấu chồng (`ệ`, `ợ`) không va nhau.
+- Tiêu đề đậm, `tracking-tight`; số tiền lớn (`text-4xl`–`5xl`) là thứ đầu tiên mắt thấy. Cột tiền `tabular-nums`.
+- Body 16px, line-height 1.5. Ô nhập `text-base` để Safari iOS không tự zoom.
+
+## Chuyển động
+
+Thư viện `motion` (`motion/react`), nạp qua `<LazyMotion>`: component `m.*` render ngay, gói tính năng (`domMax`, ~19 kB gzip) tải sau lần vẽ đầu. `MotionConfig reducedMotion="user"` + CSS `prefers-reduced-motion` tắt transform khi người dùng yêu cầu.
+
+Token chung ở `src/client/lib/motion.ts` — một nhịp cho cả app:
+
+| Token | Dùng cho |
+|---|---|
+| `spring` (stiffness 380, damping 30) | thứ di chuyển: hàng, chỉ báo điều hướng, thẻ |
+| `springExpressive` (nảy nhẹ) | phần tử nhỏ "đến": badge, dấu check, icon copy — **không** dùng cho danh sách |
+| `pageEnter` | màn vào: mờ → rõ + nhô lên 12px, 400ms, easing emphasized-decelerate |
+| `listStagger` / `listItem` | hàng lần lượt xuất hiện, cách nhau 50ms |
+| CSS `--ease-emphasized*`, `animate-dialog-*` | dialog, scrim, state layer, nút |
+
+- Thoát nhanh hơn vào (~60%): dialog vào 400ms, ra 200ms.
+- Mỗi màn chỉ 1–2 chuyển động chính; không animation chạy vòng liên tục (trừ skeleton khi đang tải).
+- Kết quả đúng không phụ thuộc animation: trạng thái được đặt thẳng, animation chỉ trình bày nó.
+- `motion` đặt style qua CSSOM (`element.style`) nên **không** vi phạm `style-src 'self'` — đã kiểm console trên `vite preview`.
+
+Các chuyển động hiện có: chuyển trang; danh sách xuất hiện lần lượt; thẻ tổng nợ đếm số; badge đổi trạng thái bật ra; icon copy → check; QR hiện dần; dialog phóng từ 92%; báo chuyển xong → dấu check tự vẽ trong một hình tròn; nền login có các hình trôi vào một lần; skeleton shimmer khi tải; nút co 0.97 khi bấm.
 
 ## Tương tác
 
-- Vùng chạm tối thiểu **44 × 44px** (`min-h-11`, nút icon `w-11`). Tab dưới đáy cao 56px.
-- Mọi thứ bấm được có `cursor-pointer`, hover đổi màu trong 200ms, và **focus ring nhìn thấy được** (`outline-ring`). Không bao giờ xoá outline mà không thay thế.
-- Nút chỉ có icon phải có `aria-label`. Icon trang trí có `aria-hidden`. Icon là SVG Lucide, không emoji.
-- `prefers-reduced-motion`: mọi animation/transition gần như tắt (`index.css`).
-- Toast: Sonner, luôn `toast.success` / `toast.error`, không `toast()` trơn. Hiện ở giữa phía trên.
-- Xác nhận: `useConfirm()` → AlertDialog (Hủy + Đồng ý; `destructive: true` cho nút đỏ). Không `window.confirm`.
-- Form đăng nhập cho dán và dùng `autocomplete="username"` / `"current-password"` để trình quản lý mật khẩu hoạt động (WCAG 2.2 Accessible Authentication).
+- Vùng chạm tối thiểu **44 × 44px**; nút lớn 56px; mục điều hướng 80px cao trên điện thoại.
+- **State layer** (`state-layer` utility): lớp `currentColor` 8% khi hover, 12% khi bấm, thay vì đổi màu nền.
+- Focus ring 3px `primary`, luôn nhìn thấy. Nút chỉ có icon có `aria-label`; icon trang trí `aria-hidden`. Icon Lucide SVG, không emoji.
+- Ô nhập: M3 outlined text field, **nhãn nổi là `<label>` thật** (không phải placeholder đóng vai nhãn).
+- Toast: Sonner, dáng snackbar M3 (`inverse-surface`, ở đáy, trong tầm ngón cái); luôn `toast.success` / `toast.error`.
+- Xác nhận: `useConfirm()` → AlertDialog M3 (nút chữ "Huỷ" + nút filled). Focus mặc định vào "Huỷ". Không `window.confirm`.
+- Tải dữ liệu: skeleton cùng hình dạng màn thật (không nhảy layout), không spinner giữa màn.
+- Form đăng nhập cho dán, `autocomplete` đúng (WCAG 2.2 Accessible Authentication), `method="post"`.
 
 ## Component
 
-- `StatusBadge`: nền nhạt + chữ + icon cho `UNPAID` / `PENDING` / `PAID`.
-- `CopyRow`: mỗi dòng chuyển khoản một nút copy thật (44px), `value` tách khỏi `display` — tiền copy số nguyên.
-- `QrCode`: **ngoại lệ duy nhất** được dùng hex thô (`#000` / `#fff`) — máy quét cần module tối trên nền sáng, bất kể theme.
-- `LoadError`: trạng thái lỗi tải tại chỗ, có "Thử lại" (trừ `NOT_FOUND`).
+Viết tay trong `src/client/components/` (CLI `shadcn` cần `npx`, không chạy được ở đây), primitive từ `radix-ui`:
 
+- `ui/button` (`filled`, `tonal`, `outlined`, `text`, `error`, `icon`), `ui/text-field`, `ui/card`, `ui/alert-dialog`, `ui/sonner`.
+- `NavBar`, `AppHeader`, `UserAvatar`, `PlanAvatar`, `StatusBadge`, `CopyRow`, `QrCode`, `AnimatedNumber`, `PageTransition`, `EmptyState`, `Skeleton`, `LoadError`.
+- `QrCode` là **ngoại lệ duy nhất** dùng hex thô (`#000` / `#fff`): máy quét cần module tối trên nền sáng, bất kể theme.
 
-Viết tay theo mẫu shadcn/ui trong `src/client/components/ui/` (CLI `shadcn` cần `npx`, không chạy được ở đây): `button`, `input`, `label`, `card`, `alert-dialog`, `sonner`. Primitive từ gói hợp nhất `radix-ui`. Thêm component mới thì theo cùng mẫu: `cn()` + token, không hex.
-
-## Đã loại khỏi kết quả sinh
+## Đã loại
 
 | Đề xuất | Lý do bỏ |
 |---|---|
-| Pattern "Product Demo + Features" | Bố cục landing page; đây là app sau đăng nhập |
-| Google Fonts CDN (Calistoga + Inter) | Vi phạm `font-src 'self'`, lộ IP người dùng cho Google; serif hiển thị không hợp app tiền |
-| Accent/CTA đỏ `#DC2626` | Trùng nghĩa "còn nợ" |
-| Primary `#059669` với chữ trắng | Contrast ~3.8:1, dưới AA |
-| GSAP scroll reveal | Thêm thư viện cho hiệu ứng app này không cần; CSS transition là đủ |
+| Minimalism & Swiss (bản đầu) | Đúng nhưng đơn điệu; ba chọn M3 Expressive |
+| Google Fonts CDN | Vi phạm `font-src 'self'`, lộ IP người dùng cho Google |
+| GSAP | `motion` đã có spring, exit và layout animation cho React; không cần thư viện thứ hai |
+| Haptic feedback, FAB | Checklist M3 cho Android native; web không có haptic đáng tin, app không có hành động chính đủ lớn cho FAB |
+| Logo dịch vụ (YouTube, Netflix…) | Nhãn hiệu của bên khác; dùng `PlanAvatar` chữ cái đầu |

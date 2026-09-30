@@ -1,7 +1,9 @@
 import { Check, Copy } from "lucide-react";
+import { AnimatePresence, m } from "motion/react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { springExpressive } from "../lib/motion";
 import { Button } from "./ui/button";
 
 type CopyRowProps = {
@@ -34,18 +36,28 @@ export function CopyRow({ label, value, display }: CopyRowProps) {
   };
 
   return (
-    <div className="flex items-center justify-between gap-3 py-2">
+    <div className="flex items-center justify-between gap-3 py-2.5">
       <div className="min-w-0">
-        <dt className="text-xs text-muted-foreground">{label}</dt>
-        <dd className="font-medium break-all tabular-nums select-all">{display ?? value}</dd>
+        <dt className="text-xs font-medium text-on-surface-variant">{label}</dt>
+        <dd className="text-base font-semibold break-all tabular-nums select-all">{display ?? value}</dd>
       </div>
       <Button
-        variant="outline"
+        variant="tonal"
         size="icon"
         onClick={() => void copy()}
         aria-label={t("copy.action", { label: label.toLowerCase() })}
       >
-        {copied ? <Check className="text-paid" aria-hidden="true" /> : <Copy aria-hidden="true" />}
+        <AnimatePresence mode="popLayout" initial={false}>
+          <m.span
+            key={copied ? "done" : "copy"}
+            initial={{ scale: 0.4, opacity: 0, rotate: -45 }}
+            animate={{ scale: 1, opacity: 1, rotate: 0, transition: springExpressive }}
+            exit={{ scale: 0.4, opacity: 0, transition: { duration: 0.1 } }}
+            className="flex"
+          >
+            {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+          </m.span>
+        </AnimatePresence>
       </Button>
     </div>
   );

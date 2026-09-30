@@ -61,7 +61,7 @@ function ChunkErrorScreen() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center">
       <h1 className="text-xl font-semibold">{t("chunkError.title")}</h1>
-      <p className="text-muted-foreground">{t("chunkError.body")}</p>
+      <p className="text-on-surface-variant">{t("chunkError.body")}</p>
       <Button onClick={reload}>
         <RefreshCw aria-hidden="true" />
         {t("chunkError.reload")}

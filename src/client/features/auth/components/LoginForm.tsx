@@ -2,8 +2,7 @@ import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
-import { Label } from "../../../components/ui/label";
+import { TextField } from "../../../components/ui/text-field";
 
 type LoginFormProps = {
   // Resolves true on success; a failure has already raised its toast.
@@ -33,48 +32,40 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
   return (
     // method="post": if the script has not attached yet, a native submit must never put the
     // password in the URL (history, logs), which the default GET would.
-    <form method="post" onSubmit={(event) => void submit(event)} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="username">{t("login.username")}</Label>
-        <Input
-          id="username"
-          name="username"
-          autoComplete="username"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          required
-          autoFocus
-          value={username}
-          onChange={(event) => setUsername(event.target.value)}
-        />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="password">{t("login.password")}</Label>
-        <div className="relative">
-          <Input
-            id="password"
-            name="password"
-            type={showPassword ? "text" : "password"}
-            autoComplete="current-password"
-            required
-            className="pr-12"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-          />
+    <form method="post" onSubmit={(event) => void submit(event)} className="flex flex-col gap-5">
+      <TextField
+        label={t("login.username")}
+        name="username"
+        autoComplete="username"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        required
+        autoFocus
+        value={username}
+        onChange={(event) => setUsername(event.target.value)}
+      />
+      <TextField
+        label={t("login.password")}
+        name="password"
+        type={showPassword ? "text" : "password"}
+        autoComplete="current-password"
+        required
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        trailing={
           <Button
-            variant="ghost"
+            variant="icon"
             size="icon"
-            className="absolute top-0 right-0 text-muted-foreground"
             onClick={() => setShowPassword((shown) => !shown)}
             aria-label={t(showPassword ? "login.hidePassword" : "login.showPassword")}
             aria-pressed={showPassword}
           >
             {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
           </Button>
-        </div>
-      </div>
-      <Button type="submit" disabled={submitting} className="mt-2 w-full">
+        }
+      />
+      <Button type="submit" size="large" disabled={submitting} className="mt-1 w-full">
         {submitting && <LoaderCircle className="animate-spin" aria-hidden="true" />}
         {t(submitting ? "login.submitting" : "login.submit")}
       </Button>

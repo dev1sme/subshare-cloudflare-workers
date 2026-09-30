@@ -5,55 +5,109 @@
 @import "@fontsource/be-vietnam-pro/400.css";
 @import "@fontsource/be-vietnam-pro/500.css";
 @import "@fontsource/be-vietnam-pro/600.css";
+@import "@fontsource/be-vietnam-pro/700.css";
 
 /* Bundled so toasts are styled under style-src 'self'. Sonner also injects the same CSS as an
    inline <style> at runtime; CSP blocks that copy, which is harmless once this one is loaded. */
 @import "sonner/dist/styles.css";
 
-/* Design tokens — design-system/subshare/MASTER.md. Components use these names, never raw hex.
-   Light only for now; dark mode redefines the same variables later. */
+/* Material 3 Expressive tokens — docs/design-system.md. Generated once with
+   @material/material-color-utilities (SchemeVibrant, seed #6750A4); success and warning come from
+   tonal palettes at hue 145 and 70. Components use these role names, never raw hex. Light only. */
 @theme {
   --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
 
-  --color-background: #f8fafc;
-  --color-foreground: #0f172a;
-  --color-card: #ffffff;
-  --color-card-foreground: #0f172a;
-  --color-muted: #f1f5f9;
-  --color-muted-foreground: #475569;
-  --color-border: #e2e8f0;
-  --color-input: #cbd5e1;
-  --color-ring: #047857;
+  --color-surface: #fdf7ff;
+  --color-on-surface: #1d1a24;
+  --color-on-surface-variant: #494453;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f8f1ff;
+  --color-surface-container: #f2ebfa;
+  --color-surface-container-high: #ede5f4;
+  --color-surface-container-highest: #e7e0ef;
+  --color-outline: #7a7484;
+  --color-outline-variant: #cbc3d5;
+  --color-inverse-surface: #322f3a;
+  --color-inverse-on-surface: #f5eefd;
 
-  /* emerald-700: 5.5:1 against white text (emerald-600 is only ~3.8:1). */
-  --color-primary: #047857;
-  --color-primary-hover: #065f46;
-  --color-primary-foreground: #ffffff;
-  --color-secondary: #f1f5f9;
-  --color-secondary-hover: #e2e8f0;
-  --color-secondary-foreground: #0f172a;
+  --color-primary: #6f19ff;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #e9ddff;
+  --color-on-primary-container: #5400cc;
+  --color-secondary: #6b5778;
+  --color-secondary-container: #f3daff;
+  --color-on-secondary-container: #523f5f;
+  --color-tertiary: #79507a;
+  --color-tertiary-container: #ffd6fc;
+  --color-on-tertiary-container: #5f3961;
 
-  /* Red means money still owed or a destructive action — never a plain call to action. */
-  --color-destructive: #b91c1c;
-  --color-destructive-hover: #991b1b;
-  --color-destructive-foreground: #ffffff;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  --color-success: #296b2a;
+  --color-success-container: #acf4a2;
+  --color-on-success-container: #0b5314;
+  --color-warning: #865300;
+  --color-warning-container: #ffddb8;
+  --color-on-warning-container: #653e00;
 
-  /* Payment status: UNPAID / PENDING / PAID. Text colours pass 4.5:1 on their soft background. */
-  --color-owed: #b91c1c;
-  --color-owed-soft: #fef2f2;
-  --color-pending: #b45309;
-  --color-pending-soft: #fffbeb;
-  --color-paid: #047857;
-  --color-paid-soft: #ecfdf5;
+  /* Container shapes: 16–28px; buttons and chips are pills (rounded-full). */
+  --radius-card: 1.75rem;
+  --radius-field: 1rem;
+
+  /* M3 emphasized easing for everything that moves; decelerate to arrive, accelerate to leave. */
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+
+  /* Exit runs ~60% of enter. Radix waits for the exit animation before unmounting. */
+  --animate-scrim-in: scrim-in 300ms var(--ease-emphasized-decelerate);
+  --animate-scrim-out: scrim-out 180ms var(--ease-emphasized-accelerate);
+  --animate-dialog-in: dialog-in 400ms var(--ease-emphasized-decelerate);
+  --animate-dialog-out: dialog-out 200ms var(--ease-emphasized-accelerate);
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  @keyframes scrim-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes scrim-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -46%) scale(0.92);
+    }
+  }
+  @keyframes dialog-out {
+    to {
+      opacity: 0;
+      transform: translate(-50%, -48%) scale(0.96);
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
 }
 
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-surface font-sans text-on-surface antialiased;
     font-size: 1rem;
     line-height: 1.5;
   }
@@ -63,7 +117,42 @@
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
   }
+}
+
+/* M3 state layer: a currentColor overlay at 8% on hover, 12% on press, instead of changing the
+   fill. The element needs `relative` and `overflow-hidden` (the button variants include both). */
+@utility state-layer {
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms var(--ease-emphasized);
+  }
+  &:hover::after {
+    opacity: 0.08;
+  }
+  &:active::after {
+    opacity: 0.12;
+  }
+}
+
+/* Loading placeholder that keeps the final layout's space (no content jump). */
+@utility skeleton {
+  border-radius: var(--radius-field);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-container-high) 25%,
+    var(--color-surface-container-highest) 50%,
+    var(--color-surface-container-high) 75%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
 }

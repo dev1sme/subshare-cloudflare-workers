@@ -89,6 +89,8 @@ const en: typeof vi = {
   payments: {
     due: "To pay",
     paid: "Paid",
+    dueCount_one: "{{count}} payment not yet confirmed",
+    dueCount_other: "{{count}} payments not yet confirmed",
     totalDue: "Total to pay",
     nothingDue: "You have nothing left to pay.",
     empty: "No payments yet.",
@@ -107,6 +109,8 @@ const en: typeof vi = {
     markSent: "I have transferred",
     markSentTitle: "Confirm you have transferred?",
     markSentBody: "You transferred {{amount}} with the note {{code}}. An admin will check the bank statement and confirm.",
+    sentThanks: "Thank you!",
+    sentNext: "An admin will check the bank statement and confirm this payment.",
     markSentDone: "Transfer reported. Waiting for an admin to confirm.",
     pendingInfo: "You reported the transfer on {{date}}. An admin will confirm after checking the bank statement.",
     paidInfo: "Confirmed on {{date}}.",
