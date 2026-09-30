@@ -1,6 +1,6 @@
 # Mô hình dữ liệu
 
-> Đã chốt bằng `migrations/0001_initial_schema.sql` … `0008_join_requests_decided_by_set_null.sql`. File này phải khớp migration; thay đổi schema là migration mới, không sửa file đã apply.
+> Đã chốt bằng `migrations/0001_initial_schema.sql` … `0009_plan_wishes.sql`. File này phải khớp migration; thay đổi schema là migration mới, không sửa file đã apply.
 
 Tên bảng và cột **tiếng Anh**; enum **UPPER_SNAKE tiếng Anh**.
 
@@ -8,7 +8,7 @@ Tên bảng và cột **tiếng Anh**; enum **UPPER_SNAKE tiếng Anh**.
 users            (id, code, username, display_name, password_hash, role, created_at)
 plans            (id, code, name, provider, price, member_amount, cycle, max_slots, payer_id,
                   bank_bin, bank_account_no, bank_account_name, active,
-                  accepting_requests, created_at)
+                  accepting_requests, priority_until, created_at)
 plan_members     (id, code, plan_id, user_id, joined_on, left_on)
 billing_periods  (id, code, plan_id, period /YYYY-MM/, price, created_at)
 payments         (id, code, billing_period_id, user_id, amount, status,
@@ -18,6 +18,8 @@ prepayments      (id, code, plan_id, user_id, start_period, end_period, months,
                   marked_at, confirmed_at, confirmed_by)
 join_requests    (id, code, plan_id, user_id, status, note, created_at,
                   decided_at, decided_by, member_id)
+plan_wishes      (id, code, user_id, provider, service_name, service_key, note,
+                  status, plan_id, created_at, decided_at, seen_at)
 ```
 
 ## Vai trò và người thanh toán là hai thứ khác nhau
@@ -67,6 +69,7 @@ Mọi bảng mà URL có thể trỏ tới có `code` ngẫu nhiên, không suy 
 | `payments` | `PM…` |
 | `prepayments` | `PP…` |
 | `join_requests` | `JR…` |
+| `plan_wishes` | `PW…` |
 
 Tiền tố là thứ chặn việc dùng mã gói ở chỗ cần mã khoản — `parseCode` kiểm tiền tố và hình dạng trước mọi lookup. Sinh bằng `crypto.getRandomValues`, dạng hex in hoa (`0-9A-F`, không O/I/l để gõ nhầm). `payments.code` là **nội dung chuyển khoản**, nên phải ngắn và gõ lại được.
 
@@ -80,6 +83,8 @@ Tiền tố là thứ chặn việc dùng mã gói ở chỗ cần mã khoản �
 | `payments.status`, `prepayments.status` | `UNPAID` \| `PENDING` \| `PAID` |
 | `prepayments.months` | `3` \| `6` \| `12` |
 | `join_requests.status` | `PENDING` \| `APPROVED` \| `REJECTED` \| `CANCELLED` |
+| `plan_wishes.status` | `OPEN` \| `FULFILLED` \| `CANCELLED` \| `DECLINED` |
+| `plan_wishes.provider` | như `plans.provider` |
 
 Đều có CHECK constraint. SQLite không sửa được CHECK, nên đổi giá trị enum là dựng lại bảng trong migration — chọn cẩn thận ngay từ đầu.
 
@@ -131,6 +136,18 @@ Tài khoản vẫn **chỉ admin tạo** — không có trang đăng ký công k
 - CHECK: đã quyết thì có `decided_at`; `APPROVED` ⇔ `member_id` khác NULL; `note` ≤ 200 ký tự. (`APPROVED`/`REJECTED` bắt buộc có `decided_by` đã bỏ ở `0008` vì cột có thể về NULL; app vẫn luôn ghi.)
 - **Payer không bao giờ được duyệt vào gói của mình**: người đã xin rồi mới thành payer (đổi payer chỉ kiểm suất, không kiểm yêu cầu đang chờ) bị câu `INSERT` của lần duyệt từ chối (`r.user_id <> p.payer_id`) → 409 `PAYER_CANNOT_BE_MEMBER`.
 - Index: `(status, created_at)` cho hàng đợi admin, `(user_id, created_at)` cho lịch sử của thành viên, `plan_id` / `decided_by` / `member_id` cho FK. Danh sách "Khám phá" quét `plans` (vài dòng), tra suất và yêu cầu qua index.
+
+## Yêu cầu mở gói
+
+Gói đầy, hay chưa có gói nào của dịch vụ đó — thành viên vẫn nói được là mình muốn: một `plan_wishes` = một lần "muốn có gói <dịch vụ>". Admin thấy đủ người thì mở gói mới từ các yêu cầu đó (migration `0009`).
+
+- **Dịch vụ** = `provider` (danh sách cố định) hoặc `OTHER` + `service_name` gõ tay. `service_key` là khoá gom nhóm: `''` với provider có sẵn, tên đã trim + chữ thường + gộp khoảng trắng với `OTHER` ("Coursera  Plus" và "coursera plus" là một). CHECK: `OTHER` ⇔ có `service_name` ⇔ `service_key` khác rỗng.
+- `OPEN` → `FULFILLED` (admin mở gói từ nó) / `CANCELLED` (thành viên huỷ) / `DECLINED` (admin đóng). Mỗi người mỗi dịch vụ **tối đa một `OPEN`** (partial UNIQUE `plan_wishes_one_open`) → bấm đúp là `WISH_EXISTS`.
+- **Thành viên thấy số người cùng chờ, không thấy tên**: `others_waiting` đếm `OPEN` cùng `(provider, service_key)` qua index `plan_wishes_status`. Tên chỉ admin thấy.
+- **Mở gói từ yêu cầu** = `POST /api/plans` kèm `wish_codes`, trong **cùng một batch**: `INSERT plans` với `priority_until = bây giờ + 48 giờ`, rồi `UPDATE plan_wishes SET status = 'FULFILLED', plan_id = …` chỉ với các mã còn `OPEN` (đã huỷ / đã đóng thì bỏ qua).
+- **Ưu tiên 48 giờ** (`plans.priority_until`): trước mốc đó chỉ người có yêu cầu `FULFILLED` trỏ vào gói mới xin vào được; người khác → 409 `PLAN_PRIORITY_ONLY`. Hết mốc thì như gói thường. Không có cron nào dọn — so sánh với giờ hiện tại lúc xin.
+- **Thông báo trong app**, không email / push (không có dịch vụ ngoài): yêu cầu `FULFILLED` mà gói còn mở, còn suất, thành viên chưa có suất hay yêu cầu chờ, và `seen_at` còn NULL → trang chủ hiện banner. Thành viên đóng banner → `seen_at`.
+- Không phải dòng tiền: `user_id` **`ON DELETE CASCADE`**, `plan_id` **`ON DELETE SET NULL`** (xoá gói thì yêu cầu còn, chỉ mất gói).
 
 ## Ai vào kỳ nào
 

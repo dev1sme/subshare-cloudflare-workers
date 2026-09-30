@@ -5,6 +5,7 @@ import { securityHeaders } from "./headers";
 import { accountRoutes } from "./routes/accounts";
 import { authRoutes } from "./routes/auth";
 import { joinRequestRoutes } from "./routes/joinRequests";
+import { wishRoutes } from "./routes/wishes";
 import { meRoutes } from "./routes/me";
 import { memberRoutes } from "./routes/members";
 import { paymentRoutes } from "./routes/payments";
@@ -43,6 +44,9 @@ app.route("/api/prepayments", prepaymentRoutes);
 
 // requireAdmin, applied inside the sub-app. Members ask through /api/me/join-requests.
 app.route("/api/join-requests", joinRequestRoutes);
+
+// requireAdmin, applied inside the sub-app. Members ask through /api/me/wishes.
+app.route("/api/wishes", wishRoutes);
 
 // requireMember, applied inside the sub-app. The user comes from the token only.
 app.route("/api/me", meRoutes);

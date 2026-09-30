@@ -1,5 +1,6 @@
 import { Hono } from "hono";
-import type { MyPlan, OpenPlan } from "../../shared/types";
+import { PROVIDERS } from "../../shared/providers";
+import type { MyPlan, MyWish, OpenPlan } from "../../shared/types";
 import { requireMember, type AppEnv } from "../auth";
 import {
   cancelJoinRequest,
@@ -10,6 +11,7 @@ import {
   listOpenPlansForUser,
 } from "../db/joinRequests";
 import { listSeatsOfUser } from "../db/members";
+import { type MyWishRow, closeWish, findMyWish, insertWish, listWishesOfUser, markWishSeen } from "../db/wishes";
 import { findPaymentByCode, listPaymentsOfUser, markPaymentSent } from "../db/payments";
 import {
   coverageFrom,
@@ -23,7 +25,7 @@ import { CODE_PREFIX, generateCode, isCode } from "../domain/code";
 import { addMonths, currentPeriodInVietnam } from "../domain/period";
 import { bankTransferFor } from "../domain/vietqr";
 import { failure, isUniqueViolation, notFound, ok } from "../envelope";
-import { fail, optionalString, parseCode, readBody } from "../validate";
+import { fail, optionalString, parseCode, readBody, requireEnum, requireString } from "../validate";
 import { toJoinRequest } from "./joinRequests";
 import { toPayment } from "./payments";
 import { toPrepayment } from "./prepayments";
@@ -159,6 +161,9 @@ meRoutes.get("/open-plans", async (c) => {
     max_slots: row.max_slots,
     active_members: row.active_members,
     pending_request_code: row.pending_request_code,
+    pending_requests: row.pending_requests,
+    priority_until: row.priority_until,
+    priority_for_me: row.priority_for_me === 1,
   }));
   return ok(c, { plans });
 });
@@ -181,6 +186,10 @@ meRoutes.post("/join-requests", async (c) => {
     return failure(c, "PLAN_NOT_OPEN", "The plan is not open to join requests.", 404);
   }
   if (ask.has_seat) return failure(c, "ALREADY_MEMBER", "You already hold a seat in this plan.", 409);
+  // A plan opened from wishes is reserved for those wishers until its head start ends.
+  if (ask.priority_until !== null && ask.priority_until > new Date().toISOString() && !ask.has_priority) {
+    return failure(c, "PLAN_PRIORITY_ONLY", "For now only members who asked for this plan can join.", 409);
+  }
   if (ask.has_pending) return failure(c, "JOIN_REQUEST_EXISTS", "You already asked to join this plan.", 409);
   if (ask.active_members >= ask.max_slots) return failure(c, "PLAN_FULL", "The plan has no free seat.", 409);
 
@@ -206,4 +215,83 @@ meRoutes.post("/join-requests/:code/cancel", async (c) => {
   const row = await cancelJoinRequest(c.env.DB, request.id, request.user_id);
   if (!row) return failure(c, "INVALID_STATUS_TRANSITION", `A ${request.status} request cannot be cancelled.`, 409);
   return ok(c, { join_request: toJoinRequest(row) }, "Request cancelled.");
+});
+
+// --- Plan wishes: ask for a plan of some service to be opened (docs/data-model.md#yêu-cầu-mở-gói).
+
+const SERVICE_NAME_MAX = 64;
+
+function toMyWish(row: MyWishRow): MyWish {
+  return {
+    code: row.code,
+    provider: row.provider,
+    service_name: row.service_name,
+    note: row.note,
+    status: row.status,
+    created_at: row.created_at,
+    decided_at: row.decided_at,
+    // How many others wait with you matters only while the wish is open.
+    others_waiting: row.status === "OPEN" ? row.others_waiting : 0,
+    seen: row.seen_at !== null,
+    plan:
+      row.plan_code !== null
+        ? {
+            code: row.plan_code,
+            name: row.plan_name!,
+            provider: row.plan_provider!,
+            member_amount: row.plan_member_amount!,
+            open: row.plan_open === 1,
+            free_seats: Math.max(0, row.plan_free_seats ?? 0),
+            priority_until: row.plan_priority_until,
+            joined: row.plan_joined === 1,
+          }
+        : null,
+  };
+}
+
+meRoutes.get("/wishes", async (c) => {
+  const rows = await listWishesOfUser(c.env.DB, c.get("session").code);
+  return ok(c, { wishes: rows.map(toMyWish) });
+});
+
+// A listed provider is named by the provider; OTHER needs the service's name, and wishes for the
+// same service group by its trimmed lowercase form.
+meRoutes.post("/wishes", async (c) => {
+  const body = await readBody(c);
+  const provider = requireEnum(body, "provider", PROVIDERS);
+  const serviceName = provider === "OTHER" ? requireString(body, "service_name", SERVICE_NAME_MAX) : null;
+  const note = optionalString(body, "note", NOTE_MAX);
+  try {
+    const row = await insertWish(c.env.DB, {
+      code: generateCode(CODE_PREFIX.wish),
+      userCode: c.get("session").code,
+      provider,
+      serviceName,
+      serviceKey: serviceName === null ? "" : serviceName.toLowerCase().replace(/\s+/g, " "),
+      note,
+    });
+    return ok(c, { wish: toMyWish(row) }, "Wish sent.", 201);
+  } catch (err) {
+    // plan_wishes_one_open: this member already waits for this service.
+    if (isUniqueViolation(err)) return failure(c, "WISH_EXISTS", "You already asked for this service.", 409);
+    throw err;
+  }
+});
+
+// Another member's wish is 404.
+meRoutes.post("/wishes/:code/cancel", async (c) => {
+  const wish = await findMyWish(c.env.DB, parseCode(CODE_PREFIX.wish, c.req.param("code")));
+  if (!wish || wish.user_code !== c.get("session").code) return notFound(c);
+  if (!(await closeWish(c.env.DB, wish.id, "CANCELLED"))) {
+    return failure(c, "INVALID_STATUS_TRANSITION", `A ${wish.status} wish cannot be cancelled.`, 409);
+  }
+  return ok(c, { wish: toMyWish((await findMyWish(c.env.DB, wish.code))!) }, "Wish cancelled.");
+});
+
+// Dismiss the "your plan is open" notice for a fulfilled wish.
+meRoutes.post("/wishes/:code/seen", async (c) => {
+  const wish = await findMyWish(c.env.DB, parseCode(CODE_PREFIX.wish, c.req.param("code")));
+  if (!wish || wish.user_code !== c.get("session").code) return notFound(c);
+  await markWishSeen(c.env.DB, wish.id);
+  return ok(c, { wish: toMyWish((await findMyWish(c.env.DB, wish.code))!) }, "Notice dismissed.");
 });

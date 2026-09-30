@@ -14,7 +14,7 @@ import {
 } from "../db/plans";
 import { findUserByCode } from "../db/users";
 import { type MemberRow, insertMemberIfSeatFree, listMembersOfPlan } from "../db/members";
-import { CODE_PREFIX, generateCode } from "../domain/code";
+import { CODE_PREFIX, generateCode, isCode } from "../domain/code";
 import { type PeriodRow, createPeriod, listPeriodsOfPlan } from "../db/periods";
 import { currentPeriodInVietnam, isPeriod, todayInVietnam } from "../domain/period";
 import { failure, notFound, ok } from "../envelope";
@@ -65,6 +65,7 @@ function toPlan(row: PlanRow): Plan {
     bank_account_name: row.bank_account_name,
     active: row.active === 1,
     accepting_requests: row.accepting_requests === 1,
+    priority_until: row.priority_until,
     created_at: row.created_at,
   };
 }
@@ -98,6 +99,22 @@ async function requirePayerId(db: D1Database, body: Body): Promise<number> {
   if (!user) fail("INVALID_PAYER_CODE");
   if (user.role !== "ADMIN") fail("PAYER_MUST_BE_ADMIN", "The payer must be an admin.");
   return user.id;
+}
+
+// Opening a plan from wishes gives those members this head start to ask to join.
+const WISH_PRIORITY_HOURS = 48;
+// A D1 statement binds at most 100 values; one plan is not opened for more wishers than this.
+const WISH_CODES_MAX = 50;
+
+// wish_codes: the open wishes this plan answers (docs/api.md). Duplicates collapse; wishes no longer
+// OPEN are skipped by the UPDATE itself.
+function optionalWishCodes(body: Body): string[] {
+  if (!has(body, "wish_codes")) return [];
+  const raw = body.wish_codes;
+  if (!Array.isArray(raw) || raw.length > WISH_CODES_MAX || !raw.every((code) => typeof code === "string" && isCode(CODE_PREFIX.wish, code))) {
+    fail("INVALID_WISH_CODES");
+  }
+  return [...new Set(raw as string[])];
 }
 
 // QR needs both the BIN and the account number, so they are set or cleared together.
@@ -137,9 +154,15 @@ planRoutes.post("/", async (c) => {
     accepting_requests: has(body, "accepting_requests") ? Number(requireBoolean(body, "accepting_requests")) : 0,
   };
   checkBankDetails(fields.bank_bin, fields.bank_account_no);
+  const wishCodes = optionalWishCodes(body);
 
-  const row = await insertPlan(c.env.DB, generateCode(CODE_PREFIX.plan), fields);
-  return ok(c, { plan: toPlan(row) }, "Plan created.", 201);
+  const { row, fulfilled } = await insertPlan(
+    c.env.DB,
+    generateCode(CODE_PREFIX.plan),
+    fields,
+    wishCodes.length > 0 ? { wishCodes, priorityHours: WISH_PRIORITY_HOURS } : null,
+  );
+  return ok(c, { plan: toPlan(row), wishes_fulfilled: fulfilled }, "Plan created.", 201);
 });
 
 // price / member_amount changes affect only periods created afterwards — past periods keep their snapshot.

@@ -1,6 +1,7 @@
 import type { Provider } from "../../shared/providers";
 import type { Cycle } from "../../shared/types";
 import { buildSet } from "./sql";
+import { fulfilWishesStatement } from "./wishes";
 
 export type PlanRow = {
   id: number;
@@ -17,6 +18,7 @@ export type PlanRow = {
   bank_account_name: string | null;
   active: number;
   accepting_requests: number;
+  priority_until: string | null;
   created_at: string;
   payer_code: string;
   payer_display_name: string;
@@ -42,7 +44,7 @@ export type PlanFields = {
 // The active-seat count is served by the partial index plan_members_active_unique (plan_id, ... WHERE left_on IS NULL).
 const SELECT_PLAN = `
   SELECT p.id, p.code, p.name, p.provider, p.price, p.member_amount, p.cycle, p.max_slots, p.payer_id,
-         p.bank_bin, p.bank_account_no, p.bank_account_name, p.active, p.accepting_requests, p.created_at,
+         p.bank_bin, p.bank_account_no, p.bank_account_name, p.active, p.accepting_requests, p.priority_until, p.created_at,
          u.code AS payer_code, u.display_name AS payer_display_name,
          (SELECT COUNT(*) FROM plan_members m WHERE m.plan_id = p.id AND m.left_on IS NULL) AS active_members
   FROM plans p
@@ -57,13 +59,23 @@ export function findPlanByCode(db: D1Database, code: string): Promise<PlanRow | 
   return db.prepare(`${SELECT_PLAN} WHERE p.code = ?`).bind(code).first<PlanRow>();
 }
 
-export async function insertPlan(db: D1Database, code: string, fields: PlanFields): Promise<PlanRow> {
-  // One round trip: the batch runs in order inside one transaction, so the SELECT sees the INSERT.
-  const [, selected] = await db.batch<PlanRow>([
+// Wishes that asked for this plan (see db/wishes.ts), fulfilled in the same batch; with any, the
+// plan gets a head start of `priorityHours` for those members.
+export type OpenedFromWishes = { wishCodes: string[]; priorityHours: number };
+
+export async function insertPlan(
+  db: D1Database,
+  code: string,
+  fields: PlanFields,
+  fromWishes: OpenedFromWishes | null = null,
+): Promise<{ row: PlanRow; fulfilled: number }> {
+  const withWishes = fromWishes !== null && fromWishes.wishCodes.length > 0;
+  // One round trip: the batch runs in order inside one transaction, so later statements see the INSERT.
+  const statements: D1PreparedStatement[] = [
     db
       .prepare(
-        `INSERT INTO plans (code, name, provider, price, member_amount, cycle, max_slots, payer_id, bank_bin, bank_account_no, bank_account_name, active, accepting_requests)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO plans (code, name, provider, price, member_amount, cycle, max_slots, payer_id, bank_bin, bank_account_no, bank_account_name, active, accepting_requests, priority_until)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${withWishes ? "strftime('%Y-%m-%dT%H:%M:%SZ', 'now', ?)" : "NULL"})`,
       )
       .bind(
         code,
@@ -79,10 +91,16 @@ export async function insertPlan(db: D1Database, code: string, fields: PlanField
         fields.bank_account_name,
         fields.active,
         fields.accepting_requests,
+        ...(withWishes ? [`+${fromWishes.priorityHours} hours`] : []),
       ),
-    db.prepare(`${SELECT_PLAN} WHERE p.code = ?`).bind(code),
-  ]);
-  return selected.results[0];
+  ];
+  if (withWishes) statements.push(fulfilWishesStatement(db, code, fromWishes.wishCodes));
+  statements.push(db.prepare(`${SELECT_PLAN} WHERE p.code = ?`).bind(code));
+  const results = await db.batch<PlanRow>(statements);
+  return {
+    row: results[results.length - 1].results[0],
+    fulfilled: withWishes ? results[1].meta.changes : 0,
+  };
 }
 
 export async function updatePlan(db: D1Database, id: number, patch: Partial<PlanFields>): Promise<PlanRow> {

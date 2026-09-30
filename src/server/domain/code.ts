@@ -9,6 +9,7 @@ export const CODE_PREFIX = {
   payment: "PM",
   prepayment: "PP",
   joinRequest: "JR",
+  wish: "PW",
 } as const;
 
 export type CodePrefix = (typeof CODE_PREFIX)[keyof typeof CODE_PREFIX];

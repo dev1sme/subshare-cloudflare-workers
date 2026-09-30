@@ -2,6 +2,9 @@
 // MISSING_/INVALID_/TOO_LONG_ codes refer to (used when a code has no own key).
 const vi = {
   errors: {
+    WISH_EXISTS: "Bạn đã yêu cầu mở gói dịch vụ này rồi, đang chờ.",
+    PLAN_PRIORITY_ONLY: "Gói đang ưu tiên cho những người đã yêu cầu mở gói. Bạn xin vào được sau khi hết thời gian ưu tiên.",
+    INVALID_WISH_CODES: "Danh sách yêu cầu mở gói không hợp lệ.",
     NOT_FOUND: "Không tìm thấy dữ liệu.",
     NETWORK_ERROR: "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.",
     INTERNAL_ERROR: "Có lỗi xảy ra, vui lòng thử lại.",
@@ -310,6 +313,7 @@ const vi = {
     failed: "Không chép được. Hãy chọn và chép thủ công.",
   },
   fields: {
+    service_name: "tên dịch vụ",
     provider: "nhà cung cấp",
     username: "tên đăng nhập",
     password: "mật khẩu",

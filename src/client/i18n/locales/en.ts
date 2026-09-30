@@ -2,6 +2,9 @@ import type vi from "./vi";
 
 const en: typeof vi = {
   errors: {
+    WISH_EXISTS: "You already asked for this service; it is waiting.",
+    PLAN_PRIORITY_ONLY: "This plan is reserved for members who asked for it. You can ask to join once that ends.",
+    INVALID_WISH_CODES: "The list of wishes is invalid.",
     NOT_FOUND: "Not found.",
     NETWORK_ERROR: "Cannot reach the server. Check your connection and try again.",
     INTERNAL_ERROR: "Something went wrong, please try again.",
@@ -306,6 +309,7 @@ const en: typeof vi = {
     failed: "Could not copy. Select and copy it manually.",
   },
   fields: {
+    service_name: "service name",
     provider: "provider",
     username: "username",
     password: "password",

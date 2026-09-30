@@ -82,11 +82,11 @@ Tài khoản có hai chốt: không xoá tài khoản đang đăng nhập (`CANN
 |---|---|---|
 | `GET /` | — | `{ plans }` (đang dùng trước, rồi theo tên) |
 | `GET /:code` | — | `{ plan }` |
-| `POST /` | `name`, `provider?` (mặc định `OTHER`), `price`, `member_amount`, `cycle`, `max_slots`, `payer_code`, `bank_bin?`, `bank_account_no?`, `bank_account_name?`, `active?` | `{ plan }` — 201 |
+| `POST /` | `name`, `provider?` (mặc định `OTHER`), `wish_codes?` (mã `PW…`, tối đa 50), `price`, `member_amount`, `cycle`, `max_slots`, `payer_code`, `bank_bin?`, `bank_account_no?`, `bank_account_name?`, `active?` | `{ plan }` — 201 |
 | `PATCH /:code` | bất kỳ trường nào ở trên | `{ plan }` |
 | `DELETE /:code` | — | `null` |
 
-`plan` = `{ code, name, provider, price, member_amount, cycle, max_slots, active_members, payer: { code, display_name }, bank_bin, bank_account_no, bank_account_name, active, created_at }` — `active` là boolean, không có `id` hay `payer_id`.
+`plan` = `{ code, name, provider, priority_until, price, member_amount, cycle, max_slots, active_members, payer: { code, display_name }, bank_bin, bank_account_no, bank_account_name, active, created_at }` — `active` là boolean, không có `id` hay `payer_id`.
 
 - `provider` là một giá trị trong danh sách cố định (`docs/data-model.md#nhà-cung-cấp-của-gói`); ngoài danh sách → `INVALID_PROVIDER`. Mọi tham chiếu gói lồng trong response khác (`payment.plan`, `prepayment.plan`, `join_request.plan`, `/api/me/plans`, `/api/me/open-plans`) cũng mang `provider`.
 - `payer_code` là mã tài khoản (`AC…`) của một **admin**: sai hình dạng hoặc không tồn tại → `INVALID_PAYER_CODE`, không phải admin → `PAYER_MUST_BE_ADMIN`. Đổi payer sang người đang có suất trong chính gói đó → 409 `PAYER_IS_MEMBER`.
@@ -156,8 +156,14 @@ Người dùng lấy từ token; khoản / lệnh của người khác trả **4
 | `GET /api/me/join-requests` | — | `{ join_requests }` — của mình, mới nhất trước |
 | `POST /api/me/join-requests` | `plan_code`, `note?` (≤ 200) | `{ join_request }` — 201 |
 | `POST /api/me/join-requests/:code/cancel` | — | `{ join_request }` (`PENDING → CANCELLED`) |
+| `GET /api/me/wishes` | — | `{ wishes }` — của mình, mới nhất trước, kèm `others_waiting` (số, không tên) và `plan` đã mở cho nó |
+| `POST /api/me/wishes` | `provider`, `service_name` (bắt buộc khi `OTHER`, ≤ 64), `note?` (≤ 200) | `{ wish }` — 201 |
+| `POST /api/me/wishes/:code/cancel` | — | `{ wish }` (`OPEN → CANCELLED`) |
+| `POST /api/me/wishes/:code/seen` | — | `{ wish }` — tắt thông báo "gói đã mở" |
 
-Xin vào gói: gói không tồn tại, đã ngừng hoặc không nhận đăng ký → 404 `PLAN_NOT_OPEN` (như nhau, không dò được gói ẩn); đã có suất → 409 `ALREADY_MEMBER`; đã có yêu cầu chờ → 409 `JOIN_REQUEST_EXISTS` (bấm đúp lọt qua kiểm → `DUPLICATE_DATA` từ unique index); hết suất → 409 `PLAN_FULL`. Huỷ yêu cầu của người khác → 404.
+Yêu cầu mở gói ([data-model.md](data-model.md#yêu-cầu-mở-gói)): `my_wish` = `{ code, provider, service_name, note, status, created_at, decided_at, others_waiting, seen, plan: { code, name, provider, member_amount, open, free_seats, priority_until, joined } | null }`. Đã có yêu cầu mở cùng dịch vụ → 409 `WISH_EXISTS`; yêu cầu của người khác → 404. `open-plans` thêm `pending_requests` (yêu cầu chờ duyệt của người khác), `priority_until`, `priority_for_me`.
+
+Xin vào gói: gói không tồn tại, đã ngừng hoặc không nhận đăng ký → 404 `PLAN_NOT_OPEN` (như nhau, không dò được gói ẩn); đã có suất → 409 `ALREADY_MEMBER`; đã có yêu cầu chờ → 409 `JOIN_REQUEST_EXISTS` (bấm đúp lọt qua kiểm → `DUPLICATE_DATA` từ unique index); hết suất → 409 `PLAN_FULL`; gói đang trong 48 giờ ưu tiên mà mình không có yêu cầu mở gói được đáp ứng → 409 `PLAN_PRIORITY_ONLY`. Huỷ yêu cầu của người khác → 404.
 
 `bank_transfer` = `{ bank_bin, account_no, account_name, amount, note, qr }` hoặc `null` (đã `PAID`, hoặc gói chưa có ngân hàng). `qr` là payload VietQR để trình duyệt vẽ; `amount` là số nguyên để copy.
 
@@ -170,6 +176,15 @@ Xin vào gói: gói không tồn tại, đã ngừng hoặc không nhận đăng
 | `POST /api/join-requests/:code/reject` | — | `{ join_request }` |
 
 `join_request` = `{ code, plan: { code, name, member_amount, max_slots, active_members }, user: { code, username, display_name }, status, note, created_at, decided_at }`. Duyệt: không còn `PENDING` → 409 `INVALID_STATUS_TRANSITION`; gói ngừng → 409 `PLAN_INACTIVE`; thành viên đã có suất → 409 `ALREADY_MEMBER`; hết suất → 409 `PLAN_FULL` (yêu cầu vẫn `PENDING`). `accepting_requests` (boolean) nằm trong `plan` và nhận qua `POST`/`PATCH /api/plans` (mặc định `false`).
+
+### Yêu cầu mở gói — admin (`requireAdmin`) — **đã có code** (`routes/wishes.ts`)
+
+| Route | Body | `data` |
+|---|---|---|
+| `GET /api/wishes` | — | `{ wishes }` — `OPEN`, cũ nhất trước, tối đa 500; `wish` = `{ code, provider, service_name, note, status, created_at, decided_at, user }` |
+| `POST /api/wishes/:code/decline` | — | `{ wish }` (`OPEN → DECLINED`) |
+
+Mở gói từ yêu cầu là `POST /api/plans` kèm `wish_codes`: response thêm `wishes_fulfilled` (số yêu cầu vừa chuyển `FULFILLED`), gói có `priority_until` = +48 giờ. `wish_codes` sai dạng / quá 50 → 400 `INVALID_WISH_CODES`.
 
 ### Thanh toán — admin (`requireAdmin`) — **đã có code** (`routes/payments.ts`, `routes/prepayments.ts`)
 

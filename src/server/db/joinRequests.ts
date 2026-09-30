@@ -68,6 +68,9 @@ export type OpenPlanRow = {
   max_slots: number;
   active_members: number;
   pending_request_code: string | null;
+  pending_requests: number;
+  priority_until: string | null;
+  priority_for_me: number;
 };
 
 // Plans a member may ask to join: active, accepting requests, and without their active seat.
@@ -77,7 +80,10 @@ export async function listOpenPlansForUser(db: D1Database, userCode: string): Pr
     .prepare(
       `SELECT p.code AS plan_code, p.name AS plan_name, p.provider AS plan_provider, p.member_amount, p.cycle, p.max_slots,
               (SELECT COUNT(*) FROM plan_members m WHERE m.plan_id = p.id AND m.left_on IS NULL) AS active_members,
-              (SELECT r.code FROM join_requests r WHERE r.plan_id = p.id AND r.user_id = u.id AND r.status = 'PENDING') AS pending_request_code
+              (SELECT r.code FROM join_requests r WHERE r.plan_id = p.id AND r.user_id = u.id AND r.status = 'PENDING') AS pending_request_code,
+              (SELECT COUNT(*) FROM join_requests r WHERE r.plan_id = p.id AND r.user_id <> u.id AND r.status = 'PENDING') AS pending_requests,
+              p.priority_until,
+              EXISTS (SELECT 1 FROM plan_wishes w WHERE w.plan_id = p.id AND w.user_id = u.id AND w.status = 'FULFILLED') AS priority_for_me
        FROM plans p, (SELECT id FROM users WHERE code = ?) u
        WHERE p.active = 1 AND p.accepting_requests = 1
          AND NOT EXISTS (SELECT 1 FROM plan_members m WHERE m.plan_id = p.id AND m.user_id = u.id AND m.left_on IS NULL)
@@ -97,6 +103,9 @@ export type AskContext = {
   user_id: number;
   has_seat: number;
   has_pending: number;
+  priority_until: string | null;
+  // This member's wish opened the plan: the head start applies to them.
+  has_priority: number;
 };
 
 // Everything asking to join needs to know, in one round trip: the plan's state, the member's id,
@@ -109,7 +118,9 @@ export function findAskContext(db: D1Database, planCode: string, userCode: strin
               (SELECT COUNT(*) FROM plan_members m WHERE m.plan_id = p.id AND m.left_on IS NULL) AS active_members,
               u.id AS user_id,
               EXISTS (SELECT 1 FROM plan_members m WHERE m.plan_id = p.id AND m.user_id = u.id AND m.left_on IS NULL) AS has_seat,
-              EXISTS (SELECT 1 FROM join_requests r WHERE r.plan_id = p.id AND r.user_id = u.id AND r.status = 'PENDING') AS has_pending
+              EXISTS (SELECT 1 FROM join_requests r WHERE r.plan_id = p.id AND r.user_id = u.id AND r.status = 'PENDING') AS has_pending,
+              p.priority_until,
+              EXISTS (SELECT 1 FROM plan_wishes w WHERE w.plan_id = p.id AND w.user_id = u.id AND w.status = 'FULFILLED') AS has_priority
        FROM plans p, users u
        WHERE p.code = ? AND u.code = ?`,
     )

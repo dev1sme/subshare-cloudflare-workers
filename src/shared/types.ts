@@ -60,6 +60,8 @@ export type Plan = {
   active: boolean;
   // Listed to members in "Khám phá gói", who may ask for a seat.
   accepting_requests: boolean;
+  // End of the head start given to members whose wishes opened this plan; null = none.
+  priority_until: string | null;
   created_at: string;
 };
 
@@ -157,4 +159,44 @@ export type OpenPlan = PlanRef & {
   active_members: number;
   // The member's own open request for this plan, if any.
   pending_request_code: string | null;
+  // Other members' requests waiting for an admin: free seats may already be spoken for.
+  pending_requests: number;
+  // Until then only members whose wish opened the plan may ask; null = open to all.
+  priority_until: string | null;
+  // This member is one of them.
+  priority_for_me: boolean;
 };
+
+export type WishStatus = "OPEN" | "FULFILLED" | "CANCELLED" | "DECLINED";
+
+// A member's ask for a plan of some service to be opened (docs/data-model.md#yêu-cầu-mở-gói).
+type WishBase = {
+  code: string;
+  provider: Provider;
+  // Only for provider OTHER: the service as the member typed it.
+  service_name: string | null;
+  note: string | null;
+  status: WishStatus;
+  created_at: string;
+  decided_at: string | null;
+};
+
+// The member's own view: how many others want the same service (never who), and the plan that
+// was opened for it with what they need to decide to ask to join.
+export type MyWish = WishBase & {
+  others_waiting: number;
+  seen: boolean;
+  plan:
+    | (PlanRef & {
+        member_amount: number;
+        open: boolean;
+        free_seats: number;
+        priority_until: string | null;
+        // The member already has a seat in it, or a pending request for it.
+        joined: boolean;
+      })
+    | null;
+};
+
+// The admin's view: who wants it.
+export type Wish = WishBase & { user: UserRef };
