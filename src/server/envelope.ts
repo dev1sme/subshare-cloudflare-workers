@@ -52,6 +52,14 @@ const CONSTRAINT_FAILURES: { pattern: string; status: ContentfulStatusCode; code
   { pattern: "CHECK constraint failed", status: 400, code: "INVALID_DATA", message: "Data violates a constraint." },
 ];
 
+// A route that expects one particular unique index to fire (a race its pre-check cannot close)
+// catches it and answers its own specific code instead of the generic DUPLICATE_DATA.
+export function isUniqueViolation(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const text = `${err.message} ${err.cause instanceof Error ? err.cause.message : ""}`;
+  return text.includes("UNIQUE constraint failed");
+}
+
 // Wired as app.onError. The real error is logged, never returned to the client.
 export function handleError(err: Error, c: Context) {
   if (err instanceof ApiError) {

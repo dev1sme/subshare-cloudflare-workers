@@ -8,10 +8,9 @@ import {
   listJoinRequests,
   rejectJoinRequest,
 } from "../db/joinRequests";
-import { hasActiveSeat } from "../db/plans";
 import { CODE_PREFIX, generateCode } from "../domain/code";
 import { todayInVietnam } from "../domain/period";
-import { failure, notFound, ok } from "../envelope";
+import { failure, isUniqueViolation, notFound, ok } from "../envelope";
 import { type Body, fail, has, parseCode, readBody, requireDate } from "../validate";
 
 // Admin side of join requests: the queue, approve (creates the seat), reject.
@@ -62,22 +61,35 @@ joinRequestRoutes.post("/:code/approve", async (c) => {
     return failure(c, "INVALID_STATUS_TRANSITION", `A ${request.status} request cannot be approved.`, 409);
   }
   if (request.plan_active !== 1) return failure(c, "PLAN_INACTIVE", "The plan is not active.", 409);
-  if (await hasActiveSeat(c.env.DB, request.plan_id, request.user_id)) {
-    return failure(c, "ALREADY_MEMBER", "The member already holds a seat in this plan.", 409);
+  // A member who asked, then became this plan's payer, must not be seated in it.
+  if (request.user_id === request.plan_payer_id) {
+    return failure(c, "PAYER_CANNOT_BE_MEMBER", "The plan's payer cannot hold a seat in it.", 409);
   }
 
-  const { row, approved } = await approveJoinRequest(c.env.DB, {
-    id: request.id,
-    memberCode: generateCode(CODE_PREFIX.member),
-    joinedOn,
-    adminCode: c.get("session").code,
-  });
+  let outcome: Awaited<ReturnType<typeof approveJoinRequest>>;
+  try {
+    outcome = await approveJoinRequest(c.env.DB, {
+      id: request.id,
+      memberCode: generateCode(CODE_PREFIX.member),
+      joinedOn,
+      adminCode: c.get("session").code,
+    });
+  } catch (err) {
+    // No pre-read for an existing seat: plan_members_active_unique refuses it inside the batch.
+    if (isUniqueViolation(err)) return failure(c, "ALREADY_MEMBER", "The member already holds a seat in this plan.", 409);
+    throw err;
+  }
+  const { row, approved } = outcome;
   if (!approved) {
-    // Re-read state explains the refusal: someone else decided first, or the last seat went.
+    // Re-read state explains the refusal: someone else decided first, the payer changed, or the
+    // last seat went.
     if (row.status !== "PENDING") {
       return failure(c, "INVALID_STATUS_TRANSITION", `A ${row.status} request cannot be approved.`, 409);
     }
     if (row.plan_active !== 1) return failure(c, "PLAN_INACTIVE", "The plan is not active.", 409);
+    if (row.user_id === row.plan_payer_id) {
+      return failure(c, "PAYER_CANNOT_BE_MEMBER", "The plan's payer cannot hold a seat in it.", 409);
+    }
     return failure(c, "PLAN_FULL", "The plan has no free seat.", 409);
   }
   return ok(c, { join_request: toJoinRequest(row) }, "Request approved.");

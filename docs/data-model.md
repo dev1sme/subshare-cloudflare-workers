@@ -1,6 +1,6 @@
 # Mô hình dữ liệu
 
-> Đã chốt bằng `migrations/0001_initial_schema.sql` … `0007_plan_provider.sql`. File này phải khớp migration; thay đổi schema là migration mới, không sửa file đã apply.
+> Đã chốt bằng `migrations/0001_initial_schema.sql` … `0008_join_requests_decided_by_set_null.sql`. File này phải khớp migration; thay đổi schema là migration mới, không sửa file đã apply.
 
 Tên bảng và cột **tiếng Anh**; enum **UPPER_SNAKE tiếng Anh**.
 
@@ -127,8 +127,9 @@ Tài khoản vẫn **chỉ admin tạo** — không có trang đăng ký công k
 - Một `join_requests` = một lần xin. `PENDING` → `APPROVED` / `REJECTED` (admin) hoặc `CANCELLED` (chính thành viên). Mỗi người mỗi gói **tối đa một `PENDING`** (partial UNIQUE `join_requests_one_pending`); yêu cầu đã quyết giữ lại làm lịch sử, huỷ rồi xin lại được.
 - **Duyệt = tạo suất** trong cùng một batch: `INSERT … SELECT` vào `plan_members` chỉ khi yêu cầu còn `PENDING`, gói còn `active` và còn suất (kiểm ngay trong câu INSERT), rồi `UPDATE` yêu cầu sang `APPROVED` với `member_id` trỏ về suất vừa tạo — chỉ khi suất đó tồn tại. Hai admin bấm cùng lúc, hay admin duyệt đúng lúc thành viên huỷ: một bên thắng, bên kia 409.
 - `joined_on` của suất mặc định là hôm nay (giờ Việt Nam) → theo luật "Ai vào kỳ nào" dưới, **duyệt ngày 15/10 thì đóng từ kỳ `2026-11`**. Admin gửi `joined_on` khác khi cần.
-- Yêu cầu không phải dòng tiền: `plan_id`, `user_id` **`ON DELETE CASCADE`** — xoá gói / user thì yêu cầu đi theo. Gói hay user đã có suất vẫn bị FK của `plan_members` giữ lại như cũ. `decided_by` là FK thường (như `confirmed_by`).
-- CHECK: đã quyết thì có `decided_at`; `APPROVED`/`REJECTED` có `decided_by`; `APPROVED` ⇔ `member_id` khác NULL; `note` ≤ 200 ký tự.
+- Yêu cầu không phải dòng tiền: `plan_id`, `user_id` **`ON DELETE CASCADE`** — xoá gói / user thì yêu cầu đi theo. Gói hay user đã có suất vẫn bị FK của `plan_members` giữ lại như cũ. `decided_by` là **`ON DELETE SET NULL`** (từ `0008`; bản `0006` là FK thường nên admin từng duyệt/từ chối không bao giờ xoá được — trái với chính nguyên tắc trên): xoá admin thì yêu cầu còn lại, chỉ mất "ai quyết".
+- CHECK: đã quyết thì có `decided_at`; `APPROVED` ⇔ `member_id` khác NULL; `note` ≤ 200 ký tự. (`APPROVED`/`REJECTED` bắt buộc có `decided_by` đã bỏ ở `0008` vì cột có thể về NULL; app vẫn luôn ghi.)
+- **Payer không bao giờ được duyệt vào gói của mình**: người đã xin rồi mới thành payer (đổi payer chỉ kiểm suất, không kiểm yêu cầu đang chờ) bị câu `INSERT` của lần duyệt từ chối (`r.user_id <> p.payer_id`) → 409 `PAYER_CANNOT_BE_MEMBER`.
 - Index: `(status, created_at)` cho hàng đợi admin, `(user_id, created_at)` cho lịch sử của thành viên, `plan_id` / `decided_by` / `member_id` cho FK. Danh sách "Khám phá" quét `plans` (vài dòng), tra suất và yêu cầu qua index.
 
 ## Ai vào kỳ nào

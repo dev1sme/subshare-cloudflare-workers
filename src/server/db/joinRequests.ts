@@ -21,6 +21,7 @@ export type JoinRequestRow = {
   member_amount: number;
   max_slots: number;
   plan_active: number;
+  plan_payer_id: number;
   active_members: number;
   user_code: string;
   username: string;
@@ -29,7 +30,7 @@ export type JoinRequestRow = {
 
 const SELECT_REQUEST = `
   SELECT r.id, r.code, r.plan_id, r.user_id, r.status, r.note, r.created_at, r.decided_at,
-         p.code AS plan_code, p.name AS plan_name, p.provider AS plan_provider, p.member_amount, p.max_slots, p.active AS plan_active,
+         p.code AS plan_code, p.name AS plan_name, p.provider AS plan_provider, p.member_amount, p.max_slots, p.active AS plan_active, p.payer_id AS plan_payer_id,
          (SELECT COUNT(*) FROM plan_members m WHERE m.plan_id = p.id AND m.left_on IS NULL) AS active_members,
          u.code AS user_code, u.username, u.display_name
   FROM join_requests r
@@ -87,12 +88,33 @@ export async function listOpenPlansForUser(db: D1Database, userCode: string): Pr
   return results;
 }
 
-export async function hasPendingJoinRequest(db: D1Database, planId: number, userId: number): Promise<boolean> {
-  const row = await db
-    .prepare("SELECT 1 AS found FROM join_requests WHERE plan_id = ? AND user_id = ? AND status = 'PENDING'")
-    .bind(planId, userId)
-    .first();
-  return row !== null;
+export type AskContext = {
+  plan_id: number;
+  active: number;
+  accepting_requests: number;
+  max_slots: number;
+  active_members: number;
+  user_id: number;
+  has_seat: number;
+  has_pending: number;
+};
+
+// Everything asking to join needs to know, in one round trip: the plan's state, the member's id,
+// and whether they already hold a seat or a pending request (each lookup through its index).
+// No row = unknown plan code.
+export function findAskContext(db: D1Database, planCode: string, userCode: string): Promise<AskContext | null> {
+  return db
+    .prepare(
+      `SELECT p.id AS plan_id, p.active, p.accepting_requests, p.max_slots,
+              (SELECT COUNT(*) FROM plan_members m WHERE m.plan_id = p.id AND m.left_on IS NULL) AS active_members,
+              u.id AS user_id,
+              EXISTS (SELECT 1 FROM plan_members m WHERE m.plan_id = p.id AND m.user_id = u.id AND m.left_on IS NULL) AS has_seat,
+              EXISTS (SELECT 1 FROM join_requests r WHERE r.plan_id = p.id AND r.user_id = u.id AND r.status = 'PENDING') AS has_pending
+       FROM plans p, users u
+       WHERE p.code = ? AND u.code = ?`,
+    )
+    .bind(planCode, userCode)
+    .first<AskContext>();
 }
 
 // A second PENDING request for the same plan and member violates join_requests_one_pending
@@ -154,6 +176,8 @@ export async function approveJoinRequest(
          SELECT ?, r.plan_id, r.user_id, ?
          FROM join_requests r JOIN plans p ON p.id = r.plan_id
          WHERE r.id = ? AND r.status = 'PENDING' AND p.active = 1
+           -- The payer never holds a seat in their own plan, even if they asked before becoming it.
+           AND r.user_id <> p.payer_id
            AND (SELECT COUNT(*) FROM plan_members m WHERE m.plan_id = p.id AND m.left_on IS NULL) < p.max_slots`,
       )
       .bind(memberCode, joinedOn, id),

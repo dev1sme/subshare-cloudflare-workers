@@ -3,15 +3,13 @@ import type { MyPlan, OpenPlan } from "../../shared/types";
 import { requireMember, type AppEnv } from "../auth";
 import {
   cancelJoinRequest,
+  findAskContext,
   findJoinRequestByCode,
-  hasPendingJoinRequest,
   insertJoinRequest,
   listJoinRequestsOfUser,
   listOpenPlansForUser,
 } from "../db/joinRequests";
 import { listSeatsOfUser } from "../db/members";
-import { findPlanByCode, hasActiveSeat } from "../db/plans";
-import { findUserByCode } from "../db/users";
 import { findPaymentByCode, listPaymentsOfUser, markPaymentSent } from "../db/payments";
 import {
   coverageFrom,
@@ -24,7 +22,7 @@ import {
 import { CODE_PREFIX, generateCode, isCode } from "../domain/code";
 import { addMonths, currentPeriodInVietnam } from "../domain/period";
 import { bankTransferFor } from "../domain/vietqr";
-import { failure, notFound, ok } from "../envelope";
+import { failure, isUniqueViolation, notFound, ok } from "../envelope";
 import { fail, optionalString, parseCode, readBody } from "../validate";
 import { toJoinRequest } from "./joinRequests";
 import { toPayment } from "./payments";
@@ -178,27 +176,27 @@ meRoutes.post("/join-requests", async (c) => {
   if (typeof planCode !== "string" || !isCode(CODE_PREFIX.plan, planCode)) fail("INVALID_PLAN_CODE");
   const note = optionalString(body, "note", NOTE_MAX);
 
-  const plan = await findPlanByCode(c.env.DB, planCode);
-  if (!plan || plan.active !== 1 || plan.accepting_requests !== 1) {
+  const ask = await findAskContext(c.env.DB, planCode, c.get("session").code);
+  if (!ask || ask.active !== 1 || ask.accepting_requests !== 1) {
     return failure(c, "PLAN_NOT_OPEN", "The plan is not open to join requests.", 404);
   }
-  const user = await findUserByCode(c.env.DB, c.get("session").code);
-  if (!user) return failure(c, "UNAUTHORIZED", "Not signed in.", 401);
-  if (await hasActiveSeat(c.env.DB, plan.id, user.id)) {
-    return failure(c, "ALREADY_MEMBER", "You already hold a seat in this plan.", 409);
-  }
-  if (await hasPendingJoinRequest(c.env.DB, plan.id, user.id)) {
-    return failure(c, "JOIN_REQUEST_EXISTS", "You already asked to join this plan.", 409);
-  }
-  if (plan.active_members >= plan.max_slots) return failure(c, "PLAN_FULL", "The plan has no free seat.", 409);
+  if (ask.has_seat) return failure(c, "ALREADY_MEMBER", "You already hold a seat in this plan.", 409);
+  if (ask.has_pending) return failure(c, "JOIN_REQUEST_EXISTS", "You already asked to join this plan.", 409);
+  if (ask.active_members >= ask.max_slots) return failure(c, "PLAN_FULL", "The plan has no free seat.", 409);
 
-  const row = await insertJoinRequest(c.env.DB, {
-    code: generateCode(CODE_PREFIX.joinRequest),
-    plan_id: plan.id,
-    user_id: user.id,
-    note,
-  });
-  return ok(c, { join_request: toJoinRequest(row) }, "Request sent.", 201);
+  try {
+    const row = await insertJoinRequest(c.env.DB, {
+      code: generateCode(CODE_PREFIX.joinRequest),
+      plan_id: ask.plan_id,
+      user_id: ask.user_id,
+      note,
+    });
+    return ok(c, { join_request: toJoinRequest(row) }, "Request sent.", 201);
+  } catch (err) {
+    // A double tap passes the check above twice; join_requests_one_pending lets only one in.
+    if (isUniqueViolation(err)) return failure(c, "JOIN_REQUEST_EXISTS", "You already asked to join this plan.", 409);
+    throw err;
+  }
 });
 
 // Withdraw an own request while it is still pending. Another member's request is 404.

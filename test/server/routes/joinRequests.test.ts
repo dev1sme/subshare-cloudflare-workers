@@ -219,6 +219,28 @@ describe("admin", () => {
     expect(await errorCode(await call("POST", `/api/join-requests/${bob.code}/approve`))).toBe("PLAN_INACTIVE");
   });
 
+  it("never seats a requester who became the plan's payer, and a double ask is JOIN_REQUEST_EXISTS", async () => {
+    const request = await requestOf(await ask(aliceCookie));
+    expect(await errorCode(await ask(aliceCookie))).toBe("JOIN_REQUEST_EXISTS");
+    // Alice has no seat, so the payer change is allowed; the pending request must not seat her.
+    await call("PATCH", `/api/accounts/${ALICE.code}`, { role: "ADMIN" });
+    expect((await call("PATCH", `/api/plans/${plan.code}`, { payer_code: ALICE.code })).status).toBe(200);
+    expect(await errorCode(await call("POST", `/api/join-requests/${request.code}/approve`))).toBe("PAYER_CANNOT_BE_MEMBER");
+    const members = await data<{ members: Member[] }>(await call("GET", `/api/plans/${plan.code}/members`));
+    expect(members.members).toEqual([]);
+  });
+
+  it("lets an admin who decided a request be deleted later (decided_by becomes null)", async () => {
+    await call("POST", "/api/accounts", { username: "second", display_name: "Second", role: "ADMIN", password: "second-password" });
+    const second = await login("second", "second-password");
+    const request = await requestOf(await ask(aliceCookie));
+    expect((await call("POST", `/api/join-requests/${request.code}/reject`, undefined, second)).status).toBe(200);
+    const secondCode = (await env.DB.prepare("SELECT code FROM users WHERE username = 'second'").first<{ code: string }>())!.code;
+    expect((await call("DELETE", `/api/accounts/${secondCode}`)).status).toBe(200);
+    const row = await env.DB.prepare("SELECT status, decided_by FROM join_requests WHERE code = ?").bind(request.code).first();
+    expect(row).toEqual({ status: "REJECTED", decided_by: null });
+  });
+
   it("rejects, and a cancelled request cannot be approved", async () => {
     const alice = await requestOf(await ask(aliceCookie));
     expect((await requestOf(await call("POST", `/api/join-requests/${alice.code}/reject`))).status).toBe("REJECTED");
