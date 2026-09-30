@@ -16,6 +16,7 @@ Must hold:
 - Every URL-addressable table has a random, prefixed `code`; ids never appear in URLs.
 - Enums are CHECK-constrained UPPER_SNAKE; changing one means rebuilding the table in a migration.
 - Deletes are blocked by FKs, never cascaded, once money rows exist.
+- Accounts are created by an admin only (no public sign-up). A member asks for a seat through `join_requests`; approving creates the `plan_members` row and marks the request `APPROVED` in one batch, every condition checked inside the statements. At most one `PENDING` request per member per plan.
 - A migration file that has been applied anywhere is never edited — add a new one.
 
 When adding a table/column/enum, update `docs/data-model.md` in the same commit.

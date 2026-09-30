@@ -31,7 +31,7 @@ export function MarkSentButton({ payment, onMarkSent }: MarkSentButtonProps) {
   };
 
   return (
-    <div className="sticky bottom-4 z-30">
+    <div className="sticky bottom-24 z-30 md:bottom-4">
       <Button size="large" className="w-full shadow-lg shadow-primary/25" disabled={busy} onClick={() => void markSent()}>
         <Send aria-hidden="true" />
         {t("payments.markSent")}

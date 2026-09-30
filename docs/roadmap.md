@@ -25,7 +25,9 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 - [ ] Màn thành viên: trả trước 3/6/12 tháng, đổi mật khẩu
 - [ ] Quét VietQR bằng app ngân hàng thật
 - [x] API admin: danh sách `PENDING`, xác nhận / trả về (payment và trả trước)
-- [ ] Màn admin (UI)
+- [x] Xin vào gói: `plans.accepting_requests`, `join_requests` (migration 0006), API member + admin, màn "Khám phá" và màn "Yêu cầu"
+- [x] Đổi giao diện sang Material 3 Expressive + animation (`motion`)
+- [ ] Màn admin (UI): duyệt thanh toán, CRUD gói (hiện màn Gói chỉ có công tắc "Nhận đăng ký"), tài khoản
 - [ ] Dashboard admin: ai còn nợ, qua mọi kỳ
 
 ## Sau này

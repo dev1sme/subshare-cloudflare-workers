@@ -4,6 +4,7 @@ import { handleError, notFound, ok } from "./envelope";
 import { securityHeaders } from "./headers";
 import { accountRoutes } from "./routes/accounts";
 import { authRoutes } from "./routes/auth";
+import { joinRequestRoutes } from "./routes/joinRequests";
 import { meRoutes } from "./routes/me";
 import { memberRoutes } from "./routes/members";
 import { paymentRoutes } from "./routes/payments";
@@ -39,6 +40,9 @@ app.route("/api/payments", paymentRoutes);
 
 // requireAdmin, applied inside the sub-app.
 app.route("/api/prepayments", prepaymentRoutes);
+
+// requireAdmin, applied inside the sub-app. Members ask through /api/me/join-requests.
+app.route("/api/join-requests", joinRequestRoutes);
 
 // requireMember, applied inside the sub-app. The user comes from the token only.
 app.route("/api/me", meRoutes);

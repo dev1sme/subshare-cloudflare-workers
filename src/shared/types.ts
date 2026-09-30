@@ -55,6 +55,8 @@ export type Plan = {
   bank_account_no: string | null;
   bank_account_name: string | null;
   active: boolean;
+  // Listed to members in "Khám phá gói", who may ask for a seat.
+  accepting_requests: boolean;
   created_at: string;
 };
 
@@ -130,3 +132,26 @@ export type Prepayment = {
 
 // A plan the signed-in member holds a seat in.
 export type MyPlan = PlanRef & { member_amount: number };
+
+export type JoinRequestStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+
+// A member asking for a seat in a plan the admin opened. Approving creates the seat.
+export type JoinRequest = {
+  code: string;
+  plan: PlanRef & { member_amount: number; max_slots: number; active_members: number };
+  user: UserRef;
+  status: JoinRequestStatus;
+  note: string | null;
+  created_at: string;
+  decided_at: string | null;
+};
+
+// A plan a member may ask to join: active, accepting requests, and not already theirs.
+export type OpenPlan = PlanRef & {
+  member_amount: number;
+  cycle: Cycle;
+  max_slots: number;
+  active_members: number;
+  // The member's own open request for this plan, if any.
+  pending_request_code: string | null;
+};

@@ -1,4 +1,4 @@
-import type { ApiResponse, BankTransfer, ErrorDetails, Payment, User } from "../shared/types";
+import type { ApiResponse, BankTransfer, ErrorDetails, JoinRequest, OpenPlan, Payment, Plan, User } from "../shared/types";
 
 // Typed wrapper for every endpoint. Returns a result instead of throwing, so hooks branch on
 // `ok` and never need try/catch. Components never import this file — only use*.ts hooks do.
@@ -62,5 +62,21 @@ export const api = {
       request<{ payment: Payment; bank_transfer: BankTransfer | null }>("GET", `/me/payments/${encodeURIComponent(code)}`),
     markPaymentSent: (code: string) =>
       request<{ payment: Payment }>("POST", `/me/payments/${encodeURIComponent(code)}/mark-sent`),
+    openPlans: () => request<{ plans: OpenPlan[] }>("GET", "/me/open-plans"),
+    joinRequests: () => request<{ join_requests: JoinRequest[] }>("GET", "/me/join-requests"),
+    askToJoin: (plan_code: string, note: string) =>
+      request<{ join_request: JoinRequest }>("POST", "/me/join-requests", { plan_code, note }),
+    cancelJoinRequest: (code: string) =>
+      request<{ join_request: JoinRequest }>("POST", `/me/join-requests/${encodeURIComponent(code)}/cancel`),
+  },
+  admin: {
+    plans: () => request<{ plans: Plan[] }>("GET", "/plans"),
+    setAcceptingRequests: (code: string, accepting_requests: boolean) =>
+      request<{ plan: Plan }>("PATCH", `/plans/${encodeURIComponent(code)}`, { accepting_requests }),
+    pendingJoinRequests: () => request<{ join_requests: JoinRequest[] }>("GET", "/join-requests?status=PENDING"),
+    approveJoinRequest: (code: string) =>
+      request<{ join_request: JoinRequest }>("POST", `/join-requests/${encodeURIComponent(code)}/approve`, {}),
+    rejectJoinRequest: (code: string) =>
+      request<{ join_request: JoinRequest }>("POST", `/join-requests/${encodeURIComponent(code)}/reject`),
   },
 };

@@ -1,4 +1,4 @@
-import { CreditCard, Layers, Users } from "lucide-react";
+import { CreditCard, Layers, UserPlus, Users } from "lucide-react";
 import { Suspense } from "react";
 import { Outlet, useLocation } from "react-router";
 import { AppHeader } from "../components/AppHeader";
@@ -8,6 +8,7 @@ import { Spinner } from "../components/Spinner";
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/admin/payments", labelKey: "nav.payments", icon: CreditCard },
+  { to: "/admin/requests", labelKey: "nav.requests", icon: UserPlus },
   { to: "/admin/plans", labelKey: "nav.plans", icon: Layers },
   { to: "/admin/accounts", labelKey: "nav.accounts", icon: Users },
 ];

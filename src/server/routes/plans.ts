@@ -62,6 +62,7 @@ function toPlan(row: PlanRow): Plan {
     bank_account_no: row.bank_account_no,
     bank_account_name: row.bank_account_name,
     active: row.active === 1,
+    accepting_requests: row.accepting_requests === 1,
     created_at: row.created_at,
   };
 }
@@ -128,6 +129,8 @@ planRoutes.post("/", async (c) => {
     bank_account_no: optionalMatching(body, "bank_account_no", BANK_ACCOUNT_NO),
     bank_account_name: optionalString(body, "bank_account_name", NAME_MAX),
     active: has(body, "active") ? Number(requireBoolean(body, "active")) : 1,
+    // Off unless asked for: opening a plan to every member is a deliberate choice.
+    accepting_requests: has(body, "accepting_requests") ? Number(requireBoolean(body, "accepting_requests")) : 0,
   };
   checkBankDetails(fields.bank_bin, fields.bank_account_no);
 
@@ -153,6 +156,7 @@ planRoutes.patch("/:code", async (c) => {
   if (has(body, "bank_account_no")) patch.bank_account_no = optionalMatching(body, "bank_account_no", BANK_ACCOUNT_NO);
   if (has(body, "bank_account_name")) patch.bank_account_name = optionalString(body, "bank_account_name", NAME_MAX);
   if (has(body, "active")) patch.active = Number(requireBoolean(body, "active"));
+  if (has(body, "accepting_requests")) patch.accepting_requests = Number(requireBoolean(body, "accepting_requests"));
   if (Object.keys(patch).length === 0) fail("NOTHING_TO_UPDATE", "No updatable field was sent.");
 
   checkBankDetails(

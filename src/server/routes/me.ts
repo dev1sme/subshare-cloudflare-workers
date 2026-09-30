@@ -1,7 +1,17 @@
 import { Hono } from "hono";
-import type { MyPlan } from "../../shared/types";
+import type { MyPlan, OpenPlan } from "../../shared/types";
 import { requireMember, type AppEnv } from "../auth";
+import {
+  cancelJoinRequest,
+  findJoinRequestByCode,
+  hasPendingJoinRequest,
+  insertJoinRequest,
+  listJoinRequestsOfUser,
+  listOpenPlansForUser,
+} from "../db/joinRequests";
 import { listSeatsOfUser } from "../db/members";
+import { findPlanByCode, hasActiveSeat } from "../db/plans";
+import { findUserByCode } from "../db/users";
 import { findPaymentByCode, listPaymentsOfUser, markPaymentSent } from "../db/payments";
 import {
   coverageFrom,
@@ -15,7 +25,8 @@ import { CODE_PREFIX, generateCode, isCode } from "../domain/code";
 import { addMonths, currentPeriodInVietnam } from "../domain/period";
 import { bankTransferFor } from "../domain/vietqr";
 import { failure, notFound, ok } from "../envelope";
-import { fail, parseCode, readBody } from "../validate";
+import { fail, optionalString, parseCode, readBody } from "../validate";
+import { toJoinRequest } from "./joinRequests";
 import { toPayment } from "./payments";
 import { toPrepayment } from "./prepayments";
 
@@ -134,4 +145,66 @@ meRoutes.delete("/prepayments/:code", async (c) => {
     return failure(c, "CANNOT_DELETE_PREPAYMENT", "Only an unpaid prepayment you have not reported can be deleted.", 409);
   }
   return ok(c, null, "Prepayment deleted.");
+});
+
+const NOTE_MAX = 200;
+
+// Plans the member may ask to join, each with their own pending request if any.
+meRoutes.get("/open-plans", async (c) => {
+  const rows = await listOpenPlansForUser(c.env.DB, c.get("session").code);
+  const plans: OpenPlan[] = rows.map((row) => ({
+    code: row.plan_code,
+    name: row.plan_name,
+    member_amount: row.member_amount,
+    cycle: row.cycle,
+    max_slots: row.max_slots,
+    active_members: row.active_members,
+    pending_request_code: row.pending_request_code,
+  }));
+  return ok(c, { plans });
+});
+
+meRoutes.get("/join-requests", async (c) => {
+  const rows = await listJoinRequestsOfUser(c.env.DB, c.get("session").code);
+  return ok(c, { join_requests: rows.map(toJoinRequest) });
+});
+
+// Ask for a seat. A plan that is not open to requests looks the same as one that does not exist.
+meRoutes.post("/join-requests", async (c) => {
+  const body = await readBody(c);
+  const planCode = body.plan_code;
+  if (planCode === undefined || planCode === null || planCode === "") fail("MISSING_PLAN_CODE");
+  if (typeof planCode !== "string" || !isCode(CODE_PREFIX.plan, planCode)) fail("INVALID_PLAN_CODE");
+  const note = optionalString(body, "note", NOTE_MAX);
+
+  const plan = await findPlanByCode(c.env.DB, planCode);
+  if (!plan || plan.active !== 1 || plan.accepting_requests !== 1) {
+    return failure(c, "PLAN_NOT_OPEN", "The plan is not open to join requests.", 404);
+  }
+  const user = await findUserByCode(c.env.DB, c.get("session").code);
+  if (!user) return failure(c, "UNAUTHORIZED", "Not signed in.", 401);
+  if (await hasActiveSeat(c.env.DB, plan.id, user.id)) {
+    return failure(c, "ALREADY_MEMBER", "You already hold a seat in this plan.", 409);
+  }
+  if (await hasPendingJoinRequest(c.env.DB, plan.id, user.id)) {
+    return failure(c, "JOIN_REQUEST_EXISTS", "You already asked to join this plan.", 409);
+  }
+  if (plan.active_members >= plan.max_slots) return failure(c, "PLAN_FULL", "The plan has no free seat.", 409);
+
+  const row = await insertJoinRequest(c.env.DB, {
+    code: generateCode(CODE_PREFIX.joinRequest),
+    plan_id: plan.id,
+    user_id: user.id,
+    note,
+  });
+  return ok(c, { join_request: toJoinRequest(row) }, "Request sent.", 201);
+});
+
+// Withdraw an own request while it is still pending. Another member's request is 404.
+meRoutes.post("/join-requests/:code/cancel", async (c) => {
+  const request = await findJoinRequestByCode(c.env.DB, parseCode(CODE_PREFIX.joinRequest, c.req.param("code")));
+  if (!request || request.user_code !== c.get("session").code) return notFound(c);
+  const row = await cancelJoinRequest(c.env.DB, request.id, request.user_id);
+  if (!row) return failure(c, "INVALID_STATUS_TRANSITION", `A ${request.status} request cannot be cancelled.`, 409);
+  return ok(c, { join_request: toJoinRequest(row) }, "Request cancelled.");
 });

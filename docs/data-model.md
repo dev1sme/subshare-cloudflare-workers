@@ -1,13 +1,14 @@
 # Mô hình dữ liệu
 
-> Đã chốt bằng `migrations/0001_initial_schema.sql` … `0005_prepayments.sql`. File này phải khớp migration; thay đổi schema là migration mới, không sửa file đã apply.
+> Đã chốt bằng `migrations/0001_initial_schema.sql` … `0006_join_requests.sql`. File này phải khớp migration; thay đổi schema là migration mới, không sửa file đã apply.
 
 Tên bảng và cột **tiếng Anh**; enum **UPPER_SNAKE tiếng Anh**.
 
 ```
 users            (id, code, username, display_name, password_hash, role, created_at)
 plans            (id, code, name, price, member_amount, cycle, max_slots, payer_id,
-                  bank_bin, bank_account_no, bank_account_name, active, created_at)
+                  bank_bin, bank_account_no, bank_account_name, active,
+                  accepting_requests, created_at)
 plan_members     (id, code, plan_id, user_id, joined_on, left_on)
 billing_periods  (id, code, plan_id, period /YYYY-MM/, price, created_at)
 payments         (id, code, billing_period_id, user_id, amount, status,
@@ -15,6 +16,8 @@ payments         (id, code, billing_period_id, user_id, amount, status,
 prepayments      (id, code, plan_id, user_id, start_period, end_period, months,
                   amount_per_month, amount, status, created_at,
                   marked_at, confirmed_at, confirmed_by)
+join_requests    (id, code, plan_id, user_id, status, note, created_at,
+                  decided_at, decided_by, member_id)
 ```
 
 ## Vai trò và người thanh toán là hai thứ khác nhau
@@ -22,7 +25,7 @@ prepayments      (id, code, plan_id, user_id, start_period, end_period, months,
 - **`users.role`** là quyền dùng **hệ thống**: `ADMIN` quản lý gói, tài khoản, xác nhận thanh toán; `MEMBER` chỉ xem và báo đã chuyển cho khoản của mình.
 - **`plans.payer_id`** là thuộc tính của **một gói**: người trả tiền dịch vụ cho nhà cung cấp và nhận tiền từ thành viên. Payer **luôn là một `ADMIN`** — hệ thống là của người vận hành, thành viên không đứng tên gói (app kiểm; CHECK không với sang bảng khác). Hạ quyền một admin đang là payer → 409 `USER_IS_PLAN_PAYER`.
 - Payer **không có suất** trong `plan_members`, nên không bao giờ có dòng `payments` cho payer — không ai tự chuyển tiền cho chính mình. `max_slots` đếm suất cho **thành viên**, không tính payer (YouTube Family 6 tài khoản → `max_slots = 5`).
-- Một user có thể ở **nhiều gói**, mỗi gói tối đa một suất đang hoạt động. User không tự vào gói — admin thêm.
+- Một user có thể ở **nhiều gói**, mỗi gói tối đa một suất đang hoạt động. Suất do admin tạo: thêm thẳng, hoặc duyệt một **yêu cầu xin vào gói** của thành viên (dưới). Thành viên không tự tạo suất.
 
 ## Ràng buộc
 
@@ -63,6 +66,7 @@ Mọi bảng mà URL có thể trỏ tới có `code` ngẫu nhiên, không suy 
 | `billing_periods` | `BP…` |
 | `payments` | `PM…` |
 | `prepayments` | `PP…` |
+| `join_requests` | `JR…` |
 
 Tiền tố là thứ chặn việc dùng mã gói ở chỗ cần mã khoản — `parseCode` kiểm tiền tố và hình dạng trước mọi lookup. Sinh bằng `crypto.getRandomValues`, dạng hex in hoa (`0-9A-F`, không O/I/l để gõ nhầm). `payments.code` là **nội dung chuyển khoản**, nên phải ngắn và gõ lại được.
 
@@ -74,6 +78,7 @@ Tiền tố là thứ chặn việc dùng mã gói ở chỗ cần mã khoản �
 | `plans.cycle` | `MONTHLY` \| `YEARLY` |
 | `payments.status`, `prepayments.status` | `UNPAID` \| `PENDING` \| `PAID` |
 | `prepayments.months` | `3` \| `6` \| `12` |
+| `join_requests.status` | `PENDING` \| `APPROVED` \| `REJECTED` \| `CANCELLED` |
 
 Đều có CHECK constraint. SQLite không sửa được CHECK, nên đổi giá trị enum là dựng lại bảng trong migration — chọn cẩn thận ngay từ đầu.
 
@@ -106,6 +111,18 @@ Một dòng `prepayments` = một thành viên trả trước **3, 6 hoặc 12 t
 - Trạng thái như `payments`: `UNPAID → PENDING` (thành viên báo đã chuyển) `→ PAID` (admin xác nhận), admin trả về được.
 - Khi lệnh thành `PAID`: các payment **đã có** trong khoảng đó mà chưa `PAID` → `PAID`, `prepayment_id` trỏ về lệnh, `amount = amount_per_month`. Các kỳ **tạo sau** trong khoảng đó: `createPeriod` tạo payment của người này sẵn `PAID`, cùng `confirmed_at`/`confirmed_by` của lệnh. Lịch sử vì vậy vẫn đủ từng tháng.
 - Thành viên rời gói khi còn tháng đã trả: app chỉ hiện số tháng còn lại; hoàn tiền làm ngoài app.
+
+## Xin vào gói
+
+Tài khoản vẫn **chỉ admin tạo** — không có trang đăng ký công khai (không có rate limit vì không dùng KV/DO; mở đăng ký là mở cửa cho spam ăn quota D1 và CPU PBKDF2). Cái mới là thành viên **đã có tài khoản** tự xin vào gói:
+
+- `plans.accepting_requests` (0/1, **mặc định 0**): admin chủ động mở gói nào cho thành viên thấy. Gói hiện trong "Khám phá" khi `active = 1 AND accepting_requests = 1` và thành viên chưa có suất đang hoạt động ở gói đó.
+- Một `join_requests` = một lần xin. `PENDING` → `APPROVED` / `REJECTED` (admin) hoặc `CANCELLED` (chính thành viên). Mỗi người mỗi gói **tối đa một `PENDING`** (partial UNIQUE `join_requests_one_pending`); yêu cầu đã quyết giữ lại làm lịch sử, huỷ rồi xin lại được.
+- **Duyệt = tạo suất** trong cùng một batch: `INSERT … SELECT` vào `plan_members` chỉ khi yêu cầu còn `PENDING`, gói còn `active` và còn suất (kiểm ngay trong câu INSERT), rồi `UPDATE` yêu cầu sang `APPROVED` với `member_id` trỏ về suất vừa tạo — chỉ khi suất đó tồn tại. Hai admin bấm cùng lúc, hay admin duyệt đúng lúc thành viên huỷ: một bên thắng, bên kia 409.
+- `joined_on` của suất mặc định là hôm nay (giờ Việt Nam) → theo luật "Ai vào kỳ nào" dưới, **duyệt ngày 15/10 thì đóng từ kỳ `2026-11`**. Admin gửi `joined_on` khác khi cần.
+- Yêu cầu không phải dòng tiền: `plan_id`, `user_id` **`ON DELETE CASCADE`** — xoá gói / user thì yêu cầu đi theo. Gói hay user đã có suất vẫn bị FK của `plan_members` giữ lại như cũ. `decided_by` là FK thường (như `confirmed_by`).
+- CHECK: đã quyết thì có `decided_at`; `APPROVED`/`REJECTED` có `decided_by`; `APPROVED` ⇔ `member_id` khác NULL; `note` ≤ 200 ký tự.
+- Index: `(status, created_at)` cho hàng đợi admin, `(user_id, created_at)` cho lịch sử của thành viên, `plan_id` / `decided_by` / `member_id` cho FK. Danh sách "Khám phá" quét `plans` (vài dòng), tra suất và yêu cầu qua index.
 
 ## Ai vào kỳ nào
 

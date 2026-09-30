@@ -71,6 +71,7 @@ Sub-path tĩnh (`/api/plans/summary`, …) đăng ký **trước** `/:code` — 
 | `/api/payments` | `GET /?status=&period=&plan_code=`, `PATCH /:code` (`PAID` / trả về `UNPAID`) |
 | `/api/prepayments` | `GET /?status=`, `PATCH /:code` (`PAID` / trả về `UNPAID`), `DELETE /:code` |
 | `/api/accounts` | `GET /`, `POST /`, `PATCH /:code`, `POST /:code/reset-password`, `DELETE /:code` |
+| `/api/join-requests` | `GET /?status=`, `POST /:code/approve`, `POST /:code/reject` |
 | `/api/dashboard` | `GET /` — **dự kiến** |
 
 Tài khoản có hai chốt: không xoá tài khoản đang đăng nhập (`CANNOT_DELETE_SELF`), không xoá **hay hạ quyền** admin cuối cùng (`LAST_ADMIN_REQUIRED`). Chốt admin cuối nằm **trong chính câu `UPDATE`/`DELETE`** (`… AND (role <> 'ADMIN' OR (SELECT COUNT(*) …) > 1)`), không phải SELECT-rồi-ghi, nên hai admin hạ quyền nhau cùng lúc không thể cùng lọt.
@@ -150,8 +151,24 @@ Người dùng lấy từ token; khoản / lệnh của người khác trả **4
 | `GET /api/me/prepayments/:code` | — | `{ prepayment, bank_transfer }` |
 | `POST /api/me/prepayments/:code/mark-sent` | — | `{ prepayment }` |
 | `DELETE /api/me/prepayments/:code` | — | `null` (chỉ khi `UNPAID`) |
+| `GET /api/me/open-plans` | — | `{ plans }` — gói đang nhận đăng ký mà mình chưa có suất, kèm `pending_request_code` của mình |
+| `GET /api/me/join-requests` | — | `{ join_requests }` — của mình, mới nhất trước |
+| `POST /api/me/join-requests` | `plan_code`, `note?` (≤ 200) | `{ join_request }` — 201 |
+| `POST /api/me/join-requests/:code/cancel` | — | `{ join_request }` (`PENDING → CANCELLED`) |
+
+Xin vào gói: gói không tồn tại, đã ngừng hoặc không nhận đăng ký → 404 `PLAN_NOT_OPEN` (như nhau, không dò được gói ẩn); đã có suất → 409 `ALREADY_MEMBER`; đã có yêu cầu chờ → 409 `JOIN_REQUEST_EXISTS` (bấm đúp lọt qua kiểm → `DUPLICATE_DATA` từ unique index); hết suất → 409 `PLAN_FULL`. Huỷ yêu cầu của người khác → 404.
 
 `bank_transfer` = `{ bank_bin, account_no, account_name, amount, note, qr }` hoặc `null` (đã `PAID`, hoặc gói chưa có ngân hàng). `qr` là payload VietQR để trình duyệt vẽ; `amount` là số nguyên để copy.
+
+### Yêu cầu vào gói — admin (`requireAdmin`) — **đã có code** (`routes/joinRequests.ts`)
+
+| Route | Body / query | `data` |
+|---|---|---|
+| `GET /api/join-requests` | `?status=` (mặc định `PENDING`) | `{ join_requests }` — `PENDING` cũ nhất trước (ai xin trước duyệt trước), trạng thái khác mới nhất trước; tối đa 200 |
+| `POST /api/join-requests/:code/approve` | `joined_on?` (mặc định hôm nay giờ Việt Nam; body tuỳ chọn) | `{ join_request }` — suất được tạo cùng lúc |
+| `POST /api/join-requests/:code/reject` | — | `{ join_request }` |
+
+`join_request` = `{ code, plan: { code, name, member_amount, max_slots, active_members }, user: { code, username, display_name }, status, note, created_at, decided_at }`. Duyệt: không còn `PENDING` → 409 `INVALID_STATUS_TRANSITION`; gói ngừng → 409 `PLAN_INACTIVE`; thành viên đã có suất → 409 `ALREADY_MEMBER`; hết suất → 409 `PLAN_FULL` (yêu cầu vẫn `PENDING`). `accepting_requests` (boolean) nằm trong `plan` và nhận qua `POST`/`PATCH /api/plans` (mặc định `false`).
 
 ### Thanh toán — admin (`requireAdmin`) — **đã có code** (`routes/payments.ts`, `routes/prepayments.ts`)
 

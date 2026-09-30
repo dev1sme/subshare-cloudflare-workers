@@ -11,6 +11,8 @@ import { MemberLayout } from "./layouts/MemberLayout";
 // admin panel. Login, 404 and the layouts stay eager (a lazy layout is a waterfall for nothing).
 const MyPaymentsPage = lazy(() => import("./features/payments/MyPaymentsPage"));
 const PaymentDetailPage = lazy(() => import("./features/payments/PaymentDetailPage"));
+const ExplorePlansPage = lazy(() => import("./features/explore/ExplorePlansPage"));
+const JoinRequestsPage = lazy(() => import("./features/admin/JoinRequestsPage"));
 const AdminPaymentsPage = lazy(() => import("./features/admin/AdminPaymentsPage"));
 const PlansPage = lazy(() => import("./features/admin/PlansPage"));
 const AccountsPage = lazy(() => import("./features/admin/AccountsPage"));
@@ -59,6 +61,7 @@ export function AppRoutes() {
       >
         <Route path="/payments" element={<MyPaymentsPage />} />
         <Route path="/payments/:code" element={<PaymentDetailPage />} />
+        <Route path="/plans" element={<ExplorePlansPage />} />
       </Route>
       <Route
         path="/admin"
@@ -70,6 +73,7 @@ export function AppRoutes() {
       >
         <Route index element={<Navigate to="payments" replace />} />
         <Route path="payments" element={<AdminPaymentsPage />} />
+        <Route path="requests" element={<JoinRequestsPage />} />
         <Route path="plans" element={<PlansPage />} />
         <Route path="accounts" element={<AccountsPage />} />
       </Route>
