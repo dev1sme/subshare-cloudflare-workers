@@ -14,13 +14,15 @@ Chạy hoàn toàn trên **Cloudflare**: một Worker phục vụ cả giao di�
 - **Tài khoản**: quản trị viên tạo tài khoản (đăng nhập bằng username, không email), đặt lại mật khẩu. Không có đăng ký tự do.
 - **Quản lý gói**: mỗi gói có **người thanh toán** (một quản trị viên), **giá gói** (số người thanh toán trả nhà cung cấp, gồm phí) và **số tiền mỗi thành viên đóng mỗi tháng** — cả hai đặt tay, không chia tự động. Chu kỳ tháng/năm, số suất, tài khoản ngân hàng nhận tiền riêng cho từng gói.
 - **Quản lý thành viên**: thêm người vào gói, cho rời gói (giữ lịch sử).
+- **Khám phá & xin vào gói**: thành viên thấy các gói đang nhận người (gom theo dịch vụ, có logo), xin vào; quản trị viên duyệt. Gói đủ người hiện rõ *đã đủ thành viên*.
+- **Yêu cầu mở gói**: gói đầy hoặc chưa có gói của dịch vụ đó — thành viên yêu cầu, thấy có bao nhiêu người cùng chờ. Quản trị viên mở gói mới từ các yêu cầu; người yêu cầu được báo trong app và **ưu tiên xin vào 48 giờ**.
 - **Kỳ thanh toán**: thành viên luôn đóng **theo tháng** (kể cả gói năm); kỳ mới tự tạo mỗi tháng, mỗi khoản có trạng thái *Chưa đóng / Chờ xác nhận / Đã đóng*.
 - **Nộp tiền**: thành viên xem khoản cần đóng, quét **VietQR tự sinh** (không qua dịch vụ ngoài), bấm *Tôi đã chuyển*.
 - **Trả trước**: thành viên trả gọn **3 / 6 / 12 tháng** một lần, không giảm giá; các tháng đó tự thành *Đã đóng*.
-- **Xác nhận**: quản trị viên đối chiếu sao kê rồi xác nhận, hoặc trả về.
-- **Dashboard ai còn nợ**, **nhắc nợ** *(dự kiến)*.
+- **Xác nhận**: quản trị viên đối chiếu sao kê rồi xác nhận, hoặc trả về — gom theo từng gói.
+- **Dashboard ai còn nợ**, **nhắc nợ / thông báo đẩy**, màn trả trước và đổi mật khẩu cho thành viên *(dự kiến)*.
 
-> **Trạng thái:** API và cơ sở dữ liệu đã xong và có test; **giao diện chưa làm**, **chưa deploy**. Chi tiết: [docs/roadmap.md](docs/roadmap.md).
+> **Trạng thái:** API, cơ sở dữ liệu (140 test) và giao diện cho cả thành viên lẫn quản trị viên đã xong, chạy được ở máy; **chưa deploy**. Chi tiết: [docs/roadmap.md](docs/roadmap.md).
 
 ## 🧱 Công nghệ
 
@@ -28,7 +30,7 @@ Chạy hoàn toàn trên **Cloudflare**: một Worker phục vụ cả giao di�
 |---|---|
 | API | Cloudflare Workers, [Hono](https://hono.dev), TypeScript |
 | Cơ sở dữ liệu | Cloudflare D1 (SQLite) |
-| Giao diện | React + Vite + [shadcn/ui](https://ui.shadcn.com), phục vụ bởi chính Worker (static assets) |
+| Giao diện | React + Vite, Material 3 Expressive viết tay theo mẫu [shadcn/ui](https://ui.shadcn.com) (Radix + Tailwind), [motion](https://motion.dev), logo dịch vụ từ [Simple Icons](https://simpleicons.org) (đóng gói sẵn, không CDN); phục vụ bởi chính Worker (static assets) |
 | Việc định kỳ | Cron Trigger |
 | Đăng nhập | JWT trong cookie `httpOnly`, mật khẩu PBKDF2 (Web Crypto) |
 | Kiểm thử | Vitest + `@cloudflare/vitest-plugin` (chạy trong workerd, D1 thật) |
@@ -44,9 +46,9 @@ subshare-cloudflare-workers/
 │   ├── server/        # Hono API + cron trên Worker
 │   └── shared/        # kiểu dùng chung
 ├── migrations/        # SQL migration cho D1
-├── scripts/           # hash-password.mjs (tạo admin đầu tiên)
+├── scripts/           # hash-password.mjs (tạo admin đầu tiên), generate-palette.mjs (bảng màu)
 ├── test/              # Vitest, soi gương src/
-├── public/            # _headers
+├── public/            # _headers, favicon.svg
 ├── docs/              # đặc tả hệ thống
 ├── wrangler.jsonc
 └── README.md
@@ -66,6 +68,7 @@ npm run cf-typegen
 npm run db:migrate               # D1 local
 npm run test                     # chạy test
 npm run dev                      # giao diện + API, một process
+npm run build && npm run preview # bản build, có security header (public/_headers)
 ```
 
 Tạo tài khoản quản trị đầu tiên (in ra câu SQL và mật khẩu — mật khẩu chỉ hiện một lần, **không commit** câu SQL):
@@ -105,6 +108,8 @@ Chi tiết và các bẫy đã biết: [docs/deployment.md](docs/deployment.md).
 | `billing_periods` | Các kỳ thanh toán, giá chốt tại thời điểm tạo |
 | `payments` | Khoản của từng người mỗi kỳ (số tiền chốt lúc tạo kỳ), trạng thái |
 | `prepayments` | Các lần trả trước 3 / 6 / 12 tháng |
+| `join_requests` | Yêu cầu xin vào một gói có sẵn |
+| `plan_wishes` | Yêu cầu mở gói mới cho một dịch vụ |
 
 Chi tiết: [docs/data-model.md](docs/data-model.md).
 
@@ -120,6 +125,11 @@ Chi tiết: [docs/data-model.md](docs/data-model.md).
 | `GET` | `/api/me/payments/:code` | Khoản cần đóng + VietQR |
 | `POST` | `/api/me/payments/:code/mark-sent` | Báo đã chuyển tiền |
 | `POST` | `/api/me/prepayments` | Trả trước 3 / 6 / 12 tháng |
+| `GET` | `/api/me/open-plans` | Các gói đang nhận thành viên |
+| `POST` | `/api/me/join-requests` | Xin vào gói |
+| `POST` | `/api/me/wishes` | Yêu cầu mở gói cho một dịch vụ |
+| `POST` | `/api/join-requests/:code/approve` | Duyệt xin vào gói *(admin)* |
+| `GET` | `/api/wishes` | Các yêu cầu mở gói *(admin)* |
 | `GET` | `/api/payments?status=PENDING` | Các khoản chờ xác nhận *(admin)* |
 | `PATCH` | `/api/payments/:code` | Xác nhận đã đóng / trả về *(admin)* |
 

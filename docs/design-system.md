@@ -90,7 +90,11 @@ Chuyển động **gắn với nội dung**, không có hình trang trí chuyể
 - Vùng chạm tối thiểu **44 × 44px**; nút lớn 56px; mục điều hướng 80px cao trên điện thoại.
 - **State layer** (`state-layer` utility): lớp `currentColor` 8% khi hover, 12% khi bấm, thay vì đổi màu nền.
 - Focus ring 3px `primary`, luôn nhìn thấy. Nút chỉ có icon có `aria-label`; icon trang trí `aria-hidden`. Icon Lucide SVG, không emoji.
-- Ô nhập: M3 outlined text field, **nhãn nổi là `<label>` thật** (không phải placeholder đóng vai nhãn).
+- Ô nhập: M3 outlined text field, **nhãn nổi là `<label>` thật** (không phải placeholder đóng vai nhãn). Nền của nhãn lấy từ biến `--field-bg` (mặc định `surface`); container có nền khác tự đặt, ví dụ dialog `[--field-bg:var(--color-surface-container-high)]`.
+- Lỗi từ server nằm **dưới đúng field** (`aria-invalid` + `aria-describedby`) cho tới khi field đó được sửa; lỗi không gắn field thì là toast.
+- Chọn một trong danh sách: `<select>` gốc bọc khung M3 (`SelectField`) — điện thoại mở bộ chọn của hệ điều hành, và không chèn thẻ `<style>` như Radix Select (CSP chặn). Chọn giữa vài chế độ xem của cùng một danh sách: `SegmentedTabs` (nhóm nút `aria-pressed`, không phải ARIA tabs).
+- Thao tác không làm được thì **nói bằng chữ**, không để nút bị khoá trông vẫn như bấm được: gói đầy hiện "Gói đã đủ thành viên.", gói đang ưu tiên hiện đến mấy giờ.
+- Tin mới cho thành viên (gói mình yêu cầu đã mở) là **banner trong app** + chấm đỏ ở mục điều hướng; không có email hay push.
 - Toast: Sonner, dáng snackbar M3 (`inverse-surface`, ở đáy, trong tầm ngón cái); luôn `toast.success` / `toast.error`.
 - Xác nhận: `useConfirm()` → AlertDialog M3 (nút chữ "Huỷ" + nút filled). Focus mặc định vào "Huỷ". Không `window.confirm`.
 - Tải dữ liệu: skeleton cùng hình dạng màn thật (không nhảy layout), không spinner giữa màn.
@@ -100,8 +104,8 @@ Chuyển động **gắn với nội dung**, không có hình trang trí chuyể
 
 Viết tay trong `src/client/components/` (CLI `shadcn` cần `npx`, không chạy được ở đây), primitive từ `radix-ui`:
 
-- `ui/button` (`filled`, `tonal`, `outlined`, `text`, `error`, `icon`), `ui/text-field`, `ui/card`, `ui/alert-dialog`, `ui/sonner`.
-- `NavBar`, `AppHeader`, `BrandLogo`, `UserAvatar`, `ServiceLogo`, `ProviderSection`, `StatusBadge`, `CopyRow`, `QrCode`, `PageTransition`, `EmptyState`, `Skeleton`, `LoadError`.
+- `ui/button` (`filled`, `tonal`, `outlined`, `text`, `error`, `icon`), `ui/text-field`, `ui/select-field`, `ui/text-area`, `ui/switch`, `ui/card`, `ui/dialog`, `ui/alert-dialog`, `ui/sonner`.
+- `NavBar` (có chấm đỏ `dot` cho mục có tin mới), `AppHeader`, `BrandLogo`, `UserAvatar`, `ServiceLogo`, `ProviderSection`, `ProviderPicker`, `SegmentedTabs`, `StatusBadge`, `SlotMeter`, `CopyRow`, `QrCode`, `PageTransition`, `EmptyState`, `Skeleton`, `LoadError`.
 - Hex thô chỉ ở hai chỗ: `QrCode` (`#000` / `#fff` — máy quét cần module tối trên nền sáng) và `ServiceLogo` (màu hãng).
 
 ## Đã loại

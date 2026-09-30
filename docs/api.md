@@ -175,7 +175,7 @@ Xin vào gói: gói không tồn tại, đã ngừng hoặc không nhận đăng
 | `POST /api/join-requests/:code/approve` | `joined_on?` (mặc định hôm nay giờ Việt Nam; body tuỳ chọn) | `{ join_request }` — suất được tạo cùng lúc |
 | `POST /api/join-requests/:code/reject` | — | `{ join_request }` |
 
-`join_request` = `{ code, plan: { code, name, member_amount, max_slots, active_members }, user: { code, username, display_name }, status, note, created_at, decided_at }`. Duyệt: không còn `PENDING` → 409 `INVALID_STATUS_TRANSITION`; gói ngừng → 409 `PLAN_INACTIVE`; thành viên đã có suất → 409 `ALREADY_MEMBER`; hết suất → 409 `PLAN_FULL` (yêu cầu vẫn `PENDING`). `accepting_requests` (boolean) nằm trong `plan` và nhận qua `POST`/`PATCH /api/plans` (mặc định `false`).
+`join_request` = `{ code, plan: { code, name, member_amount, max_slots, active_members }, user: { code, username, display_name }, status, note, created_at, decided_at }`. Duyệt: không còn `PENDING` → 409 `INVALID_STATUS_TRANSITION`; gói ngừng → 409 `PLAN_INACTIVE`; thành viên đã có suất → 409 `ALREADY_MEMBER` (kể cả khi suất vừa được tạo song song — unique index báo); người xin nay là payer của gói → 409 `PAYER_CANNOT_BE_MEMBER`; hết suất → 409 `PLAN_FULL` (yêu cầu vẫn `PENDING`). `accepting_requests` (boolean) nằm trong `plan` và nhận qua `POST`/`PATCH /api/plans` (mặc định `false`).
 
 ### Yêu cầu mở gói — admin (`requireAdmin`) — **đã có code** (`routes/wishes.ts`)
 

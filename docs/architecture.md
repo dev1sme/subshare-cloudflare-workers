@@ -9,7 +9,7 @@ Vite build React SPA và Worker cùng lúc; chính Worker đó phục vụ asset
 | Thành phần | Lựa chọn |
 |---|---|
 | Frontend | React + Vite (SPA), react-router |
-| Giao diện | shadcn/ui (Radix + Tailwind) |
+| Giao diện | Material 3 Expressive viết tay theo mẫu shadcn/ui (Radix + Tailwind), `motion`; logo dịch vụ từ `simple-icons` ([design-system.md](design-system.md)) |
 | Đa ngôn ngữ | `i18next` + `react-i18next` (vi / en) |
 | API | Hono trên Cloudflare Workers |
 | Database | Cloudflare D1 (SQLite), SQL viết tay, không ORM |
@@ -29,24 +29,26 @@ Build và dev chạy qua [`@cloudflare/vite-plugin`](https://developers.cloudfla
 
 ## Cấu trúc thư mục
 
-`src/server/`, `migrations/`, `scripts/`, `test/` đã có. `src/client/` có phần nền (provider, router, layout, `api.ts`, `errors.ts`, `format.ts`, `components/ui/`); các màn trong `features/` còn là placeholder.
+Mọi phần đều đã có code: server, migration `0001`–`0009`, test, và client đủ màn cho thành viên (đăng nhập, gói của tôi, khoản + VietQR, khám phá, yêu cầu mở gói) lẫn quản trị viên (thanh toán, yêu cầu, gói + thành viên + kỳ, tài khoản).
 
 ```
 index.html            entry Vite
-public/               copy nguyên vào output client — _headers, favicon
+public/               copy nguyên vào output client — _headers, favicon.svg
 src/client/           React SPA
-  main.tsx            provider: ChunkErrorBoundary > BrowserRouter > Session > Confirm, Toaster
+  main.tsx            provider: ChunkErrorBoundary > BrowserRouter > Motion > Session > Confirm, Toaster
   App.tsx             cổng phiên đăng nhập (chờ /api/auth/me rồi mới render route)
   routes.tsx          bảng route theo vai trò, RequireRole, React.lazy
   api.ts              wrapper có kiểu cho mọi endpoint, trả ApiResult thay vì throw
   errors.ts           mã lỗi API -> câu hiển thị
   format.ts           tiền / ngày / kỳ
   i18n/               index.ts (khởi tạo i18next), locales/vi.ts, en.ts
-  lib/cn.ts           gộp class Tailwind
-  hooks/              useSession, useConfirm (context + hook, không JSX), useResource…
-  components/         UI dùng ở hơn một feature; provider có JSX (SessionProvider, ConfirmProvider)
-    ui/               primitive theo mẫu shadcn (button, input, label, card, alert-dialog, sonner)
-  layouts/            MemberLayout, AdminLayout — eager, <Suspense> bên trong
+  lib/                logic thuần phía client: cn, motion (token), period (kỳ giờ VN), providers (logo / màu hãng,
+                      gom theo nhà cung cấp), banks (BIN -> tên), initials, wishName
+  hooks/              useSession, useConfirm (context + hook, không JSX), useResource, useInFlight
+  components/         UI dùng ở hơn một feature; provider có JSX (SessionProvider, ConfirmProvider, MotionProvider)
+    ui/               primitive theo mẫu shadcn (button, text-field, select-field, text-area, card, switch,
+                      dialog, alert-dialog, sonner)
+  layouts/            MemberLayout (kèm WishesProvider), AdminLayout — eager, <Suspense> bên trong
   features/<name>/
     XxxPage.tsx       chỉ ghép component
     components/       UI riêng của feature, mỗi component một file
@@ -58,11 +60,13 @@ src/server/           API Hono trên Worker
   envelope.ts         ok / failure / notFound — nơi duy nhất gọi c.json
   headers.ts          security header cho /api/*
   validate.ts         validate request viết tay
-  routes/             mỗi nhóm tài nguyên một file: auth, accounts, plans (+ members, periods), members, payments, prepayments, me
+  routes/             mỗi nhóm tài nguyên một file: auth, accounts, plans (+ members, periods), members, payments,
+                      prepayments, joinRequests, wishes, me
   domain/             logic thuần, không import runtime: period.ts, vietqr.ts, code.ts, password.ts, username.ts
-  db/                 một module mỗi bảng (users, plans, members, periods, payments, prepayments) + sql.ts
-src/shared/types.ts   kiểu API dùng chung client ↔ server
-scripts/              hash-password.mjs (tạo admin đầu tiên)
+  db/                 một module mỗi bảng (users, plans, members, periods, payments, prepayments, joinRequests,
+                      wishes) + sql.ts
+src/shared/           dùng chung client ↔ server: types.ts (kiểu API), providers.ts (danh sách nhà cung cấp)
+scripts/              hash-password.mjs (tạo admin đầu tiên), generate-palette.mjs (sinh token màu)
 migrations/           SQL cho D1
 test/                 Vitest, chạy trong workerd qua @cloudflare/vitest-plugin
   setup/              apply-migrations.ts (D1 thật cho mỗi file test), env.d.ts
@@ -84,6 +88,9 @@ TypeScript chia project reference: client (DOM lib), Worker (type workerd, sinh 
 - `*Page.tsx` **ghép** — giữ state cấp màn (modal nào mở, kỳ nào đang chọn) và render component. Không gọi `api.ts`, không chứa JSX của bảng/modal, không `try/catch` quanh request.
 - `use*.ts` sở hữu tải dữ liệu và mutation. Mutation trả `Promise<boolean>` và tự bắn toast, nên nơi gọi chỉ quyết định có đóng modal hay không.
 - Component trong `features/*/components/` nhận props và callback, **không** import `api.ts`.
+- Mutation cập nhật list bằng **hàm** (`setData((current) => …)` của `useResource`), không dựng lại từ `data` bắt được lúc bấm: hai thao tác cùng bay (xác nhận hai dòng liền nhau, bật hai công tắc) mà dùng giá trị cũ thì cái sau xoá mất kết quả của cái trước.
+- Dòng đang có request dùng `useInFlight`: kiểm bằng ref (hai cú bấm trong cùng một tick không cùng lọt) và nút của dòng đó bị khoá — bấm đúp chỉ gửi một request.
+- Dữ liệu cả khu vực cần (yêu cầu mở gói của thành viên: chấm đỏ ở nav, banner trang chủ, danh sách ở Khám phá) nạp **một lần** trong layout qua provider, không mỗi màn một lần.
 
 Hàm hay mảng truyền vào `useEffect` của component con **phải memo** (`useCallback` / `useMemo`). Không memo thì mỗi lần render tạo tham chiếu mới, effect chạy lại, set state, render lại — vòng lặp vô hạn.
 
