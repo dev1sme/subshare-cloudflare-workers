@@ -102,6 +102,7 @@ const en: typeof vi = {
     period: "Period {{period}}",
     back: "My payments",
     loadFailed: "Could not load the data.",
+    missing: "Not found.",
     retry: "Try again",
     howTo: "Scan the code with your banking app, or copy each line below. Keep the transfer note as is so the admin can match it.",
     bank: "Bank",

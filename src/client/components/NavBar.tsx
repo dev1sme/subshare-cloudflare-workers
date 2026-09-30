@@ -35,7 +35,7 @@ export function NavBar({ items, layoutId }: { items: NavItem[]; layoutId: string
                       aria-hidden="true"
                     />
                   </span>
-                  <span className={cn("transition-colors duration-200", isActive && "text-on-surface")}>{t(labelKey)}</span>
+                  <span className={cn("text-center transition-colors duration-200", isActive && "text-on-surface")}>{t(labelKey)}</span>
                 </>
               )}
             </NavLink>

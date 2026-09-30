@@ -77,7 +77,7 @@ export async function listOpenPlansForUser(db: D1Database, userCode: string): Pr
        FROM plans p, (SELECT id FROM users WHERE code = ?) u
        WHERE p.active = 1 AND p.accepting_requests = 1
          AND NOT EXISTS (SELECT 1 FROM plan_members m WHERE m.plan_id = p.id AND m.user_id = u.id AND m.left_on IS NULL)
-       ORDER BY p.name`,
+       ORDER BY p.name COLLATE NOCASE`,
     )
     .bind(userCode)
     .all<OpenPlanRow>();

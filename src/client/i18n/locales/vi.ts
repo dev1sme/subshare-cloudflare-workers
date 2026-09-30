@@ -104,6 +104,7 @@ const vi = {
     period: "Kỳ {{period}}",
     back: "Khoản cần đóng",
     loadFailed: "Không tải được dữ liệu.",
+    missing: "Không tìm thấy.",
     retry: "Thử lại",
     howTo: "Quét mã bằng app ngân hàng, hoặc chép từng dòng bên dưới. Giữ nguyên nội dung chuyển khoản để quản trị viên đối chiếu.",
     bank: "Ngân hàng",

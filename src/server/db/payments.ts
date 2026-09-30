@@ -41,7 +41,7 @@ const SELECT_PAYMENT = `
 // A member's own payments: what is still owed first, then newest.
 export async function listPaymentsOfUser(db: D1Database, userCode: string): Promise<PaymentRow[]> {
   const { results } = await db
-    .prepare(`${SELECT_PAYMENT} WHERE pm.user_id = (SELECT id FROM users WHERE code = ?) ORDER BY pm.status = 'PAID', bp.period DESC, p.name`)
+    .prepare(`${SELECT_PAYMENT} WHERE pm.user_id = (SELECT id FROM users WHERE code = ?) ORDER BY pm.status = 'PAID', bp.period DESC, p.name COLLATE NOCASE`)
     .bind(userCode)
     .all<PaymentRow>();
   return results;
@@ -50,7 +50,7 @@ export async function listPaymentsOfUser(db: D1Database, userCode: string): Prom
 // Admin list. Filters come from a Where built with fixed conditions at the call site.
 export async function listPayments(db: D1Database, where: Where, limit: number): Promise<PaymentRow[]> {
   const { results } = await db
-    .prepare(`${SELECT_PAYMENT}${where.clause()} ORDER BY bp.period DESC, p.name, u.username LIMIT ?`)
+    .prepare(`${SELECT_PAYMENT}${where.clause()} ORDER BY bp.period DESC, p.name COLLATE NOCASE, u.username LIMIT ?`)
     .bind(...where.bindings(), limit)
     .all<PaymentRow>();
   return results;

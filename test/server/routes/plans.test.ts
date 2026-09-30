@@ -102,6 +102,15 @@ describe("create and read", () => {
     expect(((await list.json()) as ApiSuccess<{ plans: Plan[] }>).data.plans).toHaveLength(1);
   });
 
+  it("lists plans by name ignoring case", async () => {
+    await createPlan({ name: "YouTube Family" });
+    await createPlan({ name: "iCloud 2TB" });
+    await createPlan({ name: "Netflix" });
+    const res = await call("GET", "/api/plans");
+    const { plans } = ((await res.json()) as ApiSuccess<{ plans: Plan[] }>).data;
+    expect(plans.map((p) => p.name)).toEqual(["iCloud 2TB", "Netflix", "YouTube Family"]);
+  });
+
   it("allows a plan without bank details", async () => {
     const plan = await createPlan({ bank_bin: null, bank_account_no: undefined, bank_account_name: "" });
     expect(plan).toMatchObject({ bank_bin: null, bank_account_no: null, bank_account_name: null });

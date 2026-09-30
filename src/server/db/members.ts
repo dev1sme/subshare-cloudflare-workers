@@ -82,7 +82,7 @@ export async function listSeatsOfUser(db: D1Database, userCode: string): Promise
       `SELECT p.id AS plan_id, p.code AS plan_code, p.name AS plan_name, p.member_amount, m.user_id
        FROM plan_members m JOIN plans p ON p.id = m.plan_id
        WHERE m.user_id = (SELECT id FROM users WHERE code = ?) AND m.left_on IS NULL AND p.active = 1
-       ORDER BY p.name`,
+       ORDER BY p.name COLLATE NOCASE`,
     )
     .bind(userCode)
     .all<SeatRow>();

@@ -46,7 +46,7 @@ const SELECT_PLAN = `
   JOIN users u ON u.id = p.payer_id`;
 
 export async function listPlans(db: D1Database): Promise<PlanRow[]> {
-  const { results } = await db.prepare(`${SELECT_PLAN} ORDER BY p.active DESC, p.name`).all<PlanRow>();
+  const { results } = await db.prepare(`${SELECT_PLAN} ORDER BY p.active DESC, p.name COLLATE NOCASE`).all<PlanRow>();
   return results;
 }
 
