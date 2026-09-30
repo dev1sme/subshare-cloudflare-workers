@@ -65,9 +65,10 @@ export function usePlanEditor(code: string | null) {
     [t],
   );
 
-  // Resolves the plan's code on success (the new one after a create), null on failure.
+  // Resolves the plan's code on success (the new one after a create), null on failure. `wishCodes`
+  // (create only): open the plan for these wishes.
   const save = useCallback(
-    async (input: PlanInput): Promise<string | null> => {
+    async (input: PlanInput, wishCodes: string[] = []): Promise<string | null> => {
       const plan = data?.plan ?? null;
       const patch = plan ? diff(toPlanInput(plan), input) : null;
       // Nothing changed: no request (the server would answer NOTHING_TO_UPDATE, which reads as a failure).
@@ -77,7 +78,7 @@ export function usePlanEditor(code: string | null) {
         return plan.code;
       }
       setSaving(true);
-      const result = plan && patch ? await api.admin.updatePlan(plan.code, patch) : await api.admin.createPlan(input);
+      const result = plan && patch ? await api.admin.updatePlan(plan.code, patch) : await api.admin.createPlan(input, wishCodes);
       setSaving(false);
       if (!result.ok) {
         fail(result);
@@ -85,7 +86,14 @@ export function usePlanEditor(code: string | null) {
       }
       setFieldErrors({});
       setData((current) => ({ ...current, plan: result.data.plan }));
-      toast.success(t(plan ? "planEditor.savedToast" : "planEditor.createdToast", { plan: result.data.plan.name }));
+      const fulfilled = "wishes_fulfilled" in result.data ? (result.data as { wishes_fulfilled: number }).wishes_fulfilled : 0;
+      toast.success(
+        plan
+          ? t("planEditor.savedToast", { plan: result.data.plan.name })
+          : fulfilled > 0
+            ? t("planEditor.createdForWishesToast", { plan: result.data.plan.name, count: fulfilled })
+            : t("planEditor.createdToast", { plan: result.data.plan.name }),
+      );
       return result.data.plan.code;
     },
     [data, fail, setData, t],

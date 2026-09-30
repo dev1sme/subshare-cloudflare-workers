@@ -16,6 +16,7 @@ import type {
   Prepayment,
   Role,
   User,
+  Wish,
 } from "../shared/types";
 import type { Provider } from "../shared/providers";
 
@@ -120,7 +121,11 @@ export const api = {
     rejectJoinRequest: (code: string) =>
       request<{ join_request: JoinRequest }>("POST", `/join-requests/${encodeURIComponent(code)}/reject`),
     plan: (code: string) => request<{ plan: Plan }>("GET", `/plans/${encodeURIComponent(code)}`),
-    createPlan: (fields: PlanInput) => request<{ plan: Plan }>("POST", "/plans", fields),
+    // wish_codes: open a plan for these wishes (fulfils them, 48-hour head start for those members).
+    createPlan: (fields: PlanInput, wish_codes: string[] = []) =>
+      request<{ plan: Plan; wishes_fulfilled: number }>("POST", "/plans", wish_codes.length > 0 ? { ...fields, wish_codes } : fields),
+    wishes: () => request<{ wishes: Wish[] }>("GET", "/wishes"),
+    declineWish: (code: string) => request<{ wish: Wish }>("POST", `/wishes/${encodeURIComponent(code)}/decline`),
     updatePlan: (code: string, patch: Partial<PlanInput>) =>
       request<{ plan: Plan }>("PATCH", `/plans/${encodeURIComponent(code)}`, patch),
     deletePlan: (code: string) => request<null>("DELETE", `/plans/${encodeURIComponent(code)}`),

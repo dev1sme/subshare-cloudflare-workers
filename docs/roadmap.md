@@ -26,6 +26,7 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 - [ ] Quét VietQR bằng app ngân hàng thật
 - [x] API admin: danh sách `PENDING`, xác nhận / trả về (payment và trả trước)
 - [x] Xin vào gói: `plans.accepting_requests`, `join_requests` (migration 0006), API member + admin, màn "Khám phá" và màn "Yêu cầu"
+- [x] Yêu cầu mở gói: `plan_wishes` + `plans.priority_until` (migration 0009); member yêu cầu dịch vụ bất kỳ, thấy số người cùng chờ; admin mở gói từ yêu cầu (ưu tiên 48 giờ), báo trong app (banner + chấm đỏ). Gói đầy hiện rõ "đã đủ thành viên"
 - [x] Đổi giao diện sang Material 3 Expressive + animation (`motion`)
 - [x] Đổi giao diện sang "lấy dịch vụ làm trung tâm": `plans.provider` (migration 0007), logo hãng (`simple-icons`), trang chủ "Gói của tôi", gộp theo nhà cung cấp; bảng màu teal (`scripts/generate-palette.mjs`), logo chữ S + mũi tên, favicon
 - [x] Màn admin (UI):
@@ -37,7 +38,7 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 
 ## Sau này
 
-- [ ] Nhắc nợ. Kênh chưa chốt; nếu là bot chat: token mã hoá at-rest (AES-GCM, khoá là secret), không response nào trả token, gửi qua `ctx.waitUntil` + `Promise.allSettled` để lỗi gửi không làm hỏng thao tác gốc, và **chat nhóm không bao giờ nhận số tiền hay tên người nợ**.
+- [ ] Nhắc nợ **và thông báo đẩy** (gói đã mở, …). Kênh chưa chốt (Web Push / bot chat) — hiện chỉ thông báo trong app; nếu là bot chat: token mã hoá at-rest (AES-GCM, khoá là secret), không response nào trả token, gửi qua `ctx.waitUntil` + `Promise.allSettled` để lỗi gửi không làm hỏng thao tác gốc, và **chat nhóm không bao giờ nhận số tiền hay tên người nợ**.
 - [ ] Thống kê chi tiêu theo tháng / năm (lọc kỳ theo khoảng để dùng index)
 
 ## Đã loại

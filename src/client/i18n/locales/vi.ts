@@ -167,6 +167,10 @@ const vi = {
     YEARLY: "Hằng năm",
   },
   planEditor: {
+    fromWishes: "Tạo gói này sẽ báo cho {{count}} người đã yêu cầu, và họ được ưu tiên xin vào trong 48 giờ.",
+    // Vietnamese has one plural form; _one exists only so en.ts (typed from this file) can have it.
+    createdForWishesToast_one: "Đã tạo gói {{plan}} và báo cho {{count}} người đã yêu cầu.",
+    createdForWishesToast_other: "Đã tạo gói {{plan}} và báo cho {{count}} người đã yêu cầu.",
     noChanges: "Không có thay đổi nào để lưu.",
     newTitle: "Thêm gói",
     create: "Tạo gói",
@@ -261,6 +265,22 @@ const vi = {
     deleteTitle: "Xoá tài khoản {{user}}?",
     deleteBody: "Không hoàn tác được. Tài khoản đã có suất trong gói hay khoản thanh toán thì không xoá được.",
   },
+  wishesAdmin: {
+    sections: "Loại yêu cầu",
+    joinTab: "Xin vào gói",
+    wishTab: "Mở gói mới",
+    hint: "Thành viên muốn có gói của các dịch vụ này. Đủ người thì bấm \"Mở gói\": họ được báo trong app và ưu tiên xin vào 48 giờ.",
+    // Vietnamese has one plural form; _one exists only so en.ts (typed from this file) can have it.
+    count_one: "{{count}} người muốn",
+    count_other: "{{count}} người muốn",
+    open: "Mở gói",
+    decline: "Đóng yêu cầu",
+    declineLabel: "Đóng yêu cầu {{service}} của {{user}}",
+    declineTitle: "Đóng yêu cầu của {{user}}?",
+    declineBody: "Thành viên sẽ thấy yêu cầu này đã bị đóng.",
+    declinedToast: "Đã đóng yêu cầu của {{user}}.",
+    empty: "Chưa ai yêu cầu mở gói mới.",
+  },
   wishes: {
     promptTitle: "Không thấy gói bạn cần?",
     promptBody: "Gói đã đủ người, hoặc chưa có gói của dịch vụ đó — cứ yêu cầu. Khi đủ người muốn, quản trị viên sẽ mở gói mới và báo bạn.",
@@ -327,7 +347,7 @@ const vi = {
     CANCELLED: "Đã huỷ",
   },
   requests: {
-    title: "Yêu cầu vào gói",
+    title: "Yêu cầu",
     empty: "Không có yêu cầu nào đang chờ.",
     seats: "{{used}}/{{total}} suất",
     approve: "Duyệt",
