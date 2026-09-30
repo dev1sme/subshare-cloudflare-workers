@@ -7,7 +7,7 @@ import { Spinner } from "../components/Spinner";
 export function MemberLayout() {
   return (
     <div className="min-h-dvh">
-      <AppHeader />
+      <AppHeader width="max-w-lg" />
       <main className="mx-auto w-full max-w-lg px-4 py-6">
         {/* Inside the layout so the header stays while a screen's chunk loads. */}
         <Suspense fallback={<Spinner />}>

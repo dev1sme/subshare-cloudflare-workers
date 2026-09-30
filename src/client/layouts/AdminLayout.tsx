@@ -19,7 +19,7 @@ export function AdminLayout() {
   const { t } = useTranslation();
   return (
     <div className="min-h-dvh">
-      <AppHeader />
+      <AppHeader width="max-w-5xl" />
       <div className="mx-auto flex w-full max-w-5xl md:gap-6 md:px-4">
         <nav
           aria-label={t("app.mainNav")}
