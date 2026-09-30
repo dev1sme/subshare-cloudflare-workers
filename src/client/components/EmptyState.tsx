@@ -1,4 +1,4 @@
-import { CircleCheck, CircleAlert, Compass, Hammer, Layers, SearchX, type LucideIcon } from "lucide-react";
+import { CircleAlert, CircleCheck, Compass, Layers, SearchX, type LucideIcon } from "lucide-react";
 import { m } from "motion/react";
 import type { ReactNode } from "react";
 import { cn } from "../lib/cn";
@@ -13,7 +13,6 @@ const ICONS = {
   done: CircleCheck,
   error: CircleAlert,
   missing: SearchX,
-  soon: Hammer,
 } satisfies Record<string, LucideIcon>;
 
 const TONE: Record<Tone, string> = {

@@ -28,11 +28,11 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 - [x] Xin vào gói: `plans.accepting_requests`, `join_requests` (migration 0006), API member + admin, màn "Khám phá" và màn "Yêu cầu"
 - [x] Đổi giao diện sang Material 3 Expressive + animation (`motion`)
 - [x] Đổi giao diện sang "lấy dịch vụ làm trung tâm": `plans.provider` (migration 0007), logo hãng (`simple-icons`), trang chủ "Gói của tôi", gộp theo nhà cung cấp; bảng màu teal (`scripts/generate-palette.mjs`), logo chữ S + mũi tên, favicon
-- [ ] Màn admin (UI):
+- [x] Màn admin (UI):
   - [x] Duyệt thanh toán: chờ xác nhận (payment + trả trước) / chưa đóng / đã đóng theo kỳ
   - [x] CRUD gói, thành viên (thêm / rời), kỳ (xem, tạo tháng này)
-  - [ ] Tài khoản
-  - [ ] Hoàn tác một lần trả trước đã `PAID` (API có, UI chưa)
+  - [x] Tài khoản: tạo / sửa tên, vai trò / đặt lại mật khẩu (hiện một lần) / xoá
+- [ ] Hoàn tác một lần trả trước đã `PAID` (API có, UI chưa)
 - [ ] Dashboard admin: ai còn nợ, qua mọi kỳ
 
 ## Sau này
