@@ -33,9 +33,10 @@ Sinh bằng `scripts/generate-palette.mjs` (`@material/material-color-utilities`
 
 ## Logo SubShare
 
-- **Chữ S ghép từ hai nửa**: nửa trên màu mực (`on-surface`, "Sub"), nửa dưới teal (`primary`, "Share"). Component `BrandLogo` (header, trang login).
-- Favicon `public/favicon.svg`: cùng hình, đặt trên ô `surface-container-high` bo 8px để đọc được cả trên tab tối; file ảnh nên màu viết thẳng hex, **đổi palette thì sửa tay hai màu trong file này**.
-- Ba chọn từ trang so sánh 5 phương án (chia phần, vòng lặp, chữ S, thẻ xếp quạt, vé xé đôi) ở 16 / 32 / 64 / 128px, trên header và trên tab.
+- **Chữ S có hai đầu là mũi tên, trên ô teal** (kiểu icon app). Chữ S = "Sub + Share"; hai mũi tên = gia hạn hằng tháng, hai phía cùng góp. Nửa trên `on-primary`, nửa dưới `primary-container`, nền `primary`, bo 9/32. Component `BrandLogo` (header, trang login).
+- Có ô nền vì chữ S trơn màu mực biến mất trên tab tối; bản có ô đọc được trên cả tab sáng lẫn tối, và dùng luôn làm favicon.
+- Favicon `public/favicon.svg`: cùng hình; file ảnh nên màu viết thẳng hex, **đổi palette thì sửa tay ba màu trong file này**.
+- Ba chọn 2026-09-30 qua ba vòng so sánh (chia phần / vòng lặp / chữ S / thẻ xếp quạt / vé xé đôi → chữ S → ghép chữ S với mũi tên của phương án vòng lặp), xem ở 16 / 32 / 64 / 128px, trên header và trên tab sáng / tối.
 
 ## Hình
 
@@ -113,6 +114,7 @@ Viết tay trong `src/client/components/` (CLI `shadcn` cần `npx`, không ch�
 | Haptic feedback, FAB | Checklist M3 cho Android native; web không có haptic đáng tin, app không có hành động chính đủ lớn cho FAB |
 | `PlanAvatar` chữ cái đầu + hình tonal theo hash | Không cho biết là dịch vụ nào; thay bằng `ServiceLogo` (2026-09-30) |
 | Thẻ gradient tổng nợ đếm số, dấu check tự vẽ trong hình tròn, nền login có hình trôi | Làm app trông như app ngân hàng / trang trí vô nghĩa; thay bằng hai con số gọn ("Cần chuyển" / "Chờ xác nhận") và badge morph |
-| Logo hai ô vuông chồng nhau | Không nói lên điều gì; thay bằng chữ S hai nửa |
+| Logo hai ô vuông chồng nhau | Không nói lên điều gì; thay bằng chữ S + mũi tên |
+| Chữ S trơn không nền; vòng lặp mũi tên đứng riêng | Chữ S trơn chìm trên tab tối; vòng lặp trông như icon "refresh" có sẵn — ghép hai ý vào một hình trên ô teal |
 | Khung trung tính (`SchemeNeutral`, seed tím) | Ba muốn màu chủ đạo rõ hơn; chọn teal dịu |
 | Logo từ CDN / `img.logo.dev` | Vi phạm `img-src 'self'`, lộ IP người dùng cho bên thứ ba |
