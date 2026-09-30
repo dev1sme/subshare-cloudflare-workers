@@ -13,6 +13,7 @@ import { PlanForm } from "./components/PlanForm";
 import { PlanMembers } from "./components/PlanMembers";
 import { PlanPeriods } from "./components/PlanPeriods";
 import { toPlanInput, usePlanEditor } from "./usePlanEditor";
+import { usePlanLedger } from "./usePlanLedger";
 import { usePlanMembers } from "./usePlanMembers";
 import { usePlanPeriods } from "./usePlanPeriods";
 
@@ -28,6 +29,7 @@ export default function PlanDetailPage() {
   const editor = usePlanEditor(code);
   const members = usePlanMembers(code, editor.plan?.payer.code ?? null, editor.accounts);
   const periods = usePlanPeriods(code);
+  const ledger = usePlanLedger(code);
   const plan = editor.plan;
 
   const remove = async () => {
@@ -67,9 +69,15 @@ export default function PlanDetailPage() {
             ]}
           />
           {section === "members" &&
-            (members.error ? (
-              <LoadError code={members.error} onRetry={members.reload} />
-            ) : members.loading ? (
+            (members.error || ledger.error ? (
+              <LoadError
+                code={(members.error ?? ledger.error)!}
+                onRetry={() => {
+                  members.reload();
+                  ledger.reload();
+                }}
+              />
+            ) : members.loading || ledger.loading ? (
               <Skeleton className="h-48 rounded-card" />
             ) : (
               <PlanMembers
@@ -79,6 +87,10 @@ export default function PlanDetailPage() {
                 planActive={plan.active}
                 onAdd={members.add}
                 onLeave={members.leave}
+                ledgerOf={ledger.ledgerOf}
+                isBusy={(paymentCode) => ledger.busy.has(paymentCode)}
+                // The periods tab counts paid rows: refresh it after a change here.
+                onReceived={(payment) => void ledger.markReceived(payment).then((done) => done && periods.reload())}
               />
             ))}
           {section === "periods" &&

@@ -192,13 +192,13 @@ Mở gói từ yêu cầu là `POST /api/plans` kèm `wish_codes`: response thê
 |---|---|---|
 | `GET /api/payments` | `?status=&period=&plan_code=` | `{ payments }` (tối đa 500, mới nhất trước) |
 | `PATCH /api/payments/:code` | `status`: `PAID` \| `UNPAID` | `{ payment }` |
-| `GET /api/prepayments` | `?status=` | `{ prepayments }` |
+| `GET /api/prepayments` | `?status=&plan_code=` | `{ prepayments }` (tối đa 500, mới tạo nhất trước) |
 | `PATCH /api/prepayments/:code` | `status`: `PAID` \| `UNPAID` | `{ prepayment }` |
 | `DELETE /api/prepayments/:code` | — | `null` (không khi `PAID`) |
 
 `payment` = `{ code, plan: { code, name }, user: { code, username, display_name }, period, amount, status, marked_at, confirmed_at, prepayment_code }`. `prepayment` = `{ code, plan, user, start_period, end_period, months, amount_per_month, amount, status, created_at, marked_at, confirmed_at }`.
 
-`GET /api/payments` không filter phải đọc cả bảng `payments` để sắp xếp — dùng `?status=PENDING` / `?period=` (có index) cho màn hằng ngày.
+`GET /api/payments` không filter phải đọc cả bảng `payments` để sắp xếp — dùng `?status=PENDING` / `?period=` (có index) cho màn hằng ngày. `?plan_code=` một mình cũng đi index (mã gói → `UNIQUE(plan_id, period)` → `UNIQUE(billing_period_id, user_id)`): màn chi tiết gói dùng nó cùng `GET /api/prepayments?plan_code=` (`prepayments_plan_user`) để hiện tiền của từng thành viên.
 
 ### Chung
 

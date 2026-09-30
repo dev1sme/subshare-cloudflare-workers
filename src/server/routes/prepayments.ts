@@ -10,7 +10,7 @@ import {
   revertPrepayment,
 } from "../db/prepayments";
 import { Where } from "../db/sql";
-import { CODE_PREFIX } from "../domain/code";
+import { CODE_PREFIX, isCode } from "../domain/code";
 import { failure, notFound, ok } from "../envelope";
 import { fail, parseCode, readBody, requireEnum } from "../validate";
 import { PAYMENT_STATUSES } from "./payments";
@@ -39,10 +39,14 @@ export function toPrepayment(row: PrepaymentRow): Prepayment {
   };
 }
 
+// ?status= for the review queue, ?plan_code= for one plan's members.
 prepaymentRoutes.get("/", async (c) => {
   const status = c.req.query("status");
+  const planCode = c.req.query("plan_code");
   if (status !== undefined && !PAYMENT_STATUSES.includes(status as PaymentStatus)) fail("INVALID_STATUS");
-  const rows = await listPrepayments(c.env.DB, new Where().add("pp.status = ?", status), LIST_LIMIT);
+  if (planCode !== undefined && !isCode(CODE_PREFIX.plan, planCode)) fail("INVALID_PLAN_CODE");
+  const where = new Where().add("pp.status = ?", status).add("p.code = ?", planCode);
+  const rows = await listPrepayments(c.env.DB, where, LIST_LIMIT);
   return ok(c, { prepayments: rows.map(toPrepayment) });
 });
 

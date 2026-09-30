@@ -164,6 +164,11 @@ export const api = {
     setPaymentStatus: (code: string, status: "PAID" | "UNPAID") =>
       request<{ payment: Payment }>("PATCH", `/payments/${encodeURIComponent(code)}`, { status }),
     prepayments: (status: PaymentStatus) => request<{ prepayments: Prepayment[] }>("GET", `/prepayments?status=${status}`),
+    // One plan's money rows, every status: indexed through the plan (docs/api.md).
+    planPayments: (planCode: string) =>
+      request<{ payments: Payment[] }>("GET", `/payments?${new URLSearchParams({ plan_code: planCode }).toString()}`),
+    planPrepayments: (planCode: string) =>
+      request<{ prepayments: Prepayment[] }>("GET", `/prepayments?${new URLSearchParams({ plan_code: planCode }).toString()}`),
     setPrepaymentStatus: (code: string, status: "PAID" | "UNPAID") =>
       request<{ prepayment: Prepayment }>("PATCH", `/prepayments/${encodeURIComponent(code)}`, { status }),
   },

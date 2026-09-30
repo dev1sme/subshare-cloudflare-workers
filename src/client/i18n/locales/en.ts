@@ -364,6 +364,16 @@ const en: typeof vi = {
     closedToast: "{{plan}} no longer takes requests.",
     empty: "No plans yet.",
   },
+  memberLedger: {
+    nothingPaid: "Nothing paid yet",
+    owes_one: "Owes {{count}} period · {{amount}}",
+    owes_other: "Owes {{count}} periods · {{amount}}",
+    pending_one: "{{count}} payment waiting for confirmation",
+    pending_other: "{{count}} payments waiting for confirmation",
+    openPrepayment: "{{months}} months ahead {{from}}–{{to}} · {{status}}",
+    history_one: "History ({{count}} period)",
+    history_other: "History ({{count}} periods)",
+  },
   prepay: {
     action: "Pay ahead",
     title: "Pay ahead for {{plan}}",

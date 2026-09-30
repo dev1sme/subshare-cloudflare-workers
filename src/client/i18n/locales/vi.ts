@@ -372,6 +372,17 @@ const vi = {
     closedToast: "Đã đóng đăng ký {{plan}}.",
     empty: "Chưa có gói nào.",
   },
+  memberLedger: {
+    nothingPaid: "Chưa đóng kỳ nào",
+    // Vietnamese has one plural form; _one exists only so en.ts (typed from this file) can have it.
+    owes_one: "Còn nợ {{count}} kỳ · {{amount}}",
+    owes_other: "Còn nợ {{count}} kỳ · {{amount}}",
+    pending_one: "{{count}} khoản chờ xác nhận",
+    pending_other: "{{count}} khoản chờ xác nhận",
+    openPrepayment: "Trả trước {{months}} tháng {{from}}–{{to}} · {{status}}",
+    history_one: "Lịch sử ({{count}} kỳ)",
+    history_other: "Lịch sử ({{count}} kỳ)",
+  },
   prepay: {
     action: "Trả trước",
     title: "Trả trước {{plan}}",

@@ -2,7 +2,7 @@ import { LogOut, UserPlus } from "lucide-react";
 import { m } from "motion/react";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Account, Member } from "../../../../shared/types";
+import type { Account, Member, Payment } from "../../../../shared/types";
 import { EmptyState } from "../../../components/EmptyState";
 import { UserAvatar } from "../../../components/UserAvatar";
 import { Button } from "../../../components/ui/button";
@@ -12,6 +12,8 @@ import { TextField } from "../../../components/ui/text-field";
 import { formatDate } from "../../../format";
 import { listItem, listStagger } from "../../../lib/motion";
 import { today } from "../../../lib/period";
+import type { MemberLedger } from "../usePlanLedger";
+import { MemberHistory, MemberLedgerSummary } from "./MemberLedger";
 
 type PlanMembersProps = {
   members: Member[];
@@ -20,11 +22,15 @@ type PlanMembersProps = {
   planActive: boolean;
   onAdd: (userCode: string, joinedOn: string) => Promise<boolean>;
   onLeave: (member: Member, leftOn: string) => Promise<boolean>;
+  // Money of each member in this plan (usePlanLedger).
+  ledgerOf: (userCode: string) => MemberLedger;
+  isBusy: (code: string) => boolean;
+  onReceived: (payment: Payment) => void;
 };
 
 // Seats of a plan: current ones first, past ones kept as history (no "un-leave", no delete —
 // coming back is a new seat).
-export function PlanMembers({ members, candidates, maxSlots, planActive, onAdd, onLeave }: PlanMembersProps) {
+export function PlanMembers({ members, candidates, maxSlots, planActive, onAdd, onLeave, ledgerOf, isBusy, onReceived }: PlanMembersProps) {
   const { t } = useTranslation();
   // Screen state: which dialog is open.
   const [adding, setAdding] = useState(false);
@@ -46,26 +52,29 @@ export function PlanMembers({ members, candidates, maxSlots, planActive, onAdd, 
       ) : (
         <m.ul variants={listStagger} initial="hidden" animate="visible" className="flex flex-col gap-2">
           {members.map((member) => (
-            <m.li
-              key={member.code}
-              variants={listItem}
-              className="flex items-center gap-3 rounded-3xl bg-surface-container-low px-4 py-3"
-            >
-              <UserAvatar name={member.user.display_name} />
-              <div className="min-w-0 flex-1">
-                <p className={member.left_on ? "truncate font-semibold text-on-surface-variant" : "truncate font-semibold"}>{member.user.display_name}</p>
-                <p className="text-sm text-on-surface-variant">
-                  {member.left_on
-                    ? t("planMembers.stayed", { from: formatDate(member.joined_on), to: formatDate(member.left_on) })
-                    : t("planMembers.since", { date: formatDate(member.joined_on) })}
-                </p>
+            <m.li key={member.code} variants={listItem} className="flex flex-col gap-2 rounded-3xl bg-surface-container-low px-4 py-3">
+              <div className="flex items-center gap-3">
+                <UserAvatar name={member.user.display_name} />
+                <div className="min-w-0 flex-1">
+                  <p className={member.left_on ? "truncate font-semibold text-on-surface-variant" : "truncate font-semibold"}>{member.user.display_name}</p>
+                  <p className="text-sm text-on-surface-variant">
+                    {member.left_on
+                      ? t("planMembers.stayed", { from: formatDate(member.joined_on), to: formatDate(member.left_on) })
+                      : t("planMembers.since", { date: formatDate(member.joined_on) })}
+                  </p>
+                </div>
+                {!member.left_on && (
+                  <Button variant="text" onClick={() => setLeaving(member)}>
+                    <LogOut aria-hidden="true" />
+                    {t("planMembers.leave")}
+                  </Button>
+                )}
               </div>
-              {!member.left_on && (
-                <Button variant="text" onClick={() => setLeaving(member)}>
-                  <LogOut aria-hidden="true" />
-                  {t("planMembers.leave")}
-                </Button>
-              )}
+              {/* A past seat shows its money too: it may still owe for months it was in. */}
+              <div className="pl-12">
+                <MemberLedgerSummary ledger={ledgerOf(member.user.code)} />
+                <MemberHistory ledger={ledgerOf(member.user.code)} isBusy={isBusy} onReceived={onReceived} />
+              </div>
             </m.li>
           ))}
         </m.ul>

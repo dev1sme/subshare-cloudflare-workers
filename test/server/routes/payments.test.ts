@@ -249,4 +249,17 @@ describe("prepayments", () => {
     const pending = await data<{ prepayments: Prepayment[] }>(await call("GET", "/api/prepayments?status=PENDING", admin));
     expect(pending.prepayments.map((p) => p.code)).toEqual([prepayment.code]);
   });
+
+  it("lists one plan's prepayments for the admin", async () => {
+    const { prepayment } = await data<{ prepayment: Prepayment }>(await prepay(alice, 3));
+    const other = await data<{ plan: Plan }>(
+      await call("POST", "/api/plans", admin, { name: "Spotify", price: 59_000, member_amount: 12_000, cycle: "MONTHLY", max_slots: 5, payer_code: ADMIN.code }),
+    );
+    const ofPlan = await data<{ prepayments: Prepayment[] }>(await call("GET", `/api/prepayments?plan_code=${plan.code}`, admin));
+    expect(ofPlan.prepayments.map((p) => p.code)).toEqual([prepayment.code]);
+    const ofOther = await data<{ prepayments: Prepayment[] }>(await call("GET", `/api/prepayments?plan_code=${other.plan.code}`, admin));
+    expect(ofOther.prepayments).toEqual([]);
+    expect(await errorCode(await call("GET", `/api/prepayments?plan_code=${ALICE.code}`, admin))).toBe("INVALID_PLAN_CODE");
+    expect(await errorCode(await call("GET", `/api/prepayments?plan_code=${plan.code}`, alice))).toBe("FORBIDDEN");
+  });
 });
