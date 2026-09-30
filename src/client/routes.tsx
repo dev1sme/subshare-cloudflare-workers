@@ -10,6 +10,7 @@ import { MemberLayout } from "./layouts/MemberLayout";
 // Every screen behind login is its own chunk: a member paying on a phone never downloads the
 // admin panel. Login, 404 and the layouts stay eager (a lazy layout is a waterfall for nothing).
 const MyPaymentsPage = lazy(() => import("./features/payments/MyPaymentsPage"));
+const PaymentDetailPage = lazy(() => import("./features/payments/PaymentDetailPage"));
 const AdminPaymentsPage = lazy(() => import("./features/admin/AdminPaymentsPage"));
 const PlansPage = lazy(() => import("./features/admin/PlansPage"));
 const AccountsPage = lazy(() => import("./features/admin/AccountsPage"));
@@ -33,9 +34,15 @@ function HomeRedirect() {
   return <Navigate to={session.user ? HOME[session.user.role] : "/login"} replace />;
 }
 
+// After signing in, go back to the page that sent the user here — but only an internal path,
+// so a crafted `state.from` can never redirect off-site.
 function LoginRoute() {
   const { session } = useSession();
-  return session.user ? <Navigate to={HOME[session.user.role]} replace /> : <LoginPage />;
+  const location = useLocation();
+  if (!session.user) return <LoginPage />;
+  const from = (location.state as { from?: unknown } | null)?.from;
+  const target = typeof from === "string" && from.startsWith("/") && !from.startsWith("//") ? from : HOME[session.user.role];
+  return <Navigate to={target} replace />;
 }
 
 export function AppRoutes() {
@@ -51,6 +58,7 @@ export function AppRoutes() {
         }
       >
         <Route path="/payments" element={<MyPaymentsPage />} />
+        <Route path="/payments/:code" element={<PaymentDetailPage />} />
       </Route>
       <Route
         path="/admin"

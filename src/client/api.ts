@@ -1,4 +1,4 @@
-import type { ApiResponse, ErrorDetails, User } from "../shared/types";
+import type { ApiResponse, BankTransfer, ErrorDetails, Payment, User } from "../shared/types";
 
 // Typed wrapper for every endpoint. Returns a result instead of throwing, so hooks branch on
 // `ok` and never need try/catch. Components never import this file — only use*.ts hooks do.
@@ -55,5 +55,12 @@ export const api = {
     logout: () => request<null>("POST", "/auth/logout"),
     changePassword: (current_password: string, new_password: string) =>
       request<null>("POST", "/auth/change-password", { current_password, new_password }),
+  },
+  me: {
+    payments: () => request<{ payments: Payment[] }>("GET", "/me/payments"),
+    payment: (code: string) =>
+      request<{ payment: Payment; bank_transfer: BankTransfer | null }>("GET", `/me/payments/${encodeURIComponent(code)}`),
+    markPaymentSent: (code: string) =>
+      request<{ payment: Payment }>("POST", `/me/payments/${encodeURIComponent(code)}/mark-sent`),
   },
 };

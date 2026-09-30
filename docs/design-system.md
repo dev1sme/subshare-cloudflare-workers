@@ -45,6 +45,12 @@ Component dùng **tên token**, không bao giờ hex thô (`bg-primary`, `text-o
 
 ## Component
 
+- `StatusBadge`: nền nhạt + chữ + icon cho `UNPAID` / `PENDING` / `PAID`.
+- `CopyRow`: mỗi dòng chuyển khoản một nút copy thật (44px), `value` tách khỏi `display` — tiền copy số nguyên.
+- `QrCode`: **ngoại lệ duy nhất** được dùng hex thô (`#000` / `#fff`) — máy quét cần module tối trên nền sáng, bất kể theme.
+- `LoadError`: trạng thái lỗi tải tại chỗ, có "Thử lại" (trừ `NOT_FOUND`).
+
+
 Viết tay theo mẫu shadcn/ui trong `src/client/components/ui/` (CLI `shadcn` cần `npx`, không chạy được ở đây): `button`, `input`, `label`, `card`, `alert-dialog`, `sonner`. Primitive từ gói hợp nhất `radix-ui`. Thêm component mới thì theo cùng mẫu: `cn()` + token, không hex.
 
 ## Đã loại khỏi kết quả sinh

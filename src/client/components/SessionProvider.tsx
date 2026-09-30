@@ -43,6 +43,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         toast.error(errorMessage(t, result.code));
         return false;
       }
+      // A "wrong password" toast from an earlier attempt must not linger over the first screen.
+      toast.dismiss();
       setSession({ status: "signedIn", user: result.data.user });
       return true;
     },

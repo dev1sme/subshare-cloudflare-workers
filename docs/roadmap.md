@@ -21,7 +21,9 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 - [ ] Khai báo Cron Trigger (đếm trigger trên account trước) — cần deploy
 - [x] API thành viên: khoản cần đóng, VietQR, "Tôi đã chuyển", trả trước 3/6/12 tháng
 - [x] Nền UI: token + font tự host, primitive shadcn, i18next, `api.ts`, phiên, router theo vai trò, layout, `useConfirm`, toast, error boundary lỗi chunk
-- [ ] Màn thành viên (UI)
+- [x] Màn thành viên: đăng nhập, khoản cần đóng, chi tiết + VietQR + copy từng dòng, "Tôi đã chuyển"
+- [ ] Màn thành viên: trả trước 3/6/12 tháng, đổi mật khẩu
+- [ ] Quét VietQR bằng app ngân hàng thật
 - [x] API admin: danh sách `PENDING`, xác nhận / trả về (payment và trả trước)
 - [ ] Màn admin (UI)
 - [ ] Dashboard admin: ai còn nợ, qua mọi kỳ
