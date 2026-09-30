@@ -33,7 +33,7 @@ Mọi phần đều đã có code: server, migration `0001`–`0009`, test, và 
 
 ```
 index.html            entry Vite
-public/               copy nguyên vào output client — _headers, favicon.svg, manifest.webmanifest, icon PNG
+public/               copy nguyên vào output client — _headers, favicon.svg, manifest.webmanifest, icon PNG, sw.js
 src/client/           React SPA
   main.tsx            provider: ChunkErrorBoundary > BrowserRouter > Motion > Session > Confirm, Toaster
   App.tsx             cổng phiên đăng nhập (chờ /api/auth/me rồi mới render route)
@@ -113,7 +113,14 @@ Cài được lên màn hình chính: `public/manifest.webmanifest` (`display: s
 Làm theo từng bước, dừng được ở bất kỳ bước nào:
 
 1. **Manifest + icon** — đã làm. Chưa có service worker: Chrome không còn đòi service worker để cho cài, iOS thì chưa bao giờ đòi.
-2. **Service worker tối giản** — chưa làm. Chỉ cache app shell (asset đã hash), `/api/*` **luôn đi mạng**: trạng thái tiền cache cũ là sai (member thấy "Cần đóng" sau khi admin đã xác nhận). Viết tay, không `vite-plugin-pwa` / Workbox. Bản mới phải thay bản cũ ngay (`skipWaiting` + reload) để không đấu với `ChunkErrorBoundary`; `sw.js` cần `Cache-Control: no-cache` trong `_headers`.
+2. **Service worker tối giản** — đã làm: `public/sw.js`, viết tay (không `vite-plugin-pwa` / Workbox), đăng ký bởi `src/client/lib/serviceWorker.ts` **chỉ ở bản build** (ở dev nó sẽ cache `index.html` của Vite).
+   - `/api/*`, request không phải GET hoặc khác origin: SW **không đụng tới**, trình duyệt tự đi mạng. Trạng thái tiền cache cũ là sai (member thấy "Cần đóng" sau khi admin đã xác nhận), và cache không bao giờ giữ dữ liệu của người dùng — đăng xuất trên máy dùng chung không để lại gì.
+   - Navigation: network-first. Mất mạng thì trả `index.html` đã lưu; app gọi `/api/auth/me` thất bại và hiện màn "Thử lại" có sẵn, thay vì trang lỗi của trình duyệt.
+   - `/assets/*` (tên có hash): cache-first, tối đa 80 file, bỏ file cũ nhất trước. **Không bao giờ cache response HTML ở đây**: chunk đã bị deploy xoá rơi vào SPA fallback, trả `index.html` với 200.
+   - Không precache: asset vào cache lần đầu được tải. Mở app offline thì màn chưa từng mở sẽ lỗi chunk như trước — chấp nhận được, vì không có mạng thì màn nào cũng không có dữ liệu.
+   - `skipWaiting` + `clients.claim`, không reload: HTML luôn lấy từ mạng, asset đổi nội dung là đổi tên, nên SW mới thay ngay là an toàn. Lần tải đầu, SW nắm trang giữa chừng; từ lần sau mới cache shell.
+   - `/sw.js` có `Cache-Control: no-cache` trong `_headers`. Đổi cách cache thì đổi tên `CACHE` (`shell-v1` → `shell-v2`); `activate` xoá cache khác tên.
+   - **Kill switch**: SW lỗi trên production thì deploy một `sw.js` mà `activate` xoá mọi cache và gọi `self.registration.unregister()`. **Không xoá file**: `sw.js` 404 thì SW cũ vẫn chạy tiếp trên máy đã cài.
 3. **Web Push** — chưa làm, sau lần deploy đầu (xem [roadmap.md](roadmap.md), mục nhắc nợ).
 
 ## Ngôn ngữ & giao diện

@@ -36,7 +36,7 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 - [ ] Hoàn tác một lần trả trước đã `PAID` (API có, UI chưa)
 - [ ] Dashboard admin: ai còn nợ, qua mọi kỳ
 - [x] PWA bước 1: manifest + icon, cài lên màn hình chính ([architecture.md](architecture.md#pwa))
-- [ ] PWA bước 2: service worker chỉ cache app shell, `/api/*` luôn đi mạng
+- [x] PWA bước 2: service worker chỉ cache app shell, `/api/*` luôn đi mạng
 
 ## Sau này
 

@@ -9,4 +9,4 @@ Must hold:
 - API responses carry `Cache-Control: no-store`.
 - `script-src` never contains `'unsafe-inline'`. An inline script (e.g. the pre-paint theme script) is allowed by its sha256; editing it means regenerating the hash.
 - HSTS without `preload`.
-- Verify with `npm run build && ./node_modules/.bin/vite preview` — `npm run dev` does not serve `_headers`. Watch the `Parsed N valid header rule` count.
+- Verify with `npm run build && ./node_modules/.bin/vite preview` — `npm run dev` does not serve `_headers`. Watch the `Parsed N valid header rule` count (2: `/*` and `/sw.js`).

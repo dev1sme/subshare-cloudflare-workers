@@ -24,7 +24,7 @@ Hiện tại (`public/_headers`): `default-src 'self'; script-src 'self'; style-
 - Font tự host (`@fontsource`), không CDN — `font-src 'self'`.
 - QR vẽ thành SVG trên client từ payload tự sinh; không `img-src` tới dịch vụ QR nào.
 - Chunk import động là script cùng origin, đã nằm trong `'self'`.
-- PWA: không có `manifest-src` / `worker-src` riêng — manifest rơi về `default-src 'self'`, service worker (khi có) rơi về `script-src 'self'`. Cả hai tự host cùng origin nên không cần sửa CSP.
+- PWA: không có `manifest-src` / `worker-src` riêng — manifest rơi về `default-src 'self'`, service worker (`/sw.js`) rơi về `script-src 'self'`. `/sw.js` có thêm rule `Cache-Control: no-cache` trong `_headers` (nên `vite preview` báo `Parsed 2 valid header rules`). Cả hai tự host cùng origin nên không cần sửa CSP.
 
 ## HSTS
 

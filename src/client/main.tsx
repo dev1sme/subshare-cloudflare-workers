@@ -7,6 +7,7 @@ import { ConfirmProvider } from "./components/ConfirmProvider";
 import { MotionProvider } from "./components/MotionProvider";
 import { SessionProvider } from "./components/SessionProvider";
 import { Toaster } from "./components/ui/sonner";
+import { registerServiceWorker } from "./lib/serviceWorker";
 import "./i18n";
 import "./index.css";
 
@@ -28,3 +29,5 @@ createRoot(document.getElementById("root")!).render(
     </ChunkErrorBoundary>
   </StrictMode>,
 );
+
+registerServiceWorker();
