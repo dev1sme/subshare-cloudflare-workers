@@ -1,6 +1,6 @@
 # Cấu hình & deploy
 
-> **Đã deploy lần đầu 2026-09-30** lên URL `*.workers.dev` của account (chưa có custom domain): D1 `subshare-db` (APAC) đã tạo và chạy đủ migration `0001`–`0009`, `JWT_SECRET` đã đặt, có admin đầu tiên. **Chưa khai báo Cron Trigger.** Phần dưới là cấu hình đích và các bẫy đã biết.
+> **Đã deploy lần đầu 2026-09-30** ; production chạy **chỉ** trên custom domain `subshare.dev1sme.cloud` (`workers_dev` và `preview_urls` tắt): D1 `subshare-db` (APAC) đã tạo và chạy đủ migration `0001`–`0009`, `JWT_SECRET` đã đặt, có admin đầu tiên. **Chưa khai báo Cron Trigger.** Phần dưới là cấu hình đích và các bẫy đã biết.
 
 ## `wrangler.jsonc`
 
@@ -9,6 +9,9 @@
   "name": "subshare",
   "main": "./src/server/index.ts",
   "compatibility_date": "<ngày tạo project>",
+  "routes": [{ "pattern": "subshare.dev1sme.cloud", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false,
   "assets": {
     // không khai báo "directory": vite-plugin tự trỏ vào output build của client
     "not_found_handling": "single-page-application",
@@ -25,7 +28,7 @@
 
 - `run_worker_first` quyết định route nào **tồn tại**: đường dẫn ngoài danh sách nhận `index.html`.
 - Sửa file này xong chạy `npm run cf-typegen` (`wrangler types`) — không viết tay kiểu `Env`.
-- Khi thêm custom domain qua `routes`, URL `*.workers.dev` bị tắt; muốn giữ làm dự phòng thì thêm `"workers_dev": true`. Wrangler tạo DNS record cho custom domain nhưng **không xoá** khi bỏ route — đổi domain thì dọn record cũ bằng tay.
+- Custom domain qua `routes` (`custom_domain: true`): zone phải nằm trong cùng account và **chưa có record** cho hostname đó — wrangler tự tạo DNS record và cert. Đã tắt hẳn `workers_dev` và `preview_urls`: một origin production duy nhất, cookie phiên không sống ở hai nơi, và URL `workers.dev` chứa định danh của account. Deploy không có `--secrets-file` thì secret cũ vẫn giữ (wrangler không in nó trong danh sách binding — kiểm bằng `wrangler secret list`). Wrangler tạo DNS record cho custom domain nhưng **không xoá** khi bỏ route — đổi domain thì dọn record cũ bằng tay.
 - Bật Workers Logs (`observability`) trước khi có người dùng thật, để có dữ liệu khi cần debug.
 
 ## Secrets

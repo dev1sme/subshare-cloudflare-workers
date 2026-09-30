@@ -3,6 +3,10 @@
   "name": "subshare",
   "main": "./src/server/index.ts",
   "compatibility_date": "2026-09-26",
+  // Production is served only from the custom domain; wrangler creates its DNS record.
+  "routes": [{ "pattern": "subshare.dev1sme.cloud", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false,
   "assets": {
     // No "directory": @cloudflare/vite-plugin points assets at the client build output.
     "not_found_handling": "single-page-application",
