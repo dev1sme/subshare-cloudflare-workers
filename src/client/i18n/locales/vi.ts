@@ -40,6 +40,9 @@ const vi = {
     ALREADY_MEMBER: "Bạn đã ở trong gói này rồi.",
     JOIN_REQUEST_EXISTS: "Bạn đã gửi yêu cầu vào gói này, đang chờ duyệt.",
     INVALID_MONTHS: "Chỉ trả trước 3, 6 hoặc 12 tháng.",
+    INVALID_PERIOD_RANGE: "Kỳ kết thúc không được trước kỳ bắt đầu.",
+    PREPAYMENT_TOO_LONG: "Mỗi lần ghi nhận tối đa 24 tháng.",
+    PERIOD_OUTSIDE_SEAT: "Khoảng tháng nằm ngoài thời gian thành viên ở trong gói.",
   },
   // Sentences built from MISSING_/INVALID_/TOO_LONG_<FIELD> when a code has no own key.
   validation: {
@@ -383,6 +386,17 @@ const vi = {
     history_one: "Lịch sử ({{count}} kỳ)",
     history_other: "Lịch sử ({{count}} kỳ)",
   },
+  recordPaid: {
+    action: "Ghi nhận đã đóng",
+    title: "Ghi nhận {{user}} đã đóng",
+    body: "Dùng khi thành viên trả ngoài app (tiền mặt, một lần chuyển cho nhiều tháng). Các kỳ được đánh dấu đã đóng ngay, tính {{amount}} mỗi tháng — kể cả kỳ đã tạo với số tiền khác.",
+    from: "Từ kỳ",
+    to: "Đến kỳ",
+    total: "{{months}} tháng · {{amount}}",
+    submit: "Ghi nhận",
+    nothingOpen: "Không còn tháng nào để ghi nhận: các tháng đều đã đóng, đang chờ xác nhận hoặc thuộc một lần trả trước.",
+    doneToast: "Đã ghi nhận {{user}} đóng {{months}} tháng.",
+  },
   prepay: {
     action: "Trả trước",
     title: "Trả trước {{plan}}",
@@ -442,6 +456,9 @@ const vi = {
     status: "trạng thái",
     plan_code: "gói",
     months: "số tháng",
+    member_code: "thành viên",
+    from_period: "từ kỳ",
+    to_period: "đến kỳ",
     note: "lời nhắn",
     accepting_requests: "nhận đăng ký",
   } as Record<string, string>,

@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import type { Payment, Prepayment } from "../../../shared/types";
+import type { Member, Payment, Prepayment } from "../../../shared/types";
 import { type ApiResult, api } from "../../api";
 import { errorMessage } from "../../errors";
 import { useInFlight } from "../../hooks/useInFlight";
@@ -103,5 +103,20 @@ export function usePlanLedger(planCode: string) {
     [finish, reload, setData, start, t],
   );
 
-  return { ledgerOf, error, loading: loading && !data, reload, busy, markReceived };
+  // The rows it settles are refetched rather than patched: which months exist is the server's to say.
+  const recordPaid = useCallback(
+    async (member: Member, from: string, to: string) => {
+      const result = await api.admin.recordPaid(member.code, from, to);
+      if (!result.ok) {
+        toast.error(errorMessage(t, result.code));
+        return false;
+      }
+      reload();
+      toast.success(t("recordPaid.doneToast", { user: member.user.display_name, months: result.data.prepayment.months }));
+      return true;
+    },
+    [reload, t],
+  );
+
+  return { ledgerOf, error, loading: loading && !data, reload, busy, markReceived, recordPaid };
 }

@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { ApiFailure, ApiSuccess, BankTransfer, MyPlan, Payment, Plan, Prepayment } from "../../../src/shared/types";
+import type { ApiFailure, ApiSuccess, BankTransfer, Member, MyPlan, Payment, Plan, Prepayment } from "../../../src/shared/types";
 import { createPeriod } from "../../../src/server/db/periods";
 import { addMonths, currentPeriodInVietnam } from "../../../src/server/domain/period";
 import { hashPassword } from "../../../src/server/domain/password";
@@ -261,5 +261,67 @@ describe("prepayments", () => {
     expect(ofOther.prepayments).toEqual([]);
     expect(await errorCode(await call("GET", `/api/prepayments?plan_code=${ALICE.code}`, admin))).toBe("INVALID_PLAN_CODE");
     expect(await errorCode(await call("GET", `/api/prepayments?plan_code=${plan.code}`, alice))).toBe("FORBIDDEN");
+  });
+});
+
+describe("admin records months paid outside the app", () => {
+  async function seatOf(userCode: string): Promise<string> {
+    const { members } = await data<{ members: Member[] }>(await call("GET", `/api/plans/${plan.code}/members`, admin));
+    return members.find((m) => m.user.code === userCode)!.code;
+  }
+  function record(body: Record<string, unknown>, cookie = admin) {
+    return call("POST", "/api/prepayments", cookie, body);
+  }
+
+  it("records any number of months as PAID, past ones included, and settles the months that exist", async () => {
+    await call("POST", `/api/plans/${plan.code}/periods`, admin, {});
+    const res = await record({ member_code: await seatOf(ALICE.code), from_period: addMonths(current, -2), to_period: addMonths(current, 2) });
+    expect(res.status).toBe(201);
+    const { prepayment } = await data<{ prepayment: Prepayment }>(res);
+    expect(prepayment).toMatchObject({ months: 5, amount_per_month: 37_000, amount: 185_000, status: "PAID", user: { code: ALICE.code } });
+    expect(prepayment.confirmed_at).not.toBeNull();
+
+    // The current month existed and was UNPAID: now PAID through the record. Bob is untouched.
+    expect((await myPayments(alice))[0]).toMatchObject({ period: current, status: "PAID", prepayment_code: prepayment.code });
+    expect((await myPayments(bob))[0].status).toBe("UNPAID");
+    // A later month in the range is created PAID for Alice.
+    await createPeriod(env.DB, planId, addMonths(current, 1));
+    expect((await myPayments(alice)).find((p) => p.period === addMonths(current, 1))).toMatchObject({ status: "PAID", prepayment_code: prepayment.code });
+
+    // Reverting it un-settles everything like any prepayment.
+    await call("PATCH", `/api/prepayments/${prepayment.code}`, admin, { status: "UNPAID" });
+    expect((await myPayments(alice)).every((p) => p.status === "UNPAID" && p.prepayment_code === null)).toBe(true);
+  });
+
+  it("refuses a range that is settled, reported or already covered", async () => {
+    await call("POST", `/api/plans/${plan.code}/periods`, admin, {});
+    const seat = await seatOf(ALICE.code);
+    const [mine] = await myPayments(alice);
+    await call("POST", `/api/me/payments/${mine.code}/mark-sent`, alice);
+    const reported = await record({ member_code: seat, from_period: current, to_period: addMonths(current, 1) });
+    expect(reported.status).toBe(409);
+    expect(await errorCode(reported)).toBe("PREPAYMENT_OVERLAP");
+
+    await data(await record({ member_code: seat, from_period: addMonths(current, 1), to_period: addMonths(current, 2) }));
+    expect(await errorCode(await record({ member_code: seat, from_period: addMonths(current, 2), to_period: addMonths(current, 3) }))).toBe("PREPAYMENT_OVERLAP");
+    // A member's own prepayment in the way counts too.
+    await data(await call("POST", "/api/me/prepayments", bob, { plan_code: plan.code, months: 3 }));
+    expect(await errorCode(await record({ member_code: await seatOf(BOB.code), from_period: current, to_period: current }))).toBe("PREPAYMENT_OVERLAP");
+  });
+
+  it("validates the seat, the months and who asks", async () => {
+    const seat = await seatOf(ALICE.code);
+    expect(await errorCode(await record({ from_period: current, to_period: current }))).toBe("MISSING_MEMBER_CODE");
+    expect(await errorCode(await record({ member_code: ALICE.code, from_period: current, to_period: current }))).toBe("INVALID_MEMBER_CODE");
+    expect(await errorCode(await record({ member_code: seat, to_period: current }))).toBe("MISSING_FROM_PERIOD");
+    expect(await errorCode(await record({ member_code: seat, from_period: current, to_period: "2026-13" }))).toBe("INVALID_TO_PERIOD");
+    expect(await errorCode(await record({ member_code: seat, from_period: current, to_period: addMonths(current, -1) }))).toBe("INVALID_PERIOD_RANGE");
+    expect(await errorCode(await record({ member_code: seat, from_period: current, to_period: addMonths(current, 24) }))).toBe("PREPAYMENT_TOO_LONG");
+    // Alice's seat started on 2026-01-01: December 2025 was never billed to her.
+    const before = await record({ member_code: seat, from_period: "2025-12", to_period: "2026-01" });
+    expect(before.status).toBe(409);
+    expect(await errorCode(before)).toBe("PERIOD_OUTSIDE_SEAT");
+    expect((await record({ member_code: "MBFFFFFFFF", from_period: current, to_period: current })).status).toBe(404);
+    expect(await errorCode(await record({ member_code: seat, from_period: current, to_period: current }, alice))).toBe("FORBIDDEN");
   });
 });

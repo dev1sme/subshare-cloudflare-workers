@@ -12,8 +12,9 @@ export type MyPlanSummary = {
   memberAmount: number | null;
   // UNPAID and PENDING payments, newest period first (the API's order).
   open: Payment[];
-  // The latest settled period, to say "paid up to".
-  lastPaid: Payment | null;
+  // The furthest month paid, to say "paid up to": a PAID period, or the end of a PAID prepayment
+  // (which runs past the periods created so far — e.g. months an admin recorded as paid).
+  paidThrough: string | null;
   // UNPAID and PENDING prepayments: started, not yet confirmed.
   prepayments: Prepayment[];
 };
@@ -50,7 +51,7 @@ export function useMyPlans() {
         plan: { code: plan.code, name: plan.name, provider: plan.provider },
         memberAmount: plan.member_amount,
         open: [],
-        lastPaid: null,
+        paidThrough: null,
         prepayments: [],
       });
     }
@@ -59,18 +60,21 @@ export function useMyPlans() {
       if (!card) {
         // A plan the member left: shown only while something is still owed on it.
         if (payment.status === "PAID") continue;
-        card = { plan: payment.plan, memberAmount: null, open: [], lastPaid: null, prepayments: [] };
+        card = { plan: payment.plan, memberAmount: null, open: [], paidThrough: null, prepayments: [] };
         cards.set(payment.plan.code, card);
       }
       if (payment.status === "PAID") {
-        if (!card.lastPaid || payment.period > card.lastPaid.period) card.lastPaid = payment;
+        if (!card.paidThrough || payment.period > card.paidThrough) card.paidThrough = payment.period;
       } else {
         card.open.push(payment);
       }
     }
     // Only for plans the member still sits in: a prepayment needs a seat to be made or paid.
     for (const prepayment of data?.prepayments ?? []) {
-      if (prepayment.status !== "PAID") cards.get(prepayment.plan.code)?.prepayments.push(prepayment);
+      const card = cards.get(prepayment.plan.code);
+      if (!card) continue;
+      if (prepayment.status !== "PAID") card.prepayments.push(prepayment);
+      else if (!card.paidThrough || prepayment.end_period > card.paidThrough) card.paidThrough = prepayment.end_period;
     }
     // An unpaid prepayment is an offer the member may still drop, not a debt: it stays out of the
     // totals. A sent one waits for the admin like a sent payment does.

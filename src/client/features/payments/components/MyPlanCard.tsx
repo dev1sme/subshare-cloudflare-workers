@@ -15,7 +15,7 @@ import { planLogoId } from "./planLogoId";
 // `onPrepay` is offered only while the member sits in the plan and has no prepayment under way.
 export function MyPlanCard({ summary, onPrepay }: { summary: MyPlanSummary; onPrepay: (summary: MyPlanSummary) => void }) {
   const { t } = useTranslation();
-  const { plan, memberAmount, open, lastPaid, prepayments } = summary;
+  const { plan, memberAmount, open, paidThrough, prepayments } = summary;
   const canPrepay = memberAmount !== null && prepayments.length === 0;
   return (
     <m.li variants={listItem} className="overflow-hidden rounded-card bg-surface-container-low">
@@ -37,10 +37,10 @@ export function MyPlanCard({ summary, onPrepay }: { summary: MyPlanSummary; onPr
             <OpenPaymentRow key={payment.code} payment={payment} />
           ))}
         </ul>
-      ) : lastPaid ? (
+      ) : paidThrough ? (
         <p className="flex items-center gap-2 border-t border-outline-variant/50 px-4 py-3 text-sm font-medium text-success">
           <CircleCheck className="size-4 shrink-0" aria-hidden="true" />
-          {t("home.paidUpTo", { period: formatPeriod(lastPaid.period) })}
+          {t("home.paidUpTo", { period: formatPeriod(paidThrough) })}
         </p>
       ) : (
         // Just joined: no period has billed this seat yet. Neutral — nothing is paid or owed.

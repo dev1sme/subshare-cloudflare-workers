@@ -37,7 +37,7 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 - [x] Hoàn tác một lần trả trước đã `PAID`
 - [ ] Đo `cpuTime` của đổi mật khẩu trên Worker thật (PBKDF2 hai lần)
 - [x] Tiền của từng thành viên trong trang chi tiết gói: đã đóng đến kỳ nào, còn nợ, chờ xác nhận, trả trước; lịch sử từng kỳ, "Đã nhận tiền" tại chỗ
-- [ ] Admin ghi nhận "đã đóng tới tháng X" (trả trước số tháng tuỳ ý, migration 0010)
+- [x] Admin ghi nhận "đã đóng tới tháng X" (trả trước số tháng tuỳ ý, migration 0010)
 - [ ] Dashboard admin: ai còn nợ, qua mọi kỳ
 - [x] PWA bước 1: manifest + icon, cài lên màn hình chính ([architecture.md](architecture.md#pwa))
 - [x] PWA bước 2: service worker chỉ cache app shell, `/api/*` luôn đi mạng

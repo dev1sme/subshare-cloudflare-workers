@@ -91,6 +91,13 @@ export default function PlanDetailPage() {
                 isBusy={(paymentCode) => ledger.busy.has(paymentCode)}
                 // The periods tab counts paid rows: refresh it after a change here.
                 onReceived={(payment) => void ledger.markReceived(payment).then((done) => done && periods.reload())}
+                memberAmount={plan.member_amount}
+                onRecord={(member, from, to) =>
+                  ledger.recordPaid(member, from, to).then((done) => {
+                    if (done) periods.reload();
+                    return done;
+                  })
+                }
               />
             ))}
           {section === "periods" &&

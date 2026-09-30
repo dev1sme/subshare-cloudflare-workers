@@ -21,6 +21,7 @@ Thành viên chọn **3 / 6 / 12 tháng** cho một gói mình có suất (`POST
 - Admin xác nhận `PAID` → các payment đã có trong khoảng đó thành `PAID` (trỏ về lệnh); kỳ tạo sau trong khoảng đó sinh sẵn `PAID`.
 - Admin trả về `UNPAID` → mọi payment lệnh đó đã trả cũng về `UNPAID`.
 - UI thành viên: nút "Trả trước" trên card gói ở trang chủ (chỉ khi còn suất và không có lệnh nào đang dở), chọn 3/6/12 tháng — tổng hiện trong dialog chỉ là xem trước, server quyết định khoảng tháng và số tiền; màn `/prepayments/:code` có VietQR, "Tôi đã chuyển", và huỷ khi còn `UNPAID`. Kỳ nằm trong một lệnh đã báo chuyển (`PENDING`) không còn tính vào "Cần chuyển" mà lệnh đó vào "Chờ xác nhận"; lệnh `UNPAID` không đổi gì vì thành viên còn huỷ được.
+- UI admin, trang chi tiết gói: mỗi thành viên có "Ghi nhận đã đóng" — chọn từ kỳ / đến kỳ trong những tháng còn mở (khoảng dừng ở tháng đầu tiên không còn mở, nên không chọn chồng được), hiện số tháng × tiền mỗi tháng. Hoàn tác như mọi lệnh: "Hoàn tác trả trước".
 - UI admin: ở "Đã đóng", dòng thuộc một lệnh có nút "Hoàn tác trả trước" — trả **cả lệnh** về `UNPAID`, mọi dòng của lệnh rời danh sách.
 - Payment thuộc một lệnh trả trước **không** đổi trạng thái lẻ được (409 `PAYMENT_COVERED_BY_PREPAYMENT`) — đổi lệnh.
 - Xoá: thành viên xoá lệnh của mình khi còn `UNPAID`; admin xoá khi `UNPAID`/`PENDING`; `PAID` phải trả về trước (`CANNOT_DELETE_PREPAYMENT`).

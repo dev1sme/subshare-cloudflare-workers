@@ -81,7 +81,7 @@ Tiền tố là thứ chặn việc dùng mã gói ở chỗ cần mã khoản �
 | `plans.cycle` | `MONTHLY` \| `YEARLY` |
 | `plans.provider` | `YOUTUBE` \| `SPOTIFY` \| `NETFLIX` \| `APPLE` \| `GOOGLE` \| `MICROSOFT` \| `OPENAI` \| `CLAUDE` \| `CANVA` \| `DUOLINGO` \| `NOTION` \| `OTHER` |
 | `payments.status`, `prepayments.status` | `UNPAID` \| `PENDING` \| `PAID` |
-| `prepayments.months` | `3` \| `6` \| `12` |
+| `prepayments.months` | `1`–`24` trong DB (migration 0010); thành viên tự tạo chỉ `3` \| `6` \| `12` (kiểm ở route) |
 | `join_requests.status` | `PENDING` \| `APPROVED` \| `REJECTED` \| `CANCELLED` |
 | `plan_wishes.status` | `OPEN` \| `FULFILLED` \| `CANCELLED` \| `DECLINED` |
 | `plan_wishes.provider` | như `plans.provider` |
@@ -117,12 +117,14 @@ Thành viên muốn đóng gọn nhiều tháng thì **trả trước** (dưới
 
 ## Trả trước
 
-Một dòng `prepayments` = một thành viên trả trước **3, 6 hoặc 12 tháng** của một gói, **không giảm giá**: `amount = months × amount_per_month`, `amount_per_month` = `plans.member_amount` lúc tạo (CHECK trong DB).
+Một dòng `prepayments` = một thành viên trả trước **3, 6 hoặc 12 tháng** của một gói (hoặc admin ghi nhận **1–24 tháng** đã trả ngoài app, xem dưới), **không giảm giá**: `amount = months × amount_per_month`, `amount_per_month` = `plans.member_amount` lúc tạo (CHECK trong DB).
 
 - `start_period` = tháng đầu tiên, tính từ tháng hiện tại (giờ Việt Nam), mà thành viên **chưa trả** (payment không `PAID`/`PENDING`) và **chưa có lệnh trả trước nào phủ**; `end_period = start_period + months − 1`. Các lệnh trả trước của một người trong một gói **không chồng nhau** (app kiểm khi tạo).
 - Trạng thái như `payments`: `UNPAID → PENDING` (thành viên báo đã chuyển) `→ PAID` (admin xác nhận), admin trả về được.
 - Khi lệnh thành `PAID`: các payment **đã có** trong khoảng đó mà chưa `PAID` → `PAID`, `prepayment_id` trỏ về lệnh, `amount = amount_per_month`. Các kỳ **tạo sau** trong khoảng đó: `createPeriod` tạo payment của người này sẵn `PAID`, cùng `confirmed_at`/`confirmed_by` của lệnh. Lịch sử vì vậy vẫn đủ từng tháng.
 - Thành viên rời gói khi còn tháng đã trả: app chỉ hiện số tháng còn lại; hoàn tiền làm ngoài app.
+- **Admin ghi nhận "đã đóng tới tháng X"** (`POST /api/prepayments`): thành viên trả ngoài app (tiền mặt, một lần chuyển cho nhiều tháng). Tạo một dòng `prepayments` **đã `PAID`** ngay, `amount_per_month` = `member_amount` hiện tại, và trong cùng batch đưa các payment `UNPAID` trong khoảng về `PAID` trỏ vào nó — như xác nhận một lệnh. Khoảng do admin chọn, **được lùi về quá khứ**, nằm trong thời gian suất bị tính tiền (từ kỳ đầu tiên suất có mặt ngày 1, tới tháng rời), tối đa 24 tháng, không chạm tháng nào đã `PAID`/`PENDING` hay thuộc lệnh khác. Kỳ cũ có `amount` khác bị ghi đè bằng `amount_per_month` — cùng quy ước với xác nhận lệnh.
+- "Đã đóng đến kỳ X" (màn thành viên và màn gói của admin) lấy tháng xa nhất trong các kỳ `PAID` **và** `end_period` của các lệnh `PAID`: lệnh có thể phủ những kỳ chưa được tạo.
 
 ## Xin vào gói
 

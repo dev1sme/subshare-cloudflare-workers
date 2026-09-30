@@ -167,6 +167,9 @@ export const api = {
     // One plan's money rows, every status: indexed through the plan (docs/api.md).
     planPayments: (planCode: string) =>
       request<{ payments: Payment[] }>("GET", `/payments?${new URLSearchParams({ plan_code: planCode }).toString()}`),
+    // Months a member paid outside the app, recorded PAID at once (any length, 1-24).
+    recordPaid: (member_code: string, from_period: string, to_period: string) =>
+      request<{ prepayment: Prepayment }>("POST", "/prepayments", { member_code, from_period, to_period }),
     planPrepayments: (planCode: string) =>
       request<{ prepayments: Prepayment[] }>("GET", `/prepayments?${new URLSearchParams({ plan_code: planCode }).toString()}`),
     setPrepaymentStatus: (code: string, status: "PAID" | "UNPAID") =>

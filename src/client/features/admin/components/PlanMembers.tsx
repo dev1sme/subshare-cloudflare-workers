@@ -1,4 +1,4 @@
-import { LogOut, UserPlus } from "lucide-react";
+import { LogOut, UserPlus, Wallet } from "lucide-react";
 import { m } from "motion/react";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,6 +14,7 @@ import { listItem, listStagger } from "../../../lib/motion";
 import { today } from "../../../lib/period";
 import type { MemberLedger } from "../usePlanLedger";
 import { MemberHistory, MemberLedgerSummary } from "./MemberLedger";
+import { RecordPaidDialog } from "./RecordPaidDialog";
 
 type PlanMembersProps = {
   members: Member[];
@@ -26,15 +27,30 @@ type PlanMembersProps = {
   ledgerOf: (userCode: string) => MemberLedger;
   isBusy: (code: string) => boolean;
   onReceived: (payment: Payment) => void;
+  memberAmount: number;
+  onRecord: (member: Member, from: string, to: string) => Promise<boolean>;
 };
 
 // Seats of a plan: current ones first, past ones kept as history (no "un-leave", no delete —
 // coming back is a new seat).
-export function PlanMembers({ members, candidates, maxSlots, planActive, onAdd, onLeave, ledgerOf, isBusy, onReceived }: PlanMembersProps) {
+export function PlanMembers({
+  members,
+  candidates,
+  maxSlots,
+  planActive,
+  onAdd,
+  onLeave,
+  ledgerOf,
+  isBusy,
+  onReceived,
+  memberAmount,
+  onRecord,
+}: PlanMembersProps) {
   const { t } = useTranslation();
   // Screen state: which dialog is open.
   const [adding, setAdding] = useState(false);
   const [leaving, setLeaving] = useState<Member | null>(null);
+  const [recording, setRecording] = useState<Member | null>(null);
   const activeCount = members.filter((member) => member.left_on === null).length;
   const full = activeCount >= maxSlots;
 
@@ -73,7 +89,13 @@ export function PlanMembers({ members, candidates, maxSlots, planActive, onAdd, 
               {/* A past seat shows its money too: it may still owe for months it was in. */}
               <div className="pl-12">
                 <MemberLedgerSummary ledger={ledgerOf(member.user.code)} />
-                <MemberHistory ledger={ledgerOf(member.user.code)} isBusy={isBusy} onReceived={onReceived} />
+                <div className="flex flex-wrap items-center gap-x-2">
+                  <MemberHistory ledger={ledgerOf(member.user.code)} isBusy={isBusy} onReceived={onReceived} />
+                  <Button variant="text" className="-ml-3" onClick={() => setRecording(member)}>
+                    <Wallet aria-hidden="true" />
+                    {t("recordPaid.action")}
+                  </Button>
+                </div>
               </div>
             </m.li>
           ))}
@@ -81,6 +103,13 @@ export function PlanMembers({ members, candidates, maxSlots, planActive, onAdd, 
       )}
       <AddMemberDialog open={adding} candidates={candidates} onClose={() => setAdding(false)} onSubmit={onAdd} />
       <LeaveDialog member={leaving} onClose={() => setLeaving(null)} onSubmit={onLeave} />
+      <RecordPaidDialog
+        member={recording}
+        ledger={ledgerOf(recording?.user.code ?? "")}
+        memberAmount={memberAmount}
+        onClose={() => setRecording(null)}
+        onSubmit={onRecord}
+      />
     </div>
   );
 }

@@ -100,6 +100,40 @@ export async function insertPrepayment(
   return selected.results[0];
 }
 
+/**
+ * Admin: a member paid for these months outside the app. Creates the prepayment already PAID at the
+ * plan's current member_amount and, in the same transaction, settles the member's UNPAID payments of
+ * those months like confirmPrepayment does. The caller has checked that nothing in the range is
+ * settled or covered yet.
+ */
+export async function recordPaidPrepayment(
+  db: D1Database,
+  row: Pick<PrepaymentRow, "code" | "plan_id" | "user_id" | "start_period" | "end_period" | "months">,
+  adminCode: string,
+): Promise<PrepaymentRow> {
+  const [, , selected] = await db.batch<PrepaymentRow>([
+    db
+      .prepare(
+        `INSERT INTO prepayments (code, plan_id, user_id, start_period, end_period, months, amount_per_month, amount,
+                                  status, confirmed_at, confirmed_by)
+         SELECT ?, id, ?, ?, ?, ?, member_amount, ? * member_amount, 'PAID', ${NOW}, (SELECT id FROM users WHERE code = ?)
+         FROM plans WHERE id = ?`,
+      )
+      .bind(row.code, row.user_id, row.start_period, row.end_period, row.months, row.months, adminCode, row.plan_id),
+    db
+      .prepare(
+        `UPDATE payments
+         SET status = 'PAID', amount = pp.amount_per_month, prepayment_id = pp.id, confirmed_at = pp.confirmed_at, confirmed_by = pp.confirmed_by
+         FROM (SELECT id, amount_per_month, confirmed_at, confirmed_by FROM prepayments WHERE code = ?) AS pp
+         WHERE payments.user_id = ? AND payments.status = 'UNPAID' AND payments.prepayment_id IS NULL
+           AND payments.billing_period_id IN (SELECT id FROM billing_periods WHERE plan_id = ? AND period BETWEEN ? AND ?)`,
+      )
+      .bind(row.code, row.user_id, row.plan_id, row.start_period, row.end_period),
+    db.prepare(`${SELECT_PREPAYMENT} WHERE pp.code = ?`).bind(row.code),
+  ]);
+  return selected.results[0];
+}
+
 // UNPAID -> PENDING, only by its own member.
 export async function markPrepaymentSent(db: D1Database, id: number, userCode: string): Promise<boolean> {
   const result = await db
