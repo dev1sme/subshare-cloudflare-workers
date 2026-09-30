@@ -5,13 +5,13 @@
 ## Định hướng
 
 - **Dịch vụ trước, tiền sau.** Trang chủ thành viên là "Gói của tôi": mỗi gói một thẻ có logo, khoản còn mở nằm trong thẻ. Khám phá và trang Gói của admin gộp theo nhà cung cấp.
-- **Khung trung tính, màu đến từ logo.** Nền và nút gần như xám; điểm màu trên màn là logo của từng hãng và màu trạng thái. Nâng tầng bằng màu container chứ không bằng bóng đổ.
+- **Teal dịu làm màu thương hiệu.** Nền phớt teal rất nhạt, nút và điểm nhấn teal; logo hãng vẫn nổi trên ô trắng. Nâng tầng bằng màu container chứ không bằng bóng đổ.
 - **Mobile-first**: thành viên mở app trên điện thoại để chuyển khoản. Màn thành viên một cột (`max-w-lg`).
 - Điều hướng: M3 navigation bar ở đáy trên điện thoại (≤ 5 mục), navigation rail từ `md`. Chỉ báo mục đang chọn là một viên thuốc trượt giữa các mục.
 
 ## Màu
 
-Sinh bằng `scripts/generate-palette.mjs` (`@material/material-color-utilities`, `SchemeNeutral`, seed `#6750A4`, light — cách chạy ở đầu file). `SchemeNeutral` cho mặt nền gần xám và `primary` tím xám dịu (#615c6b), để logo hãng nổi lên. `success` / `warning` lấy từ `TonalPalette` hue 145 / 70, chroma 48 (tone 40 / 90 / 30). Đổi seed hay scheme = sửa script, chạy lại, thay khối màu trong `@theme` — **không** sửa tay từng màu.
+Sinh bằng `scripts/generate-palette.mjs` (`@material/material-color-utilities`, `SchemeTonalSpot`, seed `#00796B`, light — cách chạy ở đầu file). Ba chọn 2026-09-30 từ trang so sánh 4 tông (teal, xanh dương, indigo, fuchsia) × 2 mức (Vibrant đậm / TonalSpot dịu); đã bỏ tím và các tông trùng màu trạng thái (đỏ, cam, xanh lá). `primary` = #006b5e. `success` / `warning` lấy từ `TonalPalette` hue 145 / 70, chroma 48 (tone 40 / 90 / 30). Đổi seed hay scheme = sửa script, chạy lại, thay khối màu trong `@theme` — **không** sửa tay từng màu.
 
 | Vai trò | Dùng cho |
 |---|---|
@@ -25,11 +25,17 @@ Sinh bằng `scripts/generate-palette.mjs` (`@material/material-color-utilities`
 | `success-container` | `PAID` |
 | `inverse-surface` | snackbar (toast) |
 
-- Khung trung tính tách **màu hãng** và **màu trạng thái** khỏi giao diện: xanh = đã đóng, đỏ = còn nợ, cam = chờ xác nhận; `primary` không mang nghĩa tiền.
-- Contrast đã đo (WCAG, 2026-09-30): chữ trên `primary` 6.5:1, `primary` trên nền 6.1:1, `on-surface-variant` trên nền 8.9:1 (trên thẻ 8.4:1), chữ trong badge `UNPAID` / `PENDING` / `PAID` 7.2 / 7.3 / 7.2:1, chữ `success` trên thẻ 5.9:1 — đều ≥ AA.
+- **Màu trạng thái** tách khỏi màu thương hiệu: xanh lá = đã đóng, đỏ = còn nợ, cam = chờ xác nhận; `primary` (teal) không mang nghĩa tiền. Teal khá gần xanh lá `success` — vì vậy badge trạng thái **luôn có chữ và icon**, không bao giờ chỉ là một chấm màu.
+- Contrast đã đo (WCAG, 2026-09-30): chữ trên `primary` 6.4:1, `primary` trên nền 6.1:1, `on-surface-variant` trên nền 8.9:1 (trên thẻ 8.4:1), chữ trên `secondary-container` 7.3:1, chữ trong badge `UNPAID` / `PENDING` / `PAID` 7.2 / 7.3 / 7.2:1, chữ `success` trên thẻ 5.9:1 — đều ≥ AA.
 - Logo hãng trên ô trắng có thể thấp (Spotify 1.9:1, Duolingo 2.1:1): chấp nhận vì logo là trang trí, tên luôn đi kèm — không bao giờ để logo một mình mang nghĩa.
 - Trạng thái thanh toán **không chỉ dựa vào màu**: luôn có chữ và icon.
 - Chưa có dark mode (scheme dark sinh được từ cùng seed). Khi thêm: định nghĩa lại cùng biến, script chọn theme inline có sha256 trong CSP ([security-headers.md](security-headers.md)).
+
+## Logo SubShare
+
+- **Chữ S ghép từ hai nửa**: nửa trên màu mực (`on-surface`, "Sub"), nửa dưới teal (`primary`, "Share"). Component `BrandLogo` (header, trang login).
+- Favicon `public/favicon.svg`: cùng hình, đặt trên ô `surface-container-high` bo 8px để đọc được cả trên tab tối; file ảnh nên màu viết thẳng hex, **đổi palette thì sửa tay hai màu trong file này**.
+- Ba chọn từ trang so sánh 5 phương án (chia phần, vòng lặp, chữ S, thẻ xếp quạt, vé xé đôi) ở 16 / 32 / 64 / 128px, trên header và trên tab.
 
 ## Hình
 
@@ -94,7 +100,7 @@ Chuyển động **gắn với nội dung**, không có hình trang trí chuyể
 Viết tay trong `src/client/components/` (CLI `shadcn` cần `npx`, không chạy được ở đây), primitive từ `radix-ui`:
 
 - `ui/button` (`filled`, `tonal`, `outlined`, `text`, `error`, `icon`), `ui/text-field`, `ui/card`, `ui/alert-dialog`, `ui/sonner`.
-- `NavBar`, `AppHeader`, `UserAvatar`, `ServiceLogo`, `ProviderSection`, `StatusBadge`, `CopyRow`, `QrCode`, `PageTransition`, `EmptyState`, `Skeleton`, `LoadError`.
+- `NavBar`, `AppHeader`, `BrandLogo`, `UserAvatar`, `ServiceLogo`, `ProviderSection`, `StatusBadge`, `CopyRow`, `QrCode`, `PageTransition`, `EmptyState`, `Skeleton`, `LoadError`.
 - Hex thô chỉ ở hai chỗ: `QrCode` (`#000` / `#fff` — máy quét cần module tối trên nền sáng) và `ServiceLogo` (màu hãng).
 
 ## Đã loại
@@ -107,4 +113,6 @@ Viết tay trong `src/client/components/` (CLI `shadcn` cần `npx`, không ch�
 | Haptic feedback, FAB | Checklist M3 cho Android native; web không có haptic đáng tin, app không có hành động chính đủ lớn cho FAB |
 | `PlanAvatar` chữ cái đầu + hình tonal theo hash | Không cho biết là dịch vụ nào; thay bằng `ServiceLogo` (2026-09-30) |
 | Thẻ gradient tổng nợ đếm số, dấu check tự vẽ trong hình tròn, nền login có hình trôi | Làm app trông như app ngân hàng / trang trí vô nghĩa; thay bằng hai con số gọn ("Cần chuyển" / "Chờ xác nhận") và badge morph |
+| Logo hai ô vuông chồng nhau | Không nói lên điều gì; thay bằng chữ S hai nửa |
+| Khung trung tính (`SchemeNeutral`, seed tím) | Ba muốn màu chủ đạo rõ hơn; chọn teal dịu |
 | Logo từ CDN / `img.logo.dev` | Vi phạm `img-src 'self'`, lộ IP người dùng cho bên thứ ba |

@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { useSession } from "../hooks/useSession";
 import { cn } from "../lib/cn";
+import { BrandLogo } from "./BrandLogo";
 import { SignOutButton } from "./SignOutButton";
 import { UserAvatar } from "./UserAvatar";
 
@@ -17,7 +18,7 @@ export function AppHeader({ width }: { width: string }) {
           to="/"
           className="flex items-center gap-2 rounded-full text-lg font-bold tracking-tight text-primary focus-visible:outline-3 focus-visible:outline-primary"
         >
-          <Logo />
+          <BrandLogo />
           {t("app.name")}
         </Link>
         <div className="flex min-w-0 items-center gap-1">
@@ -26,15 +27,5 @@ export function AppHeader({ width }: { width: string }) {
         </div>
       </div>
     </header>
-  );
-}
-
-// Two overlapping rounded squares: a shared subscription. Decorative, the name follows it.
-function Logo() {
-  return (
-    <svg viewBox="0 0 32 32" className="size-8" aria-hidden="true">
-      <rect x="2" y="6" width="20" height="20" rx="7" className="fill-primary" />
-      <rect x="10" y="6" width="20" height="20" rx="7" className="fill-tertiary-container mix-blend-multiply" />
-    </svg>
   );
 }

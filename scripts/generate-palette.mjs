@@ -9,15 +9,15 @@
 import {
   Hct,
   MaterialDynamicColors as C,
-  SchemeNeutral,
+  SchemeTonalSpot,
   TonalPalette,
   argbFromHex,
   hexFromArgb,
 } from "@material/material-color-utilities";
 
-// Neutral surfaces so each service's own logo colour is what stands out; the seed only tints them.
-const SEED = "#6750A4";
-const SCHEME = SchemeNeutral;
+// Teal, tonal spot (chosen 2026-09-30): a calm teal for brand and actions, surfaces lightly tinted.
+const SEED = "#00796B";
+const SCHEME = SchemeTonalSpot;
 
 const scheme = new SCHEME(Hct.fromInt(argbFromHex(SEED)), false, 0);
 

@@ -1,6 +1,7 @@
 import { m } from "motion/react";
 import { useTranslation } from "react-i18next";
 import type { Provider } from "../../../shared/providers";
+import { BrandLogo } from "../../components/BrandLogo";
 import { ServiceLogo } from "../../components/ServiceLogo";
 import { useSession } from "../../hooks/useSession";
 import { listItem, listStagger } from "../../lib/motion";
@@ -26,7 +27,10 @@ export default function LoginPage() {
             ))}
           </m.ul>
           <div className="flex flex-col gap-1">
-            <p className="text-4xl font-bold tracking-tight">{t("app.name")}</p>
+            <p className="flex items-center gap-2 text-4xl font-bold tracking-tight">
+              <BrandLogo className="size-11" />
+              {t("app.name")}
+            </p>
             <p className="text-lg text-on-surface-variant">{t("login.subtitle")}</p>
           </div>
         </m.header>
