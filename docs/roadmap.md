@@ -30,7 +30,7 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 - [x] Đổi giao diện sang "lấy dịch vụ làm trung tâm": `plans.provider` (migration 0007), logo hãng (`simple-icons`), trang chủ "Gói của tôi", gộp theo nhà cung cấp; bảng màu teal (`scripts/generate-palette.mjs`), logo chữ S + mũi tên, favicon
 - [ ] Màn admin (UI):
   - [x] Duyệt thanh toán: chờ xác nhận (payment + trả trước) / chưa đóng / đã đóng theo kỳ
-  - [ ] CRUD gói (hiện màn Gói chỉ có công tắc "Nhận đăng ký"), thành viên, kỳ
+  - [x] CRUD gói, thành viên (thêm / rời), kỳ (xem, tạo tháng này)
   - [ ] Tài khoản
   - [ ] Hoàn tác một lần trả trước đã `PAID` (API có, UI chưa)
 - [ ] Dashboard admin: ai còn nợ, qua mọi kỳ

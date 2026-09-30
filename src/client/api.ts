@@ -1,4 +1,38 @@
-import type { ApiResponse, BankTransfer, ErrorDetails, JoinRequest, MyPlan, OpenPlan, Payment, PaymentStatus, Plan, Prepayment, User } from "../shared/types";
+import type {
+  Account,
+  ApiResponse,
+  BankTransfer,
+  Cycle,
+  ErrorDetails,
+  JoinRequest,
+  Member,
+  MyPlan,
+  OpenPlan,
+  Payment,
+  PaymentStatus,
+  Period,
+  Plan,
+  Prepayment,
+  Role,
+  User,
+} from "../shared/types";
+import type { Provider } from "../shared/providers";
+
+// What POST / PATCH /api/plans take (docs/api.md). Bank fields null = not set / clear.
+export type PlanInput = {
+  name: string;
+  provider: Provider;
+  price: number;
+  member_amount: number;
+  cycle: Cycle;
+  max_slots: number;
+  payer_code: string;
+  bank_bin: string | null;
+  bank_account_no: string | null;
+  bank_account_name: string | null;
+  active: boolean;
+  accepting_requests: boolean;
+};
 
 // Typed wrapper for every endpoint. Returns a result instead of throwing, so hooks branch on
 // `ok` and never need try/catch. Components never import this file — only use*.ts hooks do.
@@ -79,6 +113,28 @@ export const api = {
       request<{ join_request: JoinRequest }>("POST", `/join-requests/${encodeURIComponent(code)}/approve`, {}),
     rejectJoinRequest: (code: string) =>
       request<{ join_request: JoinRequest }>("POST", `/join-requests/${encodeURIComponent(code)}/reject`),
+    plan: (code: string) => request<{ plan: Plan }>("GET", `/plans/${encodeURIComponent(code)}`),
+    createPlan: (fields: PlanInput) => request<{ plan: Plan }>("POST", "/plans", fields),
+    updatePlan: (code: string, patch: Partial<PlanInput>) =>
+      request<{ plan: Plan }>("PATCH", `/plans/${encodeURIComponent(code)}`, patch),
+    deletePlan: (code: string) => request<null>("DELETE", `/plans/${encodeURIComponent(code)}`),
+    planMembers: (code: string) => request<{ members: Member[] }>("GET", `/plans/${encodeURIComponent(code)}/members`),
+    addMember: (planCode: string, user_code: string, joined_on: string) =>
+      request<{ member: Member }>("POST", `/plans/${encodeURIComponent(planCode)}/members`, { user_code, joined_on }),
+    leaveMember: (memberCode: string, left_on: string) =>
+      request<{ member: Member }>("PATCH", `/members/${encodeURIComponent(memberCode)}`, { left_on }),
+    planPeriods: (code: string) => request<{ periods: Period[] }>("GET", `/plans/${encodeURIComponent(code)}/periods`),
+    // No period: the current month in Vietnam. `created: false` when it already existed.
+    createPeriod: (code: string) =>
+      request<{ period: Period; created: boolean }>("POST", `/plans/${encodeURIComponent(code)}/periods`, {}),
+    accounts: () => request<{ accounts: Account[] }>("GET", "/accounts"),
+    createAccount: (fields: { username: string; display_name: string; role: Role }) =>
+      request<{ account: Account; password: string }>("POST", "/accounts", fields),
+    updateAccount: (code: string, patch: { display_name?: string; role?: Role }) =>
+      request<{ account: Account }>("PATCH", `/accounts/${encodeURIComponent(code)}`, patch),
+    resetPassword: (code: string) =>
+      request<{ password: string }>("POST", `/accounts/${encodeURIComponent(code)}/reset-password`, {}),
+    deleteAccount: (code: string) => request<null>("DELETE", `/accounts/${encodeURIComponent(code)}`),
     // Always filtered by status (and period): an unfiltered list reads the whole payments table.
     payments: (status: PaymentStatus, period?: string) =>
       request<{ payments: Payment[] }>(

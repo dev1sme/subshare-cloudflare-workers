@@ -13,3 +13,10 @@ export function recentPeriods(count: number, now: Date = new Date()): string[] {
     return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`;
   });
 }
+
+const vietnamDay = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" });
+
+// "YYYY-MM-DD" today in Vietnam: the default join / leave date, and the latest one allowed.
+export function today(now: Date = new Date()): string {
+  return vietnamDay.format(now);
+}

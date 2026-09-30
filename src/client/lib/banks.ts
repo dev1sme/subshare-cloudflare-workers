@@ -18,6 +18,11 @@ const BANK_NAMES: Record<string, string> = {
   "970448": "OCB",
 };
 
+// For a bank picker, by name.
+export const BANKS: { bin: string; name: string }[] = Object.entries(BANK_NAMES)
+  .map(([bin, name]) => ({ bin, name }))
+  .sort((a, b) => a.name.localeCompare(b.name, "vi"));
+
 export function bankName(bin: string): string {
   return BANK_NAMES[bin] ?? bin;
 }

@@ -15,6 +15,8 @@ const ExplorePlansPage = lazy(() => import("./features/explore/ExplorePlansPage"
 const JoinRequestsPage = lazy(() => import("./features/admin/JoinRequestsPage"));
 const AdminPaymentsPage = lazy(() => import("./features/admin/AdminPaymentsPage"));
 const PlansPage = lazy(() => import("./features/admin/PlansPage"));
+const PlanNewPage = lazy(() => import("./features/admin/PlanNewPage"));
+const PlanDetailPage = lazy(() => import("./features/admin/PlanDetailPage"));
 const AccountsPage = lazy(() => import("./features/admin/AccountsPage"));
 
 const HOME: Record<Role, string> = {
@@ -75,6 +77,9 @@ export function AppRoutes() {
         <Route path="payments" element={<AdminPaymentsPage />} />
         <Route path="requests" element={<JoinRequestsPage />} />
         <Route path="plans" element={<PlansPage />} />
+        {/* Static segment before the parameter. */}
+        <Route path="plans/new" element={<PlanNewPage />} />
+        <Route path="plans/:code" element={<PlanDetailPage />} />
         <Route path="accounts" element={<AccountsPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
