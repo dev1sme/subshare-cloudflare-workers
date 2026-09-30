@@ -6,10 +6,11 @@ Nguồn duy nhất cho việc còn phải làm. Làm xong thì đánh dấu, và
 
 - [x] Scaffold: Vite + React + Hono + `@cloudflare/vite-plugin`, `wrangler.jsonc`, npm scripts theo `.claude/rules/commands.md`
 - [x] `envelope.ts`, `validate.ts`, `headers.ts`, `public/_headers`
-- [ ] Tạo D1 `subshare-db` (qua MCP `d1_database_create`), dán `database_id`
+- [x] Tạo D1 `subshare-db`, dán `database_id`
 - [x] Migration 0001 theo [data-model.md](data-model.md)
 - [x] Auth: PBKDF2 + JWT cookie, `requireAdmin` / `requireMember`, `scripts/hash-password.mjs`
-- [ ] Deploy lần đầu; đo `cpuTime` login trên Worker thật
+- [x] Deploy lần đầu
+- [ ] Đo `cpuTime` login đủ mẫu trên Worker thật (lần đầu: 3–20 ms, xem `.claude/rules/project-state.md`) rồi chốt số vòng PBKDF2
 
 ## Tính năng
 

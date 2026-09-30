@@ -13,8 +13,7 @@
     {
       "binding": "DB",
       "database_name": "subshare-db",
-      // Placeholder until the remote database is created (roadmap: create D1 via MCP).
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "0ccc6fd7-6ca5-4661-9a08-22adcb31b6ab",
       "migrations_dir": "./migrations"
     }
   ],

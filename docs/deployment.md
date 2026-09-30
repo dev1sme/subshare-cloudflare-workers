@@ -1,6 +1,6 @@
 # Cấu hình & deploy
 
-> Đã có `wrangler.jsonc` và `scheduled()`. **Chưa deploy**: chưa có database remote (`database_id` đang là placeholder toàn số 0), chưa khai báo Cron Trigger, chưa đặt secret nào. Local đã chạy đủ migration `0001`–`0005`. Phần dưới là cấu hình đích và các bẫy đã biết.
+> **Đã deploy lần đầu 2026-09-30** lên URL `*.workers.dev` của account (chưa có custom domain): D1 `subshare-db` (APAC) đã tạo và chạy đủ migration `0001`–`0009`, `JWT_SECRET` đã đặt, có admin đầu tiên. **Chưa khai báo Cron Trigger.** Phần dưới là cấu hình đích và các bẫy đã biết.
 
 ## `wrangler.jsonc`
 
@@ -40,7 +40,15 @@
 
 ### `secrets.required`
 
-- Thiếu tên nào thì build in cảnh báo `Missing required secrets`. Coi đó là lời nhắc, chưa kiểm là `wrangler deploy` có chặn hay không.
+- Thiếu tên nào thì build in cảnh báo `Missing required secrets`, và **`wrangler deploy` từ chối deploy** khi Worker chưa có secret đó (đã gặp 2026-09-30).
+- Worker chưa tồn tại thì `wrangler secret put` không dùng được. Lần deploy đầu truyền secret bằng file tạm, rồi xoá ngay:
+
+  ```bash
+  (umask 077; printf 'JWT_SECRET=%s\n' "$(openssl rand -base64 48 | tr -d '\n')" > /tmp/secrets.env)
+  ./node_modules/.bin/wrangler deploy --secrets-file /tmp/secrets.env; rm -f /tmp/secrets.env
+  ```
+
+  Secret production **khác** secret trong `.dev.vars`. Kiểm bằng `wrangler secret list` (`type: secret_text`).
 - **Danh sách này quyết định secret nào vào `c.env` ở dev local.** Vite plugin chỉ copy từ `.dev.vars` những tên có trong danh sách; tên không có thì `undefined` lúc runtime, **không cảnh báo gì** — rất dễ debug nhầm hướng. Thêm mọi secret mới vào đây.
 - Vite plugin copy `.dev.vars` vào output build để `vite preview` chạy được — output đó gitignore và không phục vụ cho trình duyệt, nhưng nghĩa là `dist/` chứa secret thật trên đĩa.
 
@@ -67,6 +75,8 @@ node scripts/hash-password.mjs <username> "<tên hiển thị>"
 npm run db:migrate:remote
 npm run deploy              # build + wrangler deploy — không bao giờ `wrangler pages deploy`
 ```
+
+Admin đầu tiên trên remote: `node scripts/hash-password.mjs <username> "<tên>" > <file tạm>` rồi `wrangler d1 execute subshare-db --remote --file <file tạm>`, xoá file sau đó — SQL chứa tên thật, không bao giờ nằm trong file được track.
 
 Sau migrate remote, **kiểm bằng bảng, không bằng thư mục**: `SELECT COUNT(*) FROM d1_migrations` phải bằng số file trong `migrations/`. Thư mục trông đủ trong khi remote chậm vài migration là kịch bản thật — mọi lệnh ghi trả 500 vì thiếu cột.
 
