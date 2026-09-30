@@ -5,7 +5,8 @@ import { NavLink } from "react-router";
 import { cn } from "../lib/cn";
 import { spring } from "../lib/motion";
 
-export type NavItem = { to: string; labelKey: string; icon: LucideIcon };
+// `dot`: something new waits there (e.g. a plan you asked for was opened).
+export type NavItem = { to: string; labelKey: string; icon: LucideIcon; dot?: boolean };
 
 // M3 navigation bar on a phone (bottom, ≤5 items, thumb reach) and navigation rail from md up.
 // The active indicator is one shared element (layoutId) that slides to the selected item.
@@ -17,7 +18,7 @@ export function NavBar({ items, layoutId }: { items: NavItem[]; layoutId: string
       className="fixed inset-x-0 bottom-0 z-40 bg-surface-container pb-[env(safe-area-inset-bottom)] md:sticky md:top-16 md:h-[calc(100dvh-4rem)] md:w-24 md:shrink-0 md:bg-transparent md:pt-4"
     >
       <ul className="flex md:flex-col md:gap-3">
-        {items.map(({ to, labelKey, icon: Icon }) => (
+        {items.map(({ to, labelKey, icon: Icon, dot }) => (
           <li key={to} className="flex-1">
             <NavLink
               to={to}
@@ -34,8 +35,12 @@ export function NavBar({ items, layoutId }: { items: NavItem[]; layoutId: string
                       className={cn("relative size-6 transition-colors duration-200", isActive && "text-on-secondary-container")}
                       aria-hidden="true"
                     />
+                    {dot && <span className="absolute top-0.5 right-3 size-2.5 rounded-full bg-error ring-2 ring-surface-container" aria-hidden="true" />}
                   </span>
-                  <span className={cn("text-center transition-colors duration-200", isActive && "text-on-surface")}>{t(labelKey)}</span>
+                  <span className={cn("text-center transition-colors duration-200", isActive && "text-on-surface")}>
+                    {t(labelKey)}
+                    {dot && <span className="sr-only">{t("app.newItem")}</span>}
+                  </span>
                 </>
               )}
             </NavLink>

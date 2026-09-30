@@ -1,15 +1,15 @@
 import { useTranslation } from "react-i18next";
-import { PROVIDERS, type Provider } from "../../../../shared/providers";
-import { ServiceLogo } from "../../../components/ServiceLogo";
-import { cn } from "../../../lib/cn";
-import { PROVIDER_STYLE } from "../../../lib/providers";
+import { PROVIDERS, type Provider } from "../../shared/providers";
+import { ServiceLogo } from "./ServiceLogo";
+import { cn } from "../lib/cn";
+import { PROVIDER_STYLE } from "../lib/providers";
 
 // The service a plan is for, picked by its logo. A group of toggle buttons (one pressed).
-export function ProviderPicker({ value, onChange }: { value: Provider; onChange: (provider: Provider) => void }) {
+export function ProviderPicker({ value, onChange, legend }: { value: Provider; onChange: (provider: Provider) => void; legend: string }) {
   const { t } = useTranslation();
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-2 px-1 text-sm font-medium text-on-surface-variant">{t("planEditor.provider")}</legend>
+      <legend className="mb-2 px-1 text-sm font-medium text-on-surface-variant">{legend}</legend>
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
         {PROVIDERS.map((provider) => {
           const label = PROVIDER_STYLE[provider].label ?? t("providers.other");

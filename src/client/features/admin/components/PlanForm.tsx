@@ -3,6 +3,7 @@ import { type FormEvent, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Account, Cycle } from "../../../../shared/types";
 import type { PlanInput } from "../../../api";
+import { ProviderPicker } from "../../../components/ProviderPicker";
 import { Button } from "../../../components/ui/button";
 import { SelectField } from "../../../components/ui/select-field";
 import { Switch } from "../../../components/ui/switch";
@@ -10,7 +11,6 @@ import { TextField } from "../../../components/ui/text-field";
 import { formatMoney } from "../../../format";
 import { BANKS } from "../../../lib/banks";
 import type { FieldErrors } from "../usePlanEditor";
-import { ProviderPicker } from "./ProviderPicker";
 
 type PlanFormProps = {
   initial: PlanInput;
@@ -67,7 +67,7 @@ export function PlanForm({ initial, admins, errors: serverErrors, saving, submit
 
   return (
     <form onSubmit={submit} className="flex max-w-2xl flex-col gap-6" noValidate>
-      <ProviderPicker value={form.provider} onChange={(provider) => set("provider", provider)} />
+      <ProviderPicker legend={t("planEditor.provider")} value={form.provider} onChange={(provider) => set("provider", provider)} />
 
       <section className="flex flex-col gap-4">
         <TextField label={t("planEditor.name")} value={form.name} onChange={(e) => set("name", e.target.value)} maxLength={64} error={errors.name} required />

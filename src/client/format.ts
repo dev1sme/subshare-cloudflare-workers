@@ -29,3 +29,10 @@ export function formatPeriod(period: string): string {
   const [year, month] = period.split("-");
   return `${month}/${year}`;
 }
+
+const vietnamTime = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", hour12: false });
+
+// "2026-10-02T07:00:00Z" -> "14:00 02/10/2026" (Vietnam time): a deadline to the minute.
+export function formatDateTime(iso: string): string {
+  return `${vietnamTime.format(new Date(iso))} ${formatDate(iso)}`;
+}

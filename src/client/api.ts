@@ -7,6 +7,7 @@ import type {
   JoinRequest,
   Member,
   MyPlan,
+  MyWish,
   OpenPlan,
   Payment,
   PaymentStatus,
@@ -103,6 +104,11 @@ export const api = {
       request<{ join_request: JoinRequest }>("POST", "/me/join-requests", { plan_code, note }),
     cancelJoinRequest: (code: string) =>
       request<{ join_request: JoinRequest }>("POST", `/me/join-requests/${encodeURIComponent(code)}/cancel`),
+    wishes: () => request<{ wishes: MyWish[] }>("GET", "/me/wishes"),
+    wish: (fields: { provider: Provider; service_name: string | null; note: string }) =>
+      request<{ wish: MyWish }>("POST", "/me/wishes", fields),
+    cancelWish: (code: string) => request<{ wish: MyWish }>("POST", `/me/wishes/${encodeURIComponent(code)}/cancel`),
+    dismissWish: (code: string) => request<{ wish: MyWish }>("POST", `/me/wishes/${encodeURIComponent(code)}/seen`),
   },
   admin: {
     plans: () => request<{ plans: Plan[] }>("GET", "/plans"),

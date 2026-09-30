@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { type ApiResult, api } from "../../api";
 import { errorMessage } from "../../errors";
 import { useResource } from "../../hooks/useResource";
+import { useWishes } from "./WishesProvider";
 import type { JoinRequest, OpenPlan } from "../../../shared/types";
 
 type Explore = { plans: OpenPlan[]; requests: JoinRequest[] };
@@ -19,6 +20,8 @@ async function loadExplore(): Promise<ApiResult<Explore>> {
 export function useExplore() {
   const { t } = useTranslation();
   const { data, error, loading, reload } = useResource(loadExplore);
+  // Asking to join a plan opened for a wish changes that wish's notice too.
+  const { reload: reloadWishes } = useWishes();
 
   // Mutations resolve true on success and raise their own toast; the lists reload either way,
   // since a refusal (plan full, closed meanwhile) usually means the list is stale.
@@ -26,6 +29,7 @@ export function useExplore() {
     async (planCode: string, note: string) => {
       const result = await api.me.askToJoin(planCode, note.trim());
       reload();
+      reloadWishes();
       if (!result.ok) {
         toast.error(errorMessage(t, result.code));
         return false;
@@ -33,7 +37,7 @@ export function useExplore() {
       toast.success(t("explore.sent"));
       return true;
     },
-    [reload, t],
+    [reload, reloadWishes, t],
   );
 
   const cancel = useCallback(
