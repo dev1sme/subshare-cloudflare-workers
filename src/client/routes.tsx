@@ -41,14 +41,23 @@ function HomeRedirect() {
   return <Navigate to={session.user ? HOME[session.user.role] : "/login"} replace />;
 }
 
+const isAdminPath = (path: string) => path === "/admin" || path.startsWith("/admin/");
+
+// Whether `from` is a page this role can open. After signing out, `from` is the page the previous
+// user was on; the next user may have another role, and following it would land them on a 404.
+function fitsRole(from: string, role: Role) {
+  return role === "ADMIN" ? isAdminPath(from) : !isAdminPath(from);
+}
+
 // After signing in, go back to the page that sent the user here — but only an internal path,
-// so a crafted `state.from` can never redirect off-site.
+// so a crafted `state.from` can never redirect off-site, and only one the new user's role can open.
 function LoginRoute() {
   const { session } = useSession();
   const location = useLocation();
   if (!session.user) return <LoginPage />;
   const from = (location.state as { from?: unknown } | null)?.from;
-  const target = typeof from === "string" && from.startsWith("/") && !from.startsWith("//") ? from : HOME[session.user.role];
+  const internal = typeof from === "string" && from.startsWith("/") && !from.startsWith("//");
+  const target = internal && fitsRole(from, session.user.role) ? from : HOME[session.user.role];
   return <Navigate to={target} replace />;
 }
 
