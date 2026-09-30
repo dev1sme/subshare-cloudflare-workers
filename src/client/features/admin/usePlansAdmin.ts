@@ -20,11 +20,11 @@ export function usePlansAdmin() {
         return false;
       }
       const updated = result.data.plan;
-      setData({ plans: (data?.plans ?? []).map((p) => (p.code === updated.code ? updated : p)) });
+      setData((current) => ({ plans: current.plans.map((p) => (p.code === updated.code ? updated : p)) }));
       toast.success(t(accepting ? "plansAdmin.openedToast" : "plansAdmin.closedToast", { plan: plan.name }));
       return true;
     },
-    [data, setData, t],
+    [setData, t],
   );
 
   return { plans: data?.plans ?? [], error, loading: loading && !data, reload, setAccepting };

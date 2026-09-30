@@ -20,7 +20,7 @@ export default function AdminPaymentsPage() {
   const [view, setView] = useState<PaymentsView>("pending");
   const [period, setPeriod] = useState(currentPeriod);
   const periods = useMemo(() => recentPeriods(12), []);
-  const { items, total, error, loading, reload, setStatus } = useAdminPayments(view, period);
+  const { items, total, error, loading, reload, busy, setStatus } = useAdminPayments(view, period);
   // Grouped by plan, keeping the order rows came in (oldest report first / the API's order).
   const groups = useMemo(() => {
     const byPlan = new Map<string, ReviewItem[]>();
@@ -95,6 +95,7 @@ export default function AdminPaymentsPage() {
                     key={item.code}
                     item={item}
                     view={view}
+                    busy={busy.has(item.code)}
                     onConfirm={(i) => void setStatus(i, "PAID")}
                     onRevert={(i) => void revert(i)}
                   />

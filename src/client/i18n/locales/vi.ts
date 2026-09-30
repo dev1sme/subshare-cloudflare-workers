@@ -163,6 +163,7 @@ const vi = {
     YEARLY: "Hằng năm",
   },
   planEditor: {
+    noChanges: "Không có thay đổi nào để lưu.",
     newTitle: "Thêm gói",
     create: "Tạo gói",
     save: "Lưu thay đổi",

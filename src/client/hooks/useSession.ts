@@ -15,6 +15,8 @@ export type SessionContextValue = {
   signOut: () => Promise<boolean>;
   // Ask /api/auth/me again after "unreachable".
   retry: () => void;
+  // The signed-in user's own account changed (name, role) through an admin screen.
+  replaceUser: (user: User) => void;
 };
 
 export const SessionContext = createContext<SessionContextValue | null>(null);

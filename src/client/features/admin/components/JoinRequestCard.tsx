@@ -11,12 +11,13 @@ import { spring } from "../../../lib/motion";
 
 type JoinRequestCardProps = {
   request: JoinRequest;
+  busy: boolean;
   onApprove: (request: JoinRequest) => void;
   onReject: (request: JoinRequest) => void;
 };
 
 // Enters from below, leaves sideways when decided; the rest of the queue closes the gap (layout).
-export function JoinRequestCard({ request, onApprove, onReject }: JoinRequestCardProps) {
+export function JoinRequestCard({ request, busy, onApprove, onReject }: JoinRequestCardProps) {
   const { t } = useTranslation();
   const full = request.plan.active_members >= request.plan.max_slots;
   return (
@@ -56,11 +57,11 @@ export function JoinRequestCard({ request, onApprove, onReject }: JoinRequestCar
         </blockquote>
       )}
       <div className="flex justify-end gap-2">
-        <Button variant="text" onClick={() => onReject(request)}>
+        <Button variant="text" disabled={busy} onClick={() => onReject(request)}>
           <X aria-hidden="true" />
           {t("requests.reject")}
         </Button>
-        <Button disabled={full} onClick={() => onApprove(request)}>
+        <Button disabled={full || busy} onClick={() => onApprove(request)}>
           <Check aria-hidden="true" />
           {full ? t("explore.full") : t("requests.approve")}
         </Button>

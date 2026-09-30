@@ -19,10 +19,10 @@ export function usePayment(code: string) {
       if (result.code === "INVALID_STATUS_TRANSITION") reload();
       return false;
     }
-    if (data) setData({ ...data, payment: result.data.payment });
+    setData((current) => ({ ...current, payment: result.data.payment }));
     toast.success(t("payments.markSentDone"));
     return true;
-  }, [code, data, reload, setData, t]);
+  }, [code, reload, setData, t]);
 
   return {
     payment: data?.payment ?? null,

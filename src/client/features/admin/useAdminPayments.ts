@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import type { Payment, Prepayment } from "../../../shared/types";
 import { type ApiResult, api } from "../../api";
 import { errorMessage } from "../../errors";
+import { useInFlight } from "../../hooks/useInFlight";
 import { useResource } from "../../hooks/useResource";
 
 // Three views of the money rows (docs/payments.md): what members reported and waits for the bank
@@ -35,25 +36,29 @@ export function useAdminPayments(view: PaymentsView, period: string) {
   const { t } = useTranslation();
   const load = useCallback(() => loadView(view, period), [view, period]);
   const { data, error, loading, reload, setData } = useResource(load);
+  // Rows with a request in flight: their buttons are disabled, and a double click sends one request.
+  const { busy, start, finish } = useInFlight();
 
   // A row whose status changed no longer belongs to this view: it leaves the list (and animates
   // out). A refusal usually means another admin moved it first, so the list is refetched.
   const setStatus = useCallback(
     async (item: ReviewItem, to: "PAID" | "UNPAID") => {
+      if (!start(item.code)) return false;
       const result =
         item.kind === "payment"
           ? await api.admin.setPaymentStatus(item.code, to)
           : await api.admin.setPrepaymentStatus(item.code, to);
+      finish(item.code);
       if (!result.ok) {
         toast.error(errorMessage(t, result.code));
         reload();
         return false;
       }
-      setData({ items: (data?.items ?? []).filter((other) => other.code !== item.code) });
+      setData((current) => ({ items: current.items.filter((other) => other.code !== item.code) }));
       toast.success(t(to === "PAID" ? "paymentsAdmin.confirmedToast" : "paymentsAdmin.revertedToast", { user: item.row.user.display_name }));
       return true;
     },
-    [data, reload, setData, t],
+    [finish, reload, setData, start, t],
   );
 
   const items = data?.items ?? [];
@@ -64,6 +69,7 @@ export function useAdminPayments(view: PaymentsView, period: string) {
     // A view or period change refetches: show the skeleton rather than the previous view's rows.
     loading,
     reload,
+    busy,
     setStatus,
   };
 }

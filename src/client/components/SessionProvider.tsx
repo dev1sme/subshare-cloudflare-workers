@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api, onUnauthorized } from "../api";
 import { errorMessage } from "../errors";
+import type { User } from "../../shared/types";
 import { type Session, SessionContext } from "../hooks/useSession";
 
 export function SessionProvider({ children }: { children: ReactNode }) {
@@ -31,6 +32,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, [attempt]);
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
+  const replaceUser = useCallback((user: User) => setSession({ status: "signedIn", user }), []);
 
   // Any request answering UNAUTHORIZED ends the session; the route guard then shows the login page.
   useEffect(
@@ -68,6 +70,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return true;
   }, [t]);
 
-  const value = useMemo(() => ({ session, signIn, signOut, retry }), [session, signIn, signOut, retry]);
+  const value = useMemo(() => ({ session, signIn, signOut, retry, replaceUser }), [session, signIn, signOut, retry, replaceUser]);
   return <SessionContext value={value}>{children}</SessionContext>;
 }

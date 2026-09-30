@@ -160,6 +160,7 @@ const en: typeof vi = {
     YEARLY: "Yearly",
   },
   planEditor: {
+    noChanges: "Nothing to save.",
     newTitle: "New plan",
     create: "Create plan",
     save: "Save changes",

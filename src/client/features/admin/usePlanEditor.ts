@@ -8,16 +8,16 @@ import { useResource } from "../../hooks/useResource";
 
 export type FieldErrors = Partial<Record<keyof PlanInput, string>>;
 
-type EditorData = { plan: Plan | null; admins: Account[] };
+type EditorData = { plan: Plan | null; accounts: Account[] };
 
-// Payers must be admins, so the payer picker lists only them.
+// One accounts read serves both the payer picker (admins) and the member picker of the plan page.
 async function loadEditor(code: string | null): Promise<ApiResult<EditorData>> {
   const [plan, accounts] = await Promise.all([code ? api.admin.plan(code) : Promise.resolve(null), api.admin.accounts()]);
   if (plan && !plan.ok) return plan;
   if (!accounts.ok) return accounts;
   return {
     ok: true,
-    data: { plan: plan ? plan.data.plan : null, admins: accounts.data.accounts.filter((account) => account.role === "ADMIN") },
+    data: { plan: plan ? plan.data.plan : null, accounts: accounts.data.accounts },
   };
 }
 
@@ -68,16 +68,23 @@ export function usePlanEditor(code: string | null) {
   // Resolves the plan's code on success (the new one after a create), null on failure.
   const save = useCallback(
     async (input: PlanInput): Promise<string | null> => {
-      setSaving(true);
       const plan = data?.plan ?? null;
-      const result = plan ? await api.admin.updatePlan(plan.code, diff(toPlanInput(plan), input)) : await api.admin.createPlan(input);
+      const patch = plan ? diff(toPlanInput(plan), input) : null;
+      // Nothing changed: no request (the server would answer NOTHING_TO_UPDATE, which reads as a failure).
+      if (plan && patch && Object.keys(patch).length === 0) {
+        setFieldErrors({});
+        toast.success(t("planEditor.noChanges"));
+        return plan.code;
+      }
+      setSaving(true);
+      const result = plan && patch ? await api.admin.updatePlan(plan.code, patch) : await api.admin.createPlan(input);
       setSaving(false);
       if (!result.ok) {
         fail(result);
         return null;
       }
       setFieldErrors({});
-      if (data) setData({ ...data, plan: result.data.plan });
+      setData((current) => ({ ...current, plan: result.data.plan }));
       toast.success(t(plan ? "planEditor.savedToast" : "planEditor.createdToast", { plan: result.data.plan.name }));
       return result.data.plan.code;
     },
@@ -99,7 +106,9 @@ export function usePlanEditor(code: string | null) {
 
   return {
     plan: data?.plan ?? null,
-    admins: data?.admins ?? [],
+    accounts: data?.accounts ?? [],
+    // Payers must be admins, so the payer picker lists only them.
+    admins: (data?.accounts ?? []).filter((account) => account.role === "ADMIN"),
     error,
     loading: loading && !data,
     reload,

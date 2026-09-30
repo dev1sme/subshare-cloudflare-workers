@@ -12,7 +12,7 @@ import { useJoinRequests } from "./useJoinRequests";
 export default function JoinRequestsPage() {
   const { t } = useTranslation();
   const confirm = useConfirm();
-  const { requests, error, loading, reload, decide } = useJoinRequests();
+  const { requests, error, loading, reload, busy, decide } = useJoinRequests();
 
   const approve = async (request: JoinRequest) => {
     const names = { user: request.user.display_name, plan: request.plan.name, amount: formatMoney(request.plan.member_amount) };
@@ -42,6 +42,7 @@ export default function JoinRequestsPage() {
             <JoinRequestCard
               key={request.code}
               request={request}
+              busy={busy.has(request.code)}
               onApprove={(r) => void approve(r)}
               onReject={(r) => void reject(r)}
             />

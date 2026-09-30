@@ -26,7 +26,7 @@ export default function PlanDetailPage() {
   // Screen state: which section of the plan is shown.
   const [section, setSection] = useState<Section>("members");
   const editor = usePlanEditor(code);
-  const members = usePlanMembers(code, editor.plan?.payer.code ?? null);
+  const members = usePlanMembers(code, editor.plan?.payer.code ?? null, editor.accounts);
   const periods = usePlanPeriods(code);
   const plan = editor.plan;
 

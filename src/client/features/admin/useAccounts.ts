@@ -1,10 +1,12 @@
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { Account, Role } from "../../../shared/types";
 import { api } from "../../api";
 import { errorMessage } from "../../errors";
 import { useResource } from "../../hooks/useResource";
+import { useSession } from "../../hooks/useSession";
 
 const loadAccounts = () => api.admin.accounts();
 
@@ -16,13 +18,16 @@ export type IssuedPassword = { account: Account; password: string; reset: boolea
 
 export function useAccounts() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { session, replaceUser } = useSession();
   const { data, error, loading, reload, setData } = useResource(loadAccounts);
   const [fieldErrors, setFieldErrors] = useState<AccountFieldErrors>({});
   const [issued, setIssued] = useState<IssuedPassword | null>(null);
 
   const accounts = data?.accounts ?? [];
-  const replace = useCallback(
-    (next: Account[]) => setData({ accounts: next }),
+  // Always from the latest list: two changes in flight must not undo each other.
+  const change = useCallback(
+    (update: (current: Account[]) => Account[]) => setData((current) => ({ accounts: update(current.accounts) })),
     [setData],
   );
 
@@ -47,23 +52,32 @@ export function useAccounts() {
       }
       if (!result.ok) return fail(result);
       setFieldErrors({});
-      replace([...accounts, result.data.account]);
+      change((current) => [...current, result.data.account]);
       setIssued({ account: result.data.account, password: result.data.password, reset: false });
       return true;
     },
-    [accounts, fail, replace, t],
+    [change, fail, t],
   );
 
   const update = useCallback(
     async (account: Account, patch: { display_name?: string; role?: Role }) => {
+      // Nothing changed: close without a request (the server would answer NOTHING_TO_UPDATE).
+      if (Object.keys(patch).length === 0) return true;
       const result = await api.admin.updateAccount(account.code, patch);
       if (!result.ok) return fail(result);
       setFieldErrors({});
-      replace(accounts.map((other) => (other.code === account.code ? result.data.account : other)));
-      toast.success(t("accounts.savedToast", { user: result.data.account.display_name }));
+      const updated = result.data.account;
+      change((current) => current.map((other) => (other.code === updated.code ? updated : other)));
+      toast.success(t("accounts.savedToast", { user: updated.display_name }));
+      // Your own account: the header shows the new name, and a self-demotion leaves the admin area
+      // at once instead of every screen failing with 403.
+      if (updated.code === session.user?.code) {
+        replaceUser({ code: updated.code, username: updated.username, display_name: updated.display_name, role: updated.role });
+        if (updated.role !== "ADMIN") navigate("/", { replace: true });
+      }
       return true;
     },
-    [accounts, fail, replace, t],
+    [change, fail, navigate, replaceUser, session.user?.code, t],
   );
 
   const resetPassword = useCallback(
@@ -86,11 +100,11 @@ export function useAccounts() {
         toast.error(errorMessage(t, result.code));
         return false;
       }
-      replace(accounts.filter((other) => other.code !== account.code));
+      change((current) => current.filter((other) => other.code !== account.code));
       toast.success(t("accounts.deletedToast", { user: account.display_name }));
       return true;
     },
-    [accounts, replace, t],
+    [change, t],
   );
 
   return {
